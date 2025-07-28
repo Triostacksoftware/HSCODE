@@ -70,6 +70,12 @@ export default function ForgotPassword({ onBack }) {
   // Step 3: Reset password
   const handlePasswordReset = async (e) => {
     e.preventDefault();
+
+    if (newPassword.length < 8){
+      setMessage('Password must be at least 8 characters long')
+      return
+    }
+
     setIsLoading(true);
     setMessage("");
 
@@ -213,7 +219,7 @@ export default function ForgotPassword({ onBack }) {
 
       <button
         type="submit"
-        disabled={isLoading || newPassword < 8 || (newPassword !== confirmPassword)}
+        disabled={isLoading || !newPassword || (newPassword !== confirmPassword)}
         className="w-full bg-blue-600 text-white font-semibold py-4 px-6 rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {isLoading ? "Resetting..." : "Reset Password"}
