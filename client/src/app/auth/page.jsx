@@ -1,7 +1,11 @@
+"use client";
 import Login from "@/component/authComponent/login";
-import React from "react";
+import Signup from "@/component/authComponent/signup";
+import React, { useState } from "react";
 
 export default function page() {
+  const [isLogin, setIsLogin] = useState(true);
+
   return (
     <div className="min-h-screen flex flex-col lg:flex-row">
       {/* Background Image Section */}
@@ -24,19 +28,19 @@ export default function page() {
       <div className="w-full lg:w-3/5 bg-white flex flex-col justify-center px-4 sm:px-6 lg:px-12 py-6 lg:py-8">
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col justify-center max-w-md mx-auto w-full">
-          <Login />
+          {isLogin ? <Login /> : <Signup />}
         </div>
 
-        {/* Sign in link */}
+        {/* Toggle between Sign in and Sign up */}
         <div className="mt-6 lg:mt-8 text-center lg:text-left">
           <p className="text-gray-600 text-sm lg:text-base">
-            New to LeadConnect?{" "}
-            <a
-              href="/auth/signup"
+            {isLogin ? "New to LeadConnect?" : "Already have an account?"}{" "}
+            <button
+              onClick={() => setIsLogin(!isLogin)}
               className="text-blue-600 underline hover:text-blue-700"
             >
-              Sign up
-            </a>
+              {isLogin ? "Sign up" : "Sign in"}
+            </button>
           </p>
         </div>
       </div>

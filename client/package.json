@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "axios": "^1.11.0",
+    "libphonenumber": "^0.0.10",
+    "libphonenumber-js": "^1.12.10",
     "next": "15.4.4",
     "react": "19.1.0",
     "react-dom": "19.1.0",
