@@ -1,9 +1,11 @@
+import AdminModel from "../models/Admin.js";
 import UserModel from "../models/user.js";
 import { generateToken, verifyToken } from "../utilities/jwt.util.js";
 import { generateOTP } from "../utilities/otp.util.js";
 import emailVerificatonMail from "../utilities/sendMail.js";
 import bcrypt from 'bcrypt';
 
+// User Controllers
 export const signup = async (req, res) => {
   const { email } = req.body;
 
@@ -16,7 +18,7 @@ export const signup = async (req, res) => {
     const otp = generateOTP();
 
     // 2. Send OTP email
-    await emailVerificatonMail(email, otp);
+    await emailVerificatonMail(email, otp, 'signup');
 
     // 3. Generate JWT with email and OTP (expires in 5 min)
     const token = generateToken({ email, otp }, '5m');
@@ -133,7 +135,7 @@ export const login = async (req, res) => {
 
     const otp = generateOTP();
 
-    await emailVerificatonMail(email, otp);
+    await emailVerificatonMail(email, otp, 'login');
 
     const token = generateToken({ id: user._id, otp }, '5m');
 
@@ -196,7 +198,7 @@ export const forgotPassword = async (req, res) => {
   const otp = generateOTP();
 
   try {
-    await emailVerificatonMail(email, otp);
+    await emailVerificatonMail(email, otp, 'forgot');
 
     const token = generateToken({ email, otp }, '5m');
 
@@ -266,5 +268,74 @@ export const resetPassword = async (req, res) => {
   } catch (err) {
     console.error('Reset password error:', err);
     return res.status(500).json({ message: 'Could not reset password' });
+  }
+};
+
+// Admin Controllers
+export const adminLogin = async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ message: 'Email and password are required' });
+  }
+
+  try {
+    const admin = await AdminModel.findOne({ email });
+    if (!admin) return res.status(401).json({ message: 'Invalid credentials' });
+
+    const isMatch = await bcrypt.compare(password, admin.password);
+    if (!isMatch) return res.status(401).json({ message: 'Invalid credentials' });
+
+    const otp = generateOTP();
+
+    await emailVerificatonMail(email, otp, 'login');
+
+    const token = generateToken({ id: admin._id, otp }, '5m');
+
+    res.cookie('auth_otp_token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      maxAge: 5 * 60 * 1000,
+    });
+
+    return res.status(200).json({ message: 'OTP sent to email' });
+
+  } catch (err) {
+    console.error('Login error:', err);
+    return res.status(500).json({ message: 'Login failed' });
+  }
+};
+
+export const adminVerification = async (req, res) => {
+  try {
+    const { OTP } = req.body;
+    const tempToken = req.cookies.auth_otp_token;
+
+    if (!OTP || !tempToken) {
+      return res.status(400).json({ message: 'OTP or token missing' });
+    }
+
+    const decoded = verifyToken(tempToken);
+    if (!decoded || decoded.otp !== OTP) {
+      return res.status(401).json({ message: 'Invalid or expired OTP' });
+    }
+
+    // Auth success: issue final token
+    const authToken = generateToken({ id: decoded.id }, '24h');
+
+    // Set final auth cookie
+    res.cookie('auth_token', authToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    });
+
+    res.clearCookie('auth_otp_token');
+
+    return res.status(200).json({ message: 'Login successful' });
+  } catch (error) {
+    res.status(500).json({message: 'Server Error'});
   }
 };
