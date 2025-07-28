@@ -1,15 +1,17 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { MdEmail, MdArrowBack } from "react-icons/md";
 
 export default function ForgotPassword({ onBack }) {
-  const [step, setStep] = useState(1); // 1: email, 2: OTP, 3: new password
+  const [step, setStep] = useState(3); // 1: email, 2: OTP, 3: new password
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const confirmPasswordRef = useRef();
 
   // Step 1: Send email for password reset
   const handleEmailSubmit = async (e) => {
@@ -18,9 +20,14 @@ export default function ForgotPassword({ onBack }) {
     setMessage("");
 
     try {
-      const response = await axios.post("/api/v1/auth/forgot-password", {
-        email,
-      });
+      const response = await axios.post("/api/v1/auth/forgot-password", 
+        {
+          email,
+        },
+        {
+          withCredentials: true,
+        }
+      );
 
       if (response.status === 200) {
         setMessage(response.data.message || "OTP sent to your email");
@@ -40,9 +47,14 @@ export default function ForgotPassword({ onBack }) {
     setMessage("");
 
     try {
-      const response = await axios.post("/api/v1/auth/otp-verification", {
-        OTP: otp,
-      });
+      const response = await axios.post("/api/v1/auth/otp-verification", 
+        {
+          OTP: otp,
+        },
+        {
+          withCredentials: true,
+        }
+      );
 
       if (response.status === 200) {
         setMessage(response.data.message || "OTP verified successfully");
@@ -62,9 +74,14 @@ export default function ForgotPassword({ onBack }) {
     setMessage("");
 
     try {
-      const response = await axios.post("/api/v1/auth/reset-password", {
-        "new password": newPassword,
-      });
+      const response = await axios.post("/api/v1/auth/reset-password", 
+        {
+          newPassword,
+        },
+        {
+          withCredentials: true,
+        }
+      );
 
       if (response.status === 200) {
         setMessage(response.data.message || "Password reset successfully");
@@ -167,6 +184,7 @@ export default function ForgotPassword({ onBack }) {
           New Password
         </legend>
         <input
+          ref={confirmPasswordRef}
           type="password"
           value={newPassword}
           onChange={(e) => setNewPassword(e.target.value)}
@@ -176,9 +194,26 @@ export default function ForgotPassword({ onBack }) {
         />
       </fieldset>
 
+      <fieldset className={`relative border border-gray-300 rounded-lg p-0 m-0 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-opacity-50 ${!newPassword.includes(confirmPassword) && "focus-within:ring-red-500 focus-within:border-red-500 border-red-500"}`}>
+        <legend className="absolute -top-2.5 left-3 bg-white px-2 text-gray-500 text-sm font-medium focus-within:text-blue-500">
+          Confirm Password
+        </legend>
+        <input
+          type="password"
+          value={confirmPassword}
+          onChange={(e) => {
+            if (!newPassword && !confirmPassword) return confirmPasswordRef.current.focus();
+            setConfirmPassword(e.target.value);
+          }}
+          placeholder="Enter confirm password"
+          className="w-full border-none outline-none px-3 py-4 text-base bg-transparent"
+          required
+        />
+      </fieldset>
+
       <button
         type="submit"
-        disabled={isLoading || !newPassword}
+        disabled={isLoading || newPassword < 8 || (newPassword !== confirmPassword)}
         className="w-full bg-blue-600 text-white font-semibold py-4 px-6 rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {isLoading ? "Resetting..." : "Reset Password"}

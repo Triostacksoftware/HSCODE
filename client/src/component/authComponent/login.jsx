@@ -34,11 +34,12 @@ export default function Login() {
         withCredentials: true,
       });
 
-      if (response.status === 200) {
+      if (response.status === 200 && response.data?.message === "LoggedIn") {
         console.log("Login successful:", response.data.message);
-        // Show OTP input after successful login
-        setShowOTP(true);
+        return router.push("/dashboard");
       }
+      // Show OTP input after successful login
+      setShowOTP(true);
     } catch (error) {
       console.error(
         "Login failed:",
@@ -85,18 +86,19 @@ export default function Login() {
 
   return (
     <div className="w-full">
-      {/* Header */}
-      <div className="text-center mb-6 sm:mb-8">
-        <p className="text-xs sm:text-sm text-gray-600 mb-2">Welcome Back!</p>
-        <h1 className="text-lg sm:text-xl font-bold text-gray-900">
-          Sign In to LeadConnect
-        </h1>
-      </div>
 
       {/* Conditional Rendering */}
       {!showForgotPassword ? (
         /* Login Form */
         <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:gap-4">
+          {/* Header */}
+          <div className="text-center mb-6 sm:mb-8">
+            <p className="text-xs sm:text-sm text-gray-600 mb-2">Welcome Back!</p>
+            <h1 className="text-lg sm:text-xl font-bold text-gray-900">
+              Sign In to LeadConnect
+            </h1>
+          </div>
+          
           {/* Email Field */}
           <fieldset className="relative border border-gray-300 rounded-lg p-0 m-0 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-opacity-50">
             <legend className="absolute -top-2.5 left-3 bg-white px-2 text-gray-800 text-xs sm:text-sm font-medium focus-within:text-blue-500">
