@@ -8,7 +8,6 @@ const countryAdminSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
-
     email: {
       type: String,
       required: true,
@@ -16,13 +15,11 @@ const countryAdminSchema = new mongoose.Schema(
       lowercase: true,
       trim: true,
     },
-
     phone: {
       type: String,
       required: true,
       trim: true,
     },
-
     password: {
       type: String,
       required: true,
@@ -32,7 +29,7 @@ const countryAdminSchema = new mongoose.Schema(
         enum: ['admin','superadmin'],
         default: 'admin'
     },
-    country: {
+    countryCode: {
       type: String,
       required: true,
       trim: true,
