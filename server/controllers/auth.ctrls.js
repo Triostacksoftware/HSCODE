@@ -72,10 +72,10 @@ export const emailVerification = async (req, res) => {
     await newUser.save();
 
     // 5. Generate JWT with user._id
-    const token = generateToken({ id: newUser._id }, '24h');
+    const authToken = generateToken({ id: newUser._id }, '24h');
 
     // 6. Set JWT in HTTP-only cookie
-    res.cookie('token', token, {
+    res.cookie('auth_token', authToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: process.env.NODE_ENV === 'production'? 'none': 'lax',
@@ -110,11 +110,30 @@ export const login = async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(401).json({ message: 'Invalid credentials' });
 
+    const reset = req.cookies.reset_confirmed;
+    if (reset) {
+      // Auth success: issue final token
+      const authToken = generateToken({ id: user._id }, '24h');
+
+      // Set final auth cookie
+      res.cookie('auth_token', authToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      });
+
+      res.clearCookie('reset_confirmed');
+
+      return res.status(200).json({ message: 'LoggedIn' });
+    }
+    
+
     const otp = generateOTP();
 
     await emailVerificatonMail(email, otp);
 
-    const token = generateToken({ userId: user._id, otp }, '5m');
+    const token = generateToken({ id: user._id, otp }, '5m');
 
     res.cookie('auth_otp_token', token, {
       httpOnly: true,
@@ -145,7 +164,7 @@ export const userVerification = async (req, res) => {
   }
 
   // Auth success: issue final token
-  const authToken = generateToken({ userId: decoded.userId }, '24h');
+  const authToken = generateToken({ id: decoded.id }, '24h');
 
   // Set final auth cookie
   res.cookie('auth_token', authToken, {
@@ -173,7 +192,7 @@ export const forgotPassword = async (req, res) => {
   try {
     await emailVerificatonMail(email, otp);
 
-    const token = generateToken({ userId: user._id, otp }, '5m');
+    const token = generateToken({ email, otp }, '5m');
 
     res.cookie('reset_token', token, {
       httpOnly: true,
@@ -203,7 +222,7 @@ export const otpVerification = (req, res) => {
   }
 
   // Create a short token to allow password reset
-  const newToken = generateToken({ userId: decoded.userId }, '5m');
+  const newToken = generateToken({ email: decoded.email }, '5m');
 
   res.cookie('reset_confirmed', newToken, {
     httpOnly: true,
@@ -231,13 +250,11 @@ export const resetPassword = async (req, res) => {
   }
 
   try {
-    const user = await UserModel.findById(decoded.userId);
+    const user = await UserModel.findOne({email: decoded.email});
     if (!user) return res.status(404).json({ message: 'User not found' });
 
     user.password = newPassword;
     await user.save(); // this triggers pre('save') hook
-
-    res.clearCookie('reset_confirmed');
 
     return res.status(200).json({ message: 'Password reset successful' });
   } catch (err) {
