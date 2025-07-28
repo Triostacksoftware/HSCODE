@@ -8,7 +8,7 @@ import {
   MdPhone,
   MdPerson,
 } from "react-icons/md";
-import { getCountryFromNumber } from "../../utilities/parseNumber.js";
+import getPhoneNumberLength from "@/utilities/getNumberLength";
 
 export default function Signup() {
   const [step, setStep] = useState(1); // 1: form, 2: OTP verification
@@ -27,11 +27,13 @@ export default function Signup() {
 
   // Step 1: Get country code on component mount
   useEffect(() => {
+    
     const fetchCountryCode = async () => {
       try {
-        const response = await axios.get("/api/v1/get-countryCode");
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_BASE_URL}/get-country`);
         if (response.status === 200) {
-          setCountryCode(response.data.countryCode);
+          console.log(response);
+          setCountryCode(response.data.location.countryCode);
         }
       } catch (error) {
         console.error("Failed to fetch country code:", error);
@@ -55,42 +57,21 @@ export default function Signup() {
     }
   };
 
-  // Validate phone number against detected country
-  const validatePhoneNumber = () => {
-    if (!formData.phone || !countryCode) return false;
-
-    const parsedCountry = getCountryFromNumber(formData.phone);
-    if (!parsedCountry) {
-      setPhoneError("Invalid phone number format");
-      return false;
-    }
-
-    if (parsedCountry !== countryCode) {
-      setPhoneError(
-        `Phone number doesn't match detected country (${countryCode})`
-      );
-      return false;
-    }
-
-    setPhoneError("");
-    return true;
-  };
-
   // Step 1: Submit form with email only
   const handleFormSubmit = async (e) => {
     e.preventDefault();
+
+    if (formData.password.length < 8){
+      setMessage('Password must be at least 8 characters long')
+      return
+    }
+
     setIsLoading(true);
     setMessage("");
 
-    // Validate phone number
-    if (!validatePhoneNumber()) {
-      setIsLoading(false);
-      return;
-    }
-
     try {
       const response = await axios.post(
-        "/api/v1/auth/signup",
+        `${process.env.NEXT_PUBLIC_BASE_URL}/auth/signup`,
         {
           email: formData.email,
         },
@@ -99,10 +80,7 @@ export default function Signup() {
         }
       );
 
-      if (response.status === 200) {
-        setMessage(response.data.message || "OTP sent to your email");
-        setStep(2);
-      }
+      setStep(2);
     } catch (error) {
       setMessage(error.response?.data?.message || "Failed to send OTP");
     } finally {
@@ -118,26 +96,21 @@ export default function Signup() {
 
     try {
       const response = await axios.post(
-        "/api/v1/auth/email-verification",
+        `${process.env.NEXT_PUBLIC_BASE_URL}/auth/email-verification`,
         {
           name: formData.name,
           email: formData.email,
           phone: formData.phone,
           password: formData.password,
           OTP: otp,
+          countryCode
         },
         {
           withCredentials: true,
         }
       );
 
-      if (response.status === 200) {
-        setMessage(response.data.message || "Account created successfully!");
-        // Redirect to login or dashboard after successful signup
-        setTimeout(() => {
-          window.location.href = "/auth";
-        }, 2000);
-      }
+      window.location.href = "/dashboard";
     } catch (error) {
       setMessage(error.response?.data?.message || "Failed to create account");
     } finally {
@@ -192,16 +165,20 @@ export default function Signup() {
         <legend className="absolute -top-2.5 left-3 bg-white px-2 text-gray-800 text-xs sm:text-sm font-medium focus-within:text-blue-500">
           Phone Number
         </legend>
-        <input
-          type="tel"
-          id="phone"
-          name="phone"
-          value={formData.phone}
-          onChange={handleInputChange}
-          placeholder={`+${countryCode} 9876543210`}
-          className="w-full border-none outline-none px-3 py-3 sm:py-4 text-sm sm:text-base bg-transparent"
-          required
-        />
+        <div className="flex items-center">
+          <span className="px-3 text-gray-500">+{countryCode}</span>
+          <input
+            type="tel"
+            name="phone"
+            value={formData.phone}
+            onChange={handleInputChange}
+            placeholder="9876543210"
+            minLength={getPhoneNumberLength(countryCode)}
+            maxLength={getPhoneNumberLength(countryCode)}
+            className="flex-1 outline-none border-none px-3 py-3 sm:py-4 text-sm sm:text-base bg-transparent"
+            required
+          />
+        </div>
         <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
           <MdPhone className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
         </div>
@@ -210,13 +187,6 @@ export default function Signup() {
       {/* Phone Error Message */}
       {phoneError && (
         <div className="text-red-500 text-xs sm:text-sm">{phoneError}</div>
-      )}
-
-      {/* Country Code Display */}
-      {countryCode && (
-        <div className="text-xs sm:text-sm text-gray-600">
-          Detected country: {countryCode}
-        </div>
       )}
 
       {/* Password Field */}

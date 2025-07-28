@@ -4,7 +4,7 @@ import axios from "axios";
 import { MdEmail, MdArrowBack } from "react-icons/md";
 
 export default function ForgotPassword({ onBack }) {
-  const [step, setStep] = useState(3); // 1: email, 2: OTP, 3: new password
+  const [step, setStep] = useState(1); // 1: email, 2: OTP, 3: new password
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -20,7 +20,7 @@ export default function ForgotPassword({ onBack }) {
     setMessage("");
 
     try {
-      const response = await axios.post("/api/v1/auth/forgot-password", 
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/auth/forgot-password`,
         {
           email,
         },
@@ -29,10 +29,7 @@ export default function ForgotPassword({ onBack }) {
         }
       );
 
-      if (response.status === 200) {
-        setMessage(response.data.message || "OTP sent to your email");
-        setStep(2);
-      }
+      setStep(2);
     } catch (error) {
       setMessage(error.response?.data?.message || "Failed to send OTP");
     } finally {
@@ -47,7 +44,7 @@ export default function ForgotPassword({ onBack }) {
     setMessage("");
 
     try {
-      const response = await axios.post("/api/v1/auth/otp-verification", 
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/auth/otp-verification`, 
         {
           OTP: otp,
         },
@@ -56,10 +53,7 @@ export default function ForgotPassword({ onBack }) {
         }
       );
 
-      if (response.status === 200) {
-        setMessage(response.data.message || "OTP verified successfully");
-        setStep(3);
-      }
+      setStep(3);
     } catch (error) {
       setMessage(error.response?.data?.message || "Invalid OTP");
     } finally {
@@ -80,7 +74,7 @@ export default function ForgotPassword({ onBack }) {
     setMessage("");
 
     try {
-      const response = await axios.post("/api/v1/auth/reset-password", 
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/auth/reset-password`, 
         {
           newPassword,
         },
@@ -89,13 +83,7 @@ export default function ForgotPassword({ onBack }) {
         }
       );
 
-      if (response.status === 200) {
-        setMessage(response.data.message || "Password reset successfully");
-        // Redirect to login after successful password reset
-        setTimeout(() => {
-          onBack();
-        }, 2000);
-      }
+      onBack();
     } catch (error) {
       setMessage(error.response?.data?.message || "Failed to reset password");
     } finally {

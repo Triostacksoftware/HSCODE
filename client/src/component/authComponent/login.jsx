@@ -16,6 +16,8 @@ export default function Login() {
   const [showOTP, setShowOTP] = useState(false);
   const [otp, setOtp] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState("");
+  
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -28,9 +30,10 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+    setMessage('');
 
     try {
-      const response = await axios.post("/api/v1/auth/login", formData, {
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/auth/login`, formData, {
         withCredentials: true,
       });
 
@@ -38,6 +41,7 @@ export default function Login() {
         console.log("Login successful:", response.data.message);
         return router.push("/dashboard");
       }
+
       // Show OTP input after successful login
       setShowOTP(true);
     } catch (error) {
@@ -45,6 +49,7 @@ export default function Login() {
         "Login failed:",
         error.response?.data?.message || error.message
       );
+      setMessage(error.response?.data?.message || error.message)
     } finally {
       setIsLoading(false);
     }
@@ -53,10 +58,10 @@ export default function Login() {
   const handleOTPSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-
+    setMessage('');
     try {
       const response = await axios.post(
-        "/api/v1/auth/user-verification",
+        `${process.env.NEXT_PUBLIC_BASE_URL}/auth/user-verification`,
         {
           OTP: otp,
         },
@@ -65,16 +70,13 @@ export default function Login() {
         }
       );
 
-      if (response.status === 200) {
-        console.log("OTP verification successful:", response.data.message);
-        // Handle successful verification (redirect, etc.)
-        router.push("/dashboard");
-      }
+      router.push("/dashboard");
     } catch (error) {
       console.error(
         "OTP verification failed:",
         error.response?.data?.message || error.message
       );
+      setMessage(error.response?.data?.message || error.message)
     } finally {
       setIsLoading(false);
     }
@@ -98,7 +100,19 @@ export default function Login() {
               Sign In to LeadConnect
             </h1>
           </div>
-          
+
+          {message && (
+            <div
+              className={`p-3 rounded-lg text-sm ${
+                message.includes("successfully") || message.includes("sent")
+                  ? "bg-green-50 text-green-700 border border-green-200"
+                  : "bg-red-50 text-red-700 border border-red-200"
+              }`}
+            >
+              {message}
+            </div>
+          )}
+
           {/* Email Field */}
           <fieldset className="relative border border-gray-300 rounded-lg p-0 m-0 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-opacity-50">
             <legend className="absolute -top-2.5 left-3 bg-white px-2 text-gray-800 text-xs sm:text-sm font-medium focus-within:text-blue-500">

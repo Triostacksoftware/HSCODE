@@ -39,17 +39,19 @@ export const signup = async (req, res) => {
 };
 
 export const emailVerification = async (req, res) => {
-  const { name, email, phone, password, otp, countryCode } = req.body;
+  console.log(req.body)
+  const { name, email, phone, password, OTP, countryCode } = req.body;
+  console.log(req.cookies.verify_token)
   const token = req.cookies.verify_token;
 
   // 1. Basic check
-  if (!name || !email || !phone || !password || !otp || !countryCode || !token) {
+  if (!name || !email || !phone || !password || !OTP || !countryCode || !token) {
     return res.status(400).json({ message: 'Missing required fields or token' });
   }
 
   // 2. Decode and verify JWT
   const decoded = verifyToken(token);
-  if (!decoded || decoded.email !== email || decoded.otp !== otp) {
+  if (!decoded || decoded.email !== email || decoded.otp !== OTP) {
     return res.status(401).json({ message: 'Invalid or expired token/OTP' });
   }
 
@@ -151,32 +153,36 @@ export const login = async (req, res) => {
 };
 
 export const userVerification = async (req, res) => {
-  const { otp } = req.body;
-  const tempToken = req.cookies.auth_otp_token;
+  try {
+    const { OTP } = req.body;
+    const tempToken = req.cookies.auth_otp_token;
 
-  if (!otp || !tempToken) {
-    return res.status(400).json({ message: 'OTP or token missing' });
+    if (!OTP || !tempToken) {
+      return res.status(400).json({ message: 'OTP or token missing' });
+    }
+
+    const decoded = verifyToken(tempToken);
+    if (!decoded || decoded.otp !== OTP) {
+      return res.status(401).json({ message: 'Invalid or expired OTP' });
+    }
+
+    // Auth success: issue final token
+    const authToken = generateToken({ id: decoded.id }, '24h');
+
+    // Set final auth cookie
+    res.cookie('auth_token', authToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    });
+
+    res.clearCookie('auth_otp_token');
+
+    return res.status(200).json({ message: 'Login successful' });
+  } catch (error) {
+    res.status(500).json({message: 'Server Error'});
   }
-
-  const decoded = verifyToken(tempToken);
-  if (!decoded || decoded.otp !== otp) {
-    return res.status(401).json({ message: 'Invalid or expired OTP' });
-  }
-
-  // Auth success: issue final token
-  const authToken = generateToken({ id: decoded.id }, '24h');
-
-  // Set final auth cookie
-  res.cookie('auth_token', authToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
-  });
-
-  res.clearCookie('auth_otp_token');
-
-  return res.status(200).json({ message: 'Login successful' });
 };
 
 export const forgotPassword = async (req, res) => {
@@ -209,15 +215,15 @@ export const forgotPassword = async (req, res) => {
 };
 
 export const otpVerification = (req, res) => {
-  const { otp } = req.body;
+  const { OTP } = req.body;
   const token = req.cookies.reset_token;
 
-  if (!otp || !token) {
+  if (!OTP || !token) {
     return res.status(400).json({ message: 'OTP or token missing' });
   }
 
   const decoded = verifyToken(token);
-  if (!decoded || decoded.otp !== otp) {
+  if (!decoded || decoded.otp !== OTP) {
     return res.status(401).json({ message: 'Invalid or expired OTP' });
   }
 
