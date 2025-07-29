@@ -337,8 +337,11 @@ export const adminVerification = async (req, res) => {
       return res.status(401).json({ message: "Invalid or expired OTP" });
     }
 
+    const admin = await AdminModel.findOne({email: decoded.email});
+    if (! admin) return res.status(404).json('Admin not found');
+
     // Auth success: issue final token
-    const authToken = generateToken({ id: decoded.id, role: 'admin', countryCode: decoded.countryCode }, "24h");
+    const authToken = generateToken({ id: admin._id, role: 'admin', countryCode: admin.countryCode }, "24h");
 
     // Set final auth cookie
     res.cookie("auth_token", authToken, {

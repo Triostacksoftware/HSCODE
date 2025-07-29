@@ -17,7 +17,6 @@ export const getCategories = async (req, res) => {
 
     const categories = await LocalCategoryModel.find({ countryCode });
     res.json(categories);
-    console.log(categories);
   } catch (err) {
     res.status(500).json({ message: "Error fetching categories" });
   }
@@ -29,12 +28,15 @@ export const createCategory = async (req, res) => {
 
   let categories = req.body; // Can be object or array
   const { id, countryCode } = req.user; // Admin ID & country
+  console.log(req.user);
 
   try {
     // Normalize input: if it's a single object, wrap it in array
     if (!Array.isArray(categories)) {
+      console.log("Not array");
       categories = [categories];
     }
+    console.log(categories);
 
     // Attach adminId & countryCode automatically
     const formatted = categories.map((cat) => ({

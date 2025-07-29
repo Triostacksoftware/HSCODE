@@ -52,7 +52,6 @@ const emailTemplates = {
 };
 
 const DEFAULT_FROM = `"Global Lead Platform" <${process.env.SMTP_USER}>`;
-
 const emailVerificatonMail = async (recipient, OTP, state) => {
   if (!emailTemplates[state]) {
     throw new Error(`Invalid email state: ${state}`);
