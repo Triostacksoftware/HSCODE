@@ -1,39 +1,10 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { MdAdd, MdEdit, MdDelete, MdMoreVert } from "react-icons/md";
-import CategorisGroups from "./CategorisGroups";
+import CategoriesGroups from "./CategoriesGroups";
 
 const Categories = () => {
-  const [categories, setCategories] = useState([
-    {
-      _id: "1",
-      name: "Chapter 1",
-      country: "India",
-      info: "This is the first chapter",
-      groupsize: 17,
-    },
-    {
-      _id: "2",
-      name: "Chapter 2",
-      country: "USA",
-      info: "This is the second chapter",
-      groupsize: 21,
-    },
-    {
-      _id: "3",
-      name: "Chapter 3",
-      country: "UK",
-      info: "This is the third chapter",
-      groupsize: 6,
-    },
-    {
-      _id: "4",
-      name: "Chapter 4",
-      country: "Canada",
-      info: "This is the fourth chapter",
-      groupsize: 12,
-    },
-  ]);
+  const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -43,7 +14,7 @@ const Categories = () => {
 
   useEffect(() => {
     // Commented out for now since we're using dummy data
-    // fetchCategories();
+    fetchCategories();
   }, []);
 
   // Close menu when clicking outside
@@ -66,16 +37,14 @@ const Categories = () => {
       setError("");
 
       const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/admin/categories`,
+        `${process.env.NEXT_PUBLIC_BASE_URL}/categories`,
         {
           withCredentials: true,
         }
       );
 
-      if (response.status === 200) {
-        setCategories(response.data.categories || []);
-        console.log("Categories response:", response.data);
-      }
+      setCategories(response.data || []);
+      console.log("Categories response:", response.data.categories);
     } catch (error) {
       console.error("Error fetching categories:", error);
       setError("Failed to load categories");
@@ -110,7 +79,7 @@ const Categories = () => {
     try {
       setIsLoading(true);
       const response = await axios.delete(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/admin/categories/${categoryToDelete._id}`,
+        `${process.env.NEXT_PUBLIC_BASE_URL}/categories/${categoryToDelete._id}`,
         {
           withCredentials: true,
         }
@@ -249,7 +218,7 @@ const Categories = () => {
       {/* Right Section - Groups Component */}
       <div className="w-2/3 bg-gray-50 ">
         {selectedCategory ? (
-          <CategorisGroups
+          <CategoriesGroups
             categoryId={selectedCategory._id}
             categoryName={selectedCategory.name}
           />

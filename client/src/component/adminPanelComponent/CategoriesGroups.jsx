@@ -37,7 +37,7 @@ const CategorisGroups = ({ categoryId, categoryName }) => {
       setError("");
 
       const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/admin/groups/${categoryId}`,
+        `${process.env.NEXT_PUBLIC_BASE_URL}/groups/${categoryId}`,
         {
           withCredentials: true,
         }
@@ -76,7 +76,7 @@ const CategorisGroups = ({ categoryId, categoryName }) => {
     try {
       setIsLoading(true);
       const response = await axios.delete(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/admin/categories/group/${groupToDelete._id}`,
+        `${process.env.NEXT_PUBLIC_BASE_URL}/categories/group/${groupToDelete._id}`,
         {
           withCredentials: true,
         }
