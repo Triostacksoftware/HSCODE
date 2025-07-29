@@ -10,6 +10,7 @@ const app = express();
 
 // imports routes
 import authRoutes from './routes/auth.routes.js';
+import categoryRoutes from './routes/category.routes.js';   
 import { getIpLocation } from './utilities/ip.util.js';
 
 // middlewares
@@ -40,5 +41,6 @@ app.get('/api/v1/get-country', async (req,res)=> {
 })
 
 app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/categories', categoryRoutes);
 
 export default app;

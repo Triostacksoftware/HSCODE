@@ -45,6 +45,6 @@ countryAdminSchema.pre("save", async function (next) {
   next();
 });
 
-const AdminModel = mongoose.model("Model", countryAdminSchema);
+const AdminModel = mongoose.model("Admin", countryAdminSchema);
 
 export default AdminModel;

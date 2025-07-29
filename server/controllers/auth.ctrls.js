@@ -1,5 +1,5 @@
 import AdminModel from "../models/Admin.js";
-import UserModel from "../models/user.js";
+import UserModel from "../models/User.js";
 import { generateToken, verifyToken } from "../utilities/jwt.util.js";
 import { generateOTP } from "../utilities/otp.util.js";
 import emailVerificatonMail from "../utilities/sendMail.js";
@@ -87,7 +87,7 @@ export const emailVerification = async (req, res) => {
     await newUser.save();
 
     // 5. Generate JWT with user._id
-    const authToken = generateToken({ id: newUser._id }, "24h");
+    const authToken = generateToken({ id: newUser._id, role: 'user' }, "24h");
 
     // 6. Set JWT in HTTP-only cookie
     res.cookie("auth_token", authToken, {
@@ -128,7 +128,7 @@ export const login = async (req, res) => {
     const reset = req.cookies.reset_confirmed;
     if (reset) {
       // Auth success: issue final token
-      const authToken = generateToken({ id: user._id }, "24h");
+      const authToken = generateToken({ id: user._id, role: 'user', countryCode: user.countryCode }, "24h");
 
       // Set final auth cookie
       res.cookie("auth_token", authToken, {
@@ -147,7 +147,7 @@ export const login = async (req, res) => {
 
     await emailVerificatonMail(email, otp, "login");
 
-    const token = generateToken({ id: user._id, otp }, "5m");
+    const token = generateToken({ email, otp }, "5m");
 
     res.cookie("auth_otp_token", token, {
       httpOnly: true,
@@ -177,8 +177,12 @@ export const userVerification = async (req, res) => {
       return res.status(401).json({ message: "Invalid or expired OTP" });
     }
 
+    const user = await UserModel.findOne({ email: decoded.email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
     // Auth success: issue final token
-    const authToken = generateToken({ id: decoded.id }, "24h");
+    const authToken = generateToken({ id: user._id, role: 'user', countryCode: user.countryCode }, "24h");
 
     // Set final auth cookie
     res.cookie("auth_token", authToken, {
@@ -303,7 +307,7 @@ export const adminLogin = async (req, res) => {
 
     await emailVerificatonMail(email, otp, "login");
 
-    const token = generateToken({ id: admin._id, otp }, "5m");
+    const token = generateToken({ email, otp, countryCode: admin.countryCode }, "5m");
 
     res.cookie("auth_otp_token", token, {
       httpOnly: true,
@@ -334,7 +338,7 @@ export const adminVerification = async (req, res) => {
     }
 
     // Auth success: issue final token
-    const authToken = generateToken({ id: decoded.id }, "24h");
+    const authToken = generateToken({ id: decoded.id, role: 'admin', countryCode: decoded.countryCode }, "24h");
 
     // Set final auth cookie
     res.cookie("auth_token", authToken, {
