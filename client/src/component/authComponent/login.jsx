@@ -17,7 +17,6 @@ export default function Login() {
   const [otp, setOtp] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState("");
-  
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -30,12 +29,16 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    setMessage('');
+    setMessage("");
 
     try {
-      const response = await axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/auth/login`, formData, {
-        withCredentials: true,
-      });
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/auth/login`,
+        formData,
+        {
+          withCredentials: true,
+        }
+      );
 
       if (response.status === 200 && response.data?.message === "LoggedIn") {
         console.log("Login successful:", response.data.message);
@@ -49,7 +52,7 @@ export default function Login() {
         "Login failed:",
         error.response?.data?.message || error.message
       );
-      setMessage(error.response?.data?.message || error.message)
+      setMessage(error.response?.data?.message || error.message);
     } finally {
       setIsLoading(false);
     }
@@ -58,7 +61,7 @@ export default function Login() {
   const handleOTPSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    setMessage('');
+    setMessage("");
     try {
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_BASE_URL}/auth/user-verification`,
@@ -76,7 +79,7 @@ export default function Login() {
         "OTP verification failed:",
         error.response?.data?.message || error.message
       );
-      setMessage(error.response?.data?.message || error.message)
+      setMessage(error.response?.data?.message || error.message);
     } finally {
       setIsLoading(false);
     }
@@ -88,14 +91,15 @@ export default function Login() {
 
   return (
     <div className="w-full">
-
       {/* Conditional Rendering */}
       {!showForgotPassword ? (
         /* Login Form */
         <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:gap-4">
           {/* Header */}
           <div className="text-center mb-6 sm:mb-8">
-            <p className="text-xs sm:text-sm text-gray-600 mb-2">Welcome Back!</p>
+            <p className="text-xs sm:text-sm text-gray-600 mb-2">
+              Welcome Back!
+            </p>
             <h1 className="text-lg sm:text-xl font-bold text-gray-900">
               Sign In to LeadConnect
             </h1>

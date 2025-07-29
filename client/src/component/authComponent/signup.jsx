@@ -27,10 +27,11 @@ export default function Signup() {
 
   // Step 1: Get country code on component mount
   useEffect(() => {
-    
     const fetchCountryCode = async () => {
       try {
-        const response = await axios.get(`${process.env.NEXT_PUBLIC_BASE_URL}/get-country`);
+        const response = await axios.get(
+          `${process.env.NEXT_PUBLIC_BASE_URL}/get-country`
+        );
         if (response.status === 200) {
           console.log(response);
           setCountryCode(response.data.location.countryCode);
@@ -61,9 +62,9 @@ export default function Signup() {
   const handleFormSubmit = async (e) => {
     e.preventDefault();
 
-    if (formData.password.length < 8){
-      setMessage('Password must be at least 8 characters long')
-      return
+    if (formData.password.length < 8) {
+      setMessage("Password must be at least 8 characters long");
+      return;
     }
 
     setIsLoading(true);
@@ -103,7 +104,7 @@ export default function Signup() {
           phone: formData.phone,
           password: formData.password,
           OTP: otp,
-          countryCode
+          countryCode,
         },
         {
           withCredentials: true,

@@ -1,5 +1,5 @@
-import mongoose from 'mongoose';
-import bcrypt from 'bcrypt';
+import mongoose from "mongoose";
+import bcrypt from "bcrypt";
 
 const countryAdminSchema = new mongoose.Schema(
   {
@@ -25,9 +25,9 @@ const countryAdminSchema = new mongoose.Schema(
       required: true,
     },
     role: {
-        type: String,
-        enum: ['admin','superadmin'],
-        default: 'admin'
+      type: String,
+      enum: ["admin", "superadmin"],
+      default: "admin",
     },
     countryCode: {
       type: String,
@@ -39,12 +39,12 @@ const countryAdminSchema = new mongoose.Schema(
 );
 
 // Hash password before saving
-countryAdminSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next();
+countryAdminSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) return next();
   this.password = await bcrypt.hash(this.password, 10);
   next();
 });
 
-const AdminModel = mongoose.model('Model', countryAdminSchema);
+const AdminModel = mongoose.model("Model", countryAdminSchema);
 
 export default AdminModel;
