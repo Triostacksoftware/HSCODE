@@ -13,7 +13,7 @@ const checkAdmin = (req, res) => {
 // GET all categories
 export const getCategories = async (req, res) => {
     try {
-        const {countryCode} = req.user.countryCode;
+        const countryCode = req.user.countryCode;
         const categories = await LocalCategoryModel.find({countryCode});
         res.json(categories);
     } catch (err) {
@@ -27,12 +27,15 @@ export const createCategory = async (req, res) => {
 
   let categories = req.body; // Can be object or array
   const { id, countryCode } = req.user; // Admin ID & country
+  console.log(req.user)
 
   try {
     // Normalize input: if it's a single object, wrap it in array
     if (!Array.isArray(categories)) {
+        console.log('Not array')
       categories = [categories];
     }
+    console.log(categories)
 
     // Attach adminId & countryCode automatically
     const formatted = categories.map(cat => ({
