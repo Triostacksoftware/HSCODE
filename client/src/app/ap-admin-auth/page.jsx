@@ -126,7 +126,7 @@ export default function AdminLogin() {
                 name="email"
                 value={formData.email}
                 onChange={handleInputChange}
-                placeholder="email"
+                placeholder="Email"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 text-gray-800 placeholder-gray-500"
                 required
               />
