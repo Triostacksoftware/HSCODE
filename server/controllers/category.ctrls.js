@@ -108,6 +108,7 @@ export const updateCategory = async (req, res) => {
 // GET groups in a category
 export const getGroups = async (req, res) => {
   const { id: categoryId } = req.params;
+  console.log("getGroups", categoryId);
   try {
     const groups = await LocalGroupModel.find({ categoryId });
     res.json(groups);
@@ -125,6 +126,7 @@ export const createGroup = async (req, res) => {
 
   try {
     const category = await LocalCategoryModel.findById(categoryId);
+
     if (!category)
       return res.status(404).json({ message: "Category not found" });
 
@@ -143,7 +145,7 @@ export const createGroup = async (req, res) => {
     const formatted = groups.map((g) => ({
       name: g.name,
       hscode: g.hscode,
-      image: g.file.filename || null,
+      image: req.file?.filename || null,
       categoryId,
     }));
 

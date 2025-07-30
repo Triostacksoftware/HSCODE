@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { MdAdd, MdEdit, MdDelete, MdMoreVert } from "react-icons/md";
+import {
+  MdAdd,
+  MdEdit,
+  MdDelete,
+  MdMoreVert,
+  MdArrowBack,
+} from "react-icons/md";
 import CategoriesGroups from "./CategoriesGroups";
 
 const Categories = () => {
@@ -11,6 +17,7 @@ const Categories = () => {
   const [openMenu, setOpenMenu] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState(null);
+  const [showMobileGroups, setShowMobileGroups] = useState(false);
 
   useEffect(() => {
     // Commented out for now since we're using dummy data
@@ -44,7 +51,6 @@ const Categories = () => {
       );
 
       setCategories(response.data || []);
-      console.log("Categories response:", response.data.categories);
     } catch (error) {
       console.error("Error fetching categories:", error);
       setError("Failed to load categories");
@@ -55,6 +61,15 @@ const Categories = () => {
 
   const handleCategorySelect = (category) => {
     setSelectedCategory(category);
+    // On mobile, show groups view
+    if (window.innerWidth < 1024) {
+      setShowMobileGroups(true);
+    }
+  };
+
+  const handleBackToCategories = () => {
+    setShowMobileGroups(false);
+    setSelectedCategory(null);
   };
 
   const handleMenuToggle = (categoryId) => {
@@ -94,6 +109,7 @@ const Categories = () => {
         // If the deleted category was selected, clear selection
         if (selectedCategory?._id === categoryToDelete._id) {
           setSelectedCategory(null);
+          setShowMobileGroups(false);
         }
 
         setShowDeleteModal(false);
@@ -113,18 +129,49 @@ const Categories = () => {
   };
 
   return (
-    <div className="flex min-h-screen montserrat">
-      {/* Left Section - Categorys List */}
-      <div className="w-1/3 border-r border-gray-200  transform transition-transform duration-300 ease-in-out animate-slide-in">
+    <div className="flex min-h-screen montserrat flex-col lg:flex-row">
+      {/* Mobile Groups View - Full Screen Overlay */}
+      {showMobileGroups && selectedCategory && (
+        <div className="lg:hidden fixed inset-0 z-50 bg-white">
+          <div className="w-full h-full flex flex-col">
+            {/* Mobile Header with Back Button */}
+            <div className="p-4 border-b border-gray-200 flex items-center space-x-3">
+              <button
+                onClick={handleBackToCategories}
+                className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+              >
+                <MdArrowBack className="w-5 h-5 text-gray-500" />
+              </button>
+              <div className="flex-1 min-w-0">
+                <h2 className="text-lg text-gray-700 truncate">
+                  {selectedCategory.name}
+                </h2>
+                <p className="text-sm text-gray-500">Category Groups</p>
+              </div>
+            </div>
+
+            {/* Groups Component */}
+            <div className="flex-1 overflow-hidden">
+              <CategoriesGroups
+                categoryId={selectedCategory._id}
+                categoryName={selectedCategory.name}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Left Section - Categories List */}
+      <div className="w-full lg:w-1/3 border-b lg:border-b-0 lg:border-r border-gray-200 transform transition-transform duration-300 ease-in-out animate-slide-in">
         {/* Header */}
-        <div className="p-4 border-b border-gray-200 flex justify-between items-center">
+        <div className="p-3 sm:p-4 border-b border-gray-200 flex justify-between items-center">
           <div>
-            <h2 className="text-lg text-gray-700">Categories</h2>
-            <h2 className="text-[.8em] text-gray-500">
+            <h2 className="text-base sm:text-lg text-gray-700">Categories</h2>
+            <h2 className="text-[.7em] sm:text-[.8em] text-gray-500">
               No. of Categories - 03
             </h2>
           </div>
-          <button className="w-8 h-8   rounded-lg flex items-center justify-center hover:bg-gray-200 cursor-pointer border-gray-200 border transition-colors">
+          <button className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-gray-200 cursor-pointer border-gray-200 border transition-colors">
             <MdAdd className="w-5 h-5" />
           </button>
         </div>
@@ -134,21 +181,23 @@ const Categories = () => {
           {isLoading ? (
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="text-gray-500 mt-2">Loading categories...</p>
+              <p className="text-gray-500 mt-2 text-sm">
+                Loading categories...
+              </p>
             </div>
           ) : error ? (
             <div className="text-center py-8">
-              <p className="text-red-500">{error}</p>
+              <p className="text-red-500 text-sm">{error}</p>
               <button
                 onClick={fetchCategories}
-                className="mt-2 text-blue-600 hover:text-blue-700 underline"
+                className="mt-2 text-blue-600 hover:text-blue-700 underline text-sm"
               >
                 Try again
               </button>
             </div>
           ) : categories.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-gray-500">No categories found</p>
+              <p className="text-gray-500 text-sm">No categories found</p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -162,13 +211,13 @@ const Categories = () => {
                   }`}
                   onClick={() => handleCategorySelect(category)}
                 >
-                  <div className="flex items-center  justify-between">
-                    <div>
-                      <span className="text-[.96em] text-gray-700">
+                  <div className="flex items-center justify-between">
+                    <div className="min-w-0 flex-1">
+                      <span className="text-[.9em] sm:text-[.96em] text-gray-700 truncate block">
                         {category.name}
                       </span>
                     </div>
-                    <div className="relative menu-container cursor-pointer">
+                    <div className="relative menu-container cursor-pointer flex-shrink-0 ml-2">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -213,20 +262,20 @@ const Categories = () => {
         </div>
       </div>
 
-      {/* Right Section - Groups Component */}
-      <div className="w-2/3 bg-gray-50 ">
+      {/* Right Section - Groups Component (Desktop Only) */}
+      <div className="hidden lg:block w-2/3 bg-gray-50 flex-1">
         {selectedCategory ? (
           <CategoriesGroups
             categoryId={selectedCategory._id}
             categoryName={selectedCategory.name}
           />
         ) : (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-gray-200 rounded-lg mx-auto mb-4 flex items-center justify-center">
-                <MdAdd className="w-8 h-8 text-gray-400" />
+          <div className="flex items-center justify-center h-full min-h-[400px] lg:min-h-screen">
+            <div className="text-center p-4">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gray-200 rounded-lg mx-auto mb-4 flex items-center justify-center">
+                <MdAdd className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400" />
               </div>
-              <p className="text-gray-500">
+              <p className="text-gray-500 text-sm sm:text-base">
                 Select a Category to view its groups
               </p>
             </div>

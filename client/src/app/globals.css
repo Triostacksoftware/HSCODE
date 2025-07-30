@@ -33,6 +33,14 @@ body {
   font-variation-settings: "wdth" 100;
 }
 
+/* Responsive utilities */
+@media (max-width: 640px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
 /* Sidebar slide-in animation */
 @keyframes slideIn {
   from {
@@ -64,6 +72,7 @@ body {
 .animate-dropdown {
   animation: slideDown 0.3s ease-out forwards;
 }
+
 @keyframes slideOut {
   from {
     transform: translateX(100%);
@@ -77,4 +86,30 @@ body {
 
 .animate-slide-out {
   animation: slideOut 0.5s ease-out forwards;
+}
+
+/* Mobile-specific animations */
+@media (max-width: 768px) {
+  .animate-slide-in {
+    animation-duration: 0.3s;
+  }
+
+  .animate-slide-out {
+    animation-duration: 0.3s;
+  }
+}
+
+/* Ensure proper touch targets on mobile */
+@media (max-width: 768px) {
+  button,
+  [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  input,
+  select,
+  textarea {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
 }

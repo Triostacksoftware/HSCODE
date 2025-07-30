@@ -86,7 +86,7 @@ export default function AdminLogin() {
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center bg-gray-100"
+      className="min-h-screen flex items-center justify-center bg-gray-100 p-4"
       style={{
         backgroundImage: "url('admin-bg1.jpg')",
         backgroundSize: "cover",
@@ -95,10 +95,10 @@ export default function AdminLogin() {
       }}
     >
       {/* Login Card */}
-      <div className="relative z-10 bg-white rounded-lg shadow-2xl p-8 w-full max-w-md mx-4">
+      <div className="relative z-10 bg-white rounded-lg shadow-2xl p-4 sm:p-6 lg:p-8 w-full max-w-sm sm:max-w-md mx-auto">
         {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-xl font-bold text-gray-800">HSCODE</h1>
+        <div className="flex justify-between items-center mb-6 sm:mb-8">
+          <h1 className="text-lg sm:text-xl font-bold text-gray-800">HSCODE</h1>
         </div>
 
         {/* Main Content */}
@@ -114,10 +114,14 @@ export default function AdminLogin() {
         {!showOTP ? (
           /* Login Form */
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-gray-800 mb-2">LOGIN</h2>
-              <p className="text-gray-600">Welcome to admin panel.</p>
+          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+            <div className="text-center mb-6 sm:mb-8">
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">
+                LOGIN
+              </h2>
+              <p className="text-gray-600 text-sm sm:text-base">
+                Welcome to admin panel.
+              </p>
             </div>
             {/* email Field */}
             <div>
@@ -127,7 +131,7 @@ export default function AdminLogin() {
                 value={formData.email}
                 onChange={handleInputChange}
                 placeholder="Email"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 text-gray-800 placeholder-gray-500"
+                className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 text-gray-800 placeholder-gray-500 text-sm sm:text-base"
                 required
               />
             </div>
@@ -140,7 +144,7 @@ export default function AdminLogin() {
                 value={formData.password}
                 onChange={handleInputChange}
                 placeholder="Password"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 text-gray-800 placeholder-gray-500 pr-12"
+                className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 text-gray-800 placeholder-gray-500 pr-12 text-sm sm:text-base"
                 required
               />
               <button
@@ -160,25 +164,25 @@ export default function AdminLogin() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-blue-600 cursor-pointer text-white font-semibold py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full bg-blue-600 cursor-pointer text-white font-semibold py-3 px-4 sm:px-6 rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm sm:text-base"
             >
               {isLoading ? "Logging in..." : "Log In"}
             </button>
           </form>
         ) : (
           /* OTP Verification Form */
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             <div className="text-center">
-              <h3 className="text-lg font-semibold text-gray-800 mb-2">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-2">
                 Enter OTP
               </h3>
-              <p className="text-sm text-gray-600">
+              <p className="text-xs sm:text-sm text-gray-600">
                 Please enter the 6-digit code sent to your email
               </p>
             </div>
 
-            <form onSubmit={handleOTPSubmit} className="space-y-6">
-              <div className="flex justify-center space-x-2">
+            <form onSubmit={handleOTPSubmit} className="space-y-4 sm:space-y-6">
+              <div className="flex justify-center space-x-1 sm:space-x-2">
                 {[0, 1, 2, 3, 4, 5].map((index) => (
                   <input
                     key={index}
@@ -208,7 +212,7 @@ export default function AdminLogin() {
                         if (prevInput) prevInput.focus();
                       }
                     }}
-                    className="w-12 h-12 text-center border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none text-lg font-semibold"
+                    className="w-10 h-10 sm:w-12 sm:h-12 text-center border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none text-base sm:text-lg font-semibold"
                     required
                   />
                 ))}
@@ -217,7 +221,7 @@ export default function AdminLogin() {
               <button
                 type="submit"
                 disabled={isLoading || otp.length !== 6}
-                className="w-full bg-blue-600 cursor-pointer text-white font-semibold py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-blue-600 cursor-pointer text-white font-semibold py-3 px-4 sm:px-6 rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
               >
                 {isLoading ? "Verifying..." : "Verify OTP"}
               </button>
@@ -227,7 +231,7 @@ export default function AdminLogin() {
       </div>
 
       {/* Footer */}
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-center text-gray-500 text-sm">
+      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-center text-gray-500 text-xs sm:text-sm">
         OneUI Vue Edition 2.6.0 © 2023
       </div>
     </div>
