@@ -115,19 +115,19 @@ const CategorisGroups = ({ categoryId, categoryName }) => {
     {
       _id: "1",
       name: "Group Name 1",
-      hscode: "hscode-001",
+      hscode: "001",
       categoryId: categoryId,
     },
     {
       _id: "2",
       name: "Group Name 2",
-      hscode: "hscode-002",
+      hscode: "002",
       categoryId: categoryId,
     },
     {
       _id: "3",
       name: "Group Name 3",
-      hscode: "hscode-003",
+      hscode: "003",
       categoryId: categoryId,
     },
   ];
@@ -137,19 +137,24 @@ const CategorisGroups = ({ categoryId, categoryName }) => {
 
   return (
     <>
-      <div className="w-full h-full bg-white montserrat transform transition-transform duration-300 ease-in-out animate-slide-out">
+      <div className="w-full h-full montserrat transform transition-transform duration-300 ease-in-out animate-slide-out">
         {/* Header */}
-        <div className="p-4 border-b border-gray-200 flex justify-between items-center">
-          <h2 className="text-lg font-semibold text-gray-800">
-            Chapter - {categoryName || "01"}
-          </h2>
+        <div className="p-4 border-b border-gray-200 flex justify-between items-center gap-10">
+          <div className="">
+            <h2 className="text-lg text-gray-700">
+              Category - {categoryName || "01"}
+            </h2>
+            <h2 className="text-[.8em] text-gray-500">
+              No. of Groups - 03
+            </h2>
+          </div>
           <button className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-gray-200 cursor-pointer border-gray-200 border transition-colors">
             <MdAdd className="w-5 h-5" />
           </button>
         </div>
 
         {/* Search Bar */}
-        <div className="p-4 ">
+        <div className="p-4">
           <div className="relative">
             <MdSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
             <input
@@ -157,7 +162,7 @@ const CategorisGroups = ({ categoryId, categoryName }) => {
               placeholder="search group"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-gray-500 focus:border-transparent text-gray-800"
             />
           </div>
         </div>
@@ -192,17 +197,20 @@ const CategorisGroups = ({ categoryId, categoryName }) => {
                     className="p-3 border border-gray-200 rounded-lg  hover:bg-gray-100 cursor-pointer transition-all"
                   >
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
+                      <div className="flex items-end space-x-3">
+                        <div className="w-9 h-9 bg-gray-200 rounded-full flex items-center justify-center">
                           <span className="text-xs text-gray-600">G</span>
                         </div>
                         <div>
-                          <div className="font-medium text-gray-800">
+                          <div className="text-[.96em] text-gray-700">
                             {group.name}
                           </div>
                           <div className="text-xs text-gray-500">
-                            {group.hscode}
+                            Hscode - {group.hscode}
                           </div>
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          Members - 45 
                         </div>
                       </div>
                       <div className="relative menu-container">

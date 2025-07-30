@@ -69,7 +69,7 @@ export default function AdminLogin() {
         }
       );
 
-      router.push("/admin-dashboard");
+      router.push("/ap-admin-auth");
     } catch (error) {
       console.error(
         " verification failed:",

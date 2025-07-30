@@ -5,25 +5,20 @@ import HomeContent from "@/component/adminPanelComponent/HomeContent";
 import Categories from "@/component/adminPanelComponent/Categories";
 import Settings from "@/component/adminPanelComponent/Settings";
 import {
-  MdDashboard,
-  MdReceipt,
-  MdSwapHoriz,
-  MdPayment,
-  MdInbox,
-  MdSettings,
-  MdHistory,
-  MdHeadphones,
-  MdPublic,
+  MdOutlineDashboard,
+  MdOutlineHomeMax,
+  MdOutlineCategory,
+  MdOutlineSettings,
 } from "react-icons/md";
 
 const AdminPanel = () => {
   const [activePage, setActivePage] = useState("Dashboard");
 
   const navigationItems = [
-    { name: "Dashboard", icon: MdDashboard, component: Dashboard },
-    { name: "Home Content", icon: MdReceipt, component: HomeContent },
-    { name: "Categories", icon: MdReceipt, component: Categories },
-    { name: "Settings", icon: MdSettings, component: Settings },
+    { name: "Dashboard", icon: MdOutlineDashboard, component: Dashboard },
+    { name: "Home Content", icon: MdOutlineHomeMax, component: HomeContent },
+    { name: "Categories", icon: MdOutlineCategory, component: Categories },
+    { name: "Settings", icon: MdOutlineSettings, component: Settings },
   ];
 
   const renderComponent = () => {
@@ -42,26 +37,21 @@ const AdminPanel = () => {
       {/* Sidebar */}
       <div className="relative w-64 bg-white border-r border-gray-200">
         {/* Logo and App Name */}
-        <div className="p-6 ">
-          <div className="flex items-center">
-            <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center mr-3">
-              <div className="w-4 h-4 border  border-white rounded-full"></div>
-            </div>
-            <span className="text-xl font-bold text-black">Sinvoice</span>
-          </div>
+        <div className="p-6 font-semibold">
+            HSCODE
         </div>
 
         {/* User Profile Section */}
-        <div className="p-4 ">
-          <div className="flex items-center p-3 bg-gray-50 rounded-lg">
-            <div className="w-10 h-10 rounded-full flex items-center justify-center border-gray-50 border font-semibold">
+        <div className="p-4 text-gray-900 text-sm">
+          <div className="flex items-center p-3 rounded-lg gap-2">
+            <div className="px-3 py-2 rounded-md text-sm border">
               IN
             </div>
             <div>
-              <div className="font-semibold montserrat text-black">
+              <div className="font-semibold montserrat">
                 James Robert
               </div>
-              <div className="text-sm text-gray-500">jamesrobert@gmail.com</div>
+              <div className="text-gray-500">jamesrobert@gmail.com</div>
             </div>
           </div>
         </div>
@@ -75,10 +65,10 @@ const AdminPanel = () => {
                 <button
                   key={item.name}
                   onClick={() => setActivePage(item.name)}
-                  className={`w-full flex items-center px-3 py-2 rounded-lg text-left transition-colors ${
+                  className={`w-full text-sm cursor-pointer flex items-center px-3 py-2 rounded-lg text-left transition-colors ${
                     activePage === item.name
-                      ? " text-black font-semibold"
-                      : "text-gray-600 hover:bg-gray-50"
+                      ? " text-gray-900 font-semibold"
+                      : "text-gray-600 hover:text-gray-900"
                   }`}
                 >
                   <Icon className="w-5 h-5 mr-3" />
@@ -90,11 +80,11 @@ const AdminPanel = () => {
         </div>
 
         {/* Support and Community */}
-        <div className="p-4 mt-auto space-y-2 absolute bottom-0 left-0 right-0">
-          <button className="w-full flex items-center px-3 py-2 rounded-lg text-left transition-colors bg-black text-white">
+        <div className="p-4 mt-auto text-sm space-y-2 absolute bottom-0 left-0 right-0 text-gray-600">
+          <button className="w-full px-3 py-2 rounded-lg transition-colors border  hover:bg-gray-300">
             Leads Chat
           </button>
-          <button className="w-full flex items-center px-3 py-2 rounded-lg text-left transition-colors bg-black text-white">
+          <button className="w-full px-3 py-2 rounded-lg transition-colors border  hover:bg-gray-300">
             Logout
           </button>
         </div>

@@ -114,11 +114,16 @@ const Categories = () => {
 
   return (
     <div className="flex min-h-screen montserrat">
-      {/* Left Section - Chapters List */}
-      <div className="w-1/3 border-r border-gray-200 bg-white transform transition-transform duration-300 ease-in-out animate-slide-in">
+      {/* Left Section - Categorys List */}
+      <div className="w-1/3 border-r border-gray-200  transform transition-transform duration-300 ease-in-out animate-slide-in">
         {/* Header */}
         <div className="p-4 border-b border-gray-200 flex justify-between items-center">
-          <h2 className="text-lg font-semibold text-gray-800">Chapters</h2>
+          <div>
+            <h2 className="text-lg text-gray-700">Categories</h2>
+            <h2 className="text-[.8em] text-gray-500">
+              No. of Categories - 03
+            </h2>
+          </div>
           <button className="w-8 h-8   rounded-lg flex items-center justify-center hover:bg-gray-200 cursor-pointer border-gray-200 border transition-colors">
             <MdAdd className="w-5 h-5" />
           </button>
@@ -150,25 +155,18 @@ const Categories = () => {
               {categories.map((category, index) => (
                 <div
                   key={category._id || index}
-                  className={`p-3 hover:bg-gray-100 rounded-lg cursor-pointer transition-all ${
+                  className={`p-3 hover:bg-gray-100 border border-gray-300 rounded-lg cursor-pointer transition-all ${
                     selectedCategory?._id === category._id
                       ? "bg-gray-100 "
-                      : "bg-white border-gray-300 hover:border-gray-400"
+                      : "bg-white  hover:border-gray-400"
                   }`}
                   onClick={() => handleCategorySelect(category)}
                 >
                   <div className="flex items-center  justify-between">
                     <div>
-                      <span className="font-medium text-gray-800">
+                      <span className="text-[.96em] text-gray-700">
                         {category.name}
                       </span>
-
-                      <div className="text-xs text-gray-500 mt-1">
-                        {category.info}
-                      </div>
-                    </div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      total groups: {category.groupsize}
                     </div>
                     <div className="relative menu-container cursor-pointer">
                       <button
@@ -229,7 +227,7 @@ const Categories = () => {
                 <MdAdd className="w-8 h-8 text-gray-400" />
               </div>
               <p className="text-gray-500">
-                Select a chapter to view its groups
+                Select a Category to view its groups
               </p>
             </div>
           </div>
