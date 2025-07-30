@@ -190,7 +190,8 @@ const CategorisGroups = ({ categoryId, categoryName }) => {
                       <div className="flex items-center justify-between">
                         <div className="flex items-end space-x-2 sm:space-x-3 min-w-0 flex-1">
                           <div className="w-8 h-8 sm:w-9 sm:h-9 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
-                            <span className="text-xs text-gray-600">G</span>
+                            <img src={`${process.env.NEXT_PUBLIC_BASE_URL}/upload${group.image}`} alt="" />
+                            {/* <span className="text-xs text-gray-600">G</span> */}
                           </div>
                           <div className="min-w-0 flex-1">
                             <div className="text-[.9em] sm:text-[.96em] text-gray-700 truncate">
