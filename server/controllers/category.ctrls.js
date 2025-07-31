@@ -1,6 +1,6 @@
 import LocalCategoryModel from "../models/LocalCategory.js";
 import LocalGroupModel from "../models/LocalGroup.js";
-import parseFileBuffer from "../utilities/xlsx.util.js";
+import { parseFile } from "../utilities/xlsx.util.js";
 
 // Utility to check admin role & country
 const checkAdmin = (req, res) => {
@@ -45,7 +45,7 @@ export const createManyCategory = async (req, res) => {
 
   try {
     const { id, countryCode } = req.user; // Admin ID & country
-    const array = parseFileBuffer(req.file.buffer);
+    const array = parseFile(req.file);
 
     const formatted = array.map(ob => {
       return  {name: ob.name, countryCode, adminId: id}
@@ -170,7 +170,7 @@ export const createManyGroup = async (req, res) => {
 
   try {
     const { id, countryCode } = req.user; // Admin ID & country
-    const group = parseFileBuffer(req.file.buffer);
+    const group = parseFile(req.file.buffer);
 
     const formatted = group.map(g =>(
       {
