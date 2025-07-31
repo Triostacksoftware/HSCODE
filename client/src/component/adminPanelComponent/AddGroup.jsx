@@ -5,6 +5,7 @@ import {
   MdArrowBack,
   MdUpload,
   MdImage,
+  MdFileUpload,
 } from "react-icons/md";
 import axios from "axios";
 
@@ -14,7 +15,9 @@ const AddGroup = ({ categoryId, categoryName, onClose }) => {
     hscode: "",
   });
   const [selectedFile, setSelectedFile] = useState(null);
+  const [selectedBulkFile, setSelectedBulkFile] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isBulkLoading, setIsBulkLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -40,6 +43,33 @@ const AddGroup = ({ categoryId, categoryName, onClose }) => {
         return;
       }
       setSelectedFile(file);
+      setError("");
+      setSuccess("");
+    }
+  };
+
+  const handleBulkFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file type
+      const allowedTypes = [
+        "text/csv",
+        "application/vnd.ms-excel",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      ];
+
+      if (!allowedTypes.includes(file.type)) {
+        setError("Please select a CSV or Excel file");
+        return;
+      }
+
+      // Validate file size (10MB limit)
+      if (file.size > 10 * 1024 * 1024) {
+        setError("File size should be less than 10MB");
+        return;
+      }
+
+      setSelectedBulkFile(file);
       setError("");
       setSuccess("");
     }
@@ -84,6 +114,53 @@ const AddGroup = ({ categoryId, categoryName, onClose }) => {
       setError(error.response?.data?.message || "Failed to create group");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleBulkSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedBulkFile) {
+      setError("Please select a file to upload");
+      return;
+    }
+
+    setIsBulkLoading(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      const formDataToSend = new FormData();
+      formDataToSend.append("file", selectedBulkFile);
+      formDataToSend.append("categoryId", categoryId);
+
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/categories/${categoryId}/group/many`,
+        formDataToSend,
+        {
+          withCredentials: true,
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      if (response.status === 201 || response.status === 200) {
+        console.log("Bulk groups created successfully:", response.data);
+        setSuccess("Bulk groups created successfully!");
+
+        // Reset file selection
+        setSelectedBulkFile(null);
+
+        // Close modal after a short delay to show success message
+        setTimeout(() => {
+          onClose();
+        }, 1000);
+      }
+    } catch (error) {
+      console.error("Error creating bulk groups:", error);
+      setError(error.response?.data?.message || "Failed to create bulk groups");
+    } finally {
+      setIsBulkLoading(false);
     }
   };
 
@@ -248,6 +325,100 @@ const AddGroup = ({ categoryId, categoryName, onClose }) => {
                 <>
                   <MdSave className="w-4 h-4 mr-2" />
                   Create Group
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* Divider */}
+          <div className="flex items-center pt-6">
+            <div className="flex-1 border-t border-gray-300"></div>
+            <span className="px-4 text-sm text-gray-500">OR</span>
+            <div className="flex-1 border-t border-gray-300"></div>
+          </div>
+
+          {/* Bulk Upload Section */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-medium text-gray-700">
+              Bulk Upload Groups
+            </h3>
+
+            <div>
+              <label
+                htmlFor="bulkFile"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Upload CSV/Excel File
+              </label>
+              <div className="space-y-3">
+                {/* File Input */}
+                <div className="relative">
+                  <input
+                    type="file"
+                    id="bulkFile"
+                    name="bulkFile"
+                    accept=".csv,.xlsx,.xls"
+                    onChange={handleBulkFileChange}
+                    className="hidden"
+                  />
+                  <label
+                    htmlFor="bulkFile"
+                    className="flex items-center justify-center w-full px-3 py-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+                  >
+                    <MdUpload className="w-5 h-5 mr-2 text-gray-500" />
+                    <span className="text-sm text-gray-700">
+                      {selectedBulkFile
+                        ? selectedBulkFile.name
+                        : "Choose a CSV or Excel file"}
+                    </span>
+                  </label>
+                </div>
+
+                {/* Selected File Preview */}
+                {selectedBulkFile && (
+                  <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                    <MdFileUpload className="w-8 h-8 text-gray-500" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-700 truncate">
+                        {selectedBulkFile.name}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {(selectedBulkFile.size / 1024 / 1024).toFixed(2)} MB
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedBulkFile(null)}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <MdClose className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+
+                <p className="text-xs text-gray-500">
+                  Upload a CSV or Excel file with group names and HS codes (max
+                  10MB)
+                </p>
+              </div>
+            </div>
+
+            {/* Bulk Upload Button */}
+            <button
+              type="button"
+              onClick={handleBulkSubmit}
+              disabled={isBulkLoading || !selectedBulkFile}
+              className="w-full px-3 sm:px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center justify-center text-sm sm:text-base"
+            >
+              {isBulkLoading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Uploading...
+                </>
+              ) : (
+                <>
+                  <MdFileUpload className="w-4 h-4 mr-2" />
+                  Upload Groups
                 </>
               )}
             </button>
