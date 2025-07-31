@@ -33,3 +33,7 @@ const upload = multer({
 });
 
 export default upload;
+
+const xlsxStorage = multer.memoryStorage();
+
+export const uploadXLSX = multer({storage: xlsxStorage});

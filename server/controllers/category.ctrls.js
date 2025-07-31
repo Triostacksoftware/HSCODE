@@ -1,5 +1,6 @@
 import LocalCategoryModel from "../models/LocalCategory.js";
 import LocalGroupModel from "../models/LocalGroup.js";
+import parseFileBuffer from "../utilities/xlsx.util.js";
 
 // Utility to check admin role & country
 const checkAdmin = (req, res) => {
@@ -22,31 +23,37 @@ export const getCategories = async (req, res) => {
   }
 };
 
-// CREATE categories (Admin only, supports array)
+// CREATE categories (Admin only)
 export const createCategory = async (req, res) => {
   if (checkAdmin(req, res)) return;
 
-  let categories = req.body; // Can be object or array
-  const { id, countryCode } = req.user; // Admin ID & country
-  console.log(req.user);
+  try {
+    let { name } = req.body;
+    const { id, countryCode } = req.user; // Admin ID & country
+
+    const newCategory = await LocalCategoryModel.insertOne({name, countryCode, countryCode});
+
+    res.status(201).json({message: 'Category created successfully'});
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Error creating categories" });
+  }
+};
+
+export const createManyCategory = async (req, res) => {
+  if (checkAdmin(req, res)) return;
 
   try {
-    // Normalize input: if it's a single object, wrap it in array
-    if (!Array.isArray(categories)) {
-      console.log("Not array");
-      categories = [categories];
-    }
-    console.log(categories);
+    const { id, countryCode } = req.user; // Admin ID & country
+    const array = parseFileBuffer(req.file.buffer);
 
-    // Attach adminId & countryCode automatically
-    const formatted = categories.map((cat) => ({
-      name: cat.name,
-      countryCode,
-      adminId: id,
-    }));
+    const formatted = array.map(ob => {
+      return  {name: ob.name, countryCode, adminId: id}
+    });
 
-    const newCategories = await LocalCategoryModel.insertMany(formatted);
-    res.status(201).json(newCategories);
+    const newCategory = await LocalCategoryModel.insertMany(formatted);
+
+    res.status(201).json({message: 'Categories created successfully'});
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Error creating categories" });
@@ -154,6 +161,32 @@ export const createGroup = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Error creating groups" });
+  }
+};
+
+// CREATE MANY groups (Admin only, supports array)
+export const createManyGroup = async (req, res) => {
+  if (checkAdmin(req, res)) return;
+
+  try {
+    const { id, countryCode } = req.user; // Admin ID & country
+    const group = parseFileBuffer(req.file.buffer);
+
+    const formatted = group.map(g =>(
+      {
+        name: g.name,
+        hscode: g.hscode,
+        image: req.image,
+        categoryId,
+      }
+    ));
+
+    const newGroups = await LocalGroupModel.insertMany(formatted);
+
+    res.status(201).json({message: 'Groups created successfully'});
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Error creating categories" });
   }
 };
 
