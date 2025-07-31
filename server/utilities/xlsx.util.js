@@ -36,6 +36,6 @@ export function parseFile(file) {
     fs.unlinkSync(file.path); // clean up file
     throw new Error("Unsupported file type. Please upload Excel or CSV.");
   }
-
+  fs.unlinkSync(file.path);
   return records;
 }

@@ -105,6 +105,7 @@ const AddCategories = ({ onClose, onCategoryCreated }) => {
     try {
       const formDataToSend = new FormData();
       formDataToSend.append("file", selectedFile);
+      console.log(formDataToSend);
 
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_BASE_URL}/categories/many`,

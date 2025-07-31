@@ -42,6 +42,7 @@ export const createCategory = async (req, res) => {
 
 export const createManyCategory = async (req, res) => {
   if (checkAdmin(req, res)) return;
+  console.log(req.file)
 
   try {
     const { id, countryCode } = req.user; // Admin ID & country
