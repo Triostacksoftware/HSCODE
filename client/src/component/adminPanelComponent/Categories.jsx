@@ -8,6 +8,7 @@ import {
   MdArrowBack,
 } from "react-icons/md";
 import CategoriesGroups from "./CategoriesGroups";
+import AddCategories from "./AddCategories";
 
 const Categories = () => {
   const [categories, setCategories] = useState([]);
@@ -18,6 +19,7 @@ const Categories = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState(null);
   const [showMobileGroups, setShowMobileGroups] = useState(false);
+  const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
 
   useEffect(() => {
     // Commented out for now since we're using dummy data
@@ -128,8 +130,17 @@ const Categories = () => {
     setCategoryToDelete(null);
   };
 
+  const handleAddCategory = () => {
+    setShowAddCategoryModal(true);
+  };
+
+  const handleCategoryCreated = (newCategory) => {
+    // Add the new category to the list
+    fetchCategories();
+  };
+
   return (
-    <div className="flex min-h-screen montserrat flex-col lg:flex-row">
+    <div className="flex montserrat h-screen  flex-col lg:flex-row">
       {/* Mobile Groups View - Full Screen Overlay */}
       {showMobileGroups && selectedCategory && (
         <div className="lg:hidden fixed inset-0 z-50 bg-white">
@@ -162,7 +173,7 @@ const Categories = () => {
       )}
 
       {/* Left Section - Categories List */}
-      <div className="w-full lg:w-1/3 border-b lg:border-b-0 lg:border-r border-gray-200 transform transition-transform duration-300 ease-in-out animate-slide-in">
+      <div className="w-full grid grid-rows-[auto_1fr] lg:w-1/3 border-b h-full lg:border-b-0 lg:border-r border-gray-200 transform transition-transform duration-300 ease-in-out animate-slide-in">
         {/* Header */}
         <div className="p-3 sm:p-4 border-b border-gray-200 flex justify-between items-center">
           <div>
@@ -171,13 +182,16 @@ const Categories = () => {
               No. of Categories - 03
             </h2>
           </div>
-          <button className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-gray-200 cursor-pointer border-gray-200 border transition-colors">
+          <button
+            onClick={handleAddCategory}
+            className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-gray-200 cursor-pointer border-gray-200 border transition-colors"
+          >
             <MdAdd className="w-5 h-5" />
           </button>
         </div>
 
         {/* Categories List */}
-        <div className="p-2">
+        <div className="p-2 overflow-y-auto scrollbar-hide">
           {isLoading ? (
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
@@ -330,6 +344,18 @@ const Categories = () => {
                 )}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Category Modal */}
+      {showAddCategoryModal && (
+        <div className="fixed inset-0 bg-black/20 bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 h-[80vh] max-h-[600px] animate-dropdown">
+            <AddCategories
+              onClose={() => setShowAddCategoryModal(false)}
+              onCategoryCreated={handleCategoryCreated}
+            />
           </div>
         </div>
       )}

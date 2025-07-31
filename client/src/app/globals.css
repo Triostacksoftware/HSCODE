@@ -113,3 +113,11 @@ body {
     font-size: 16px; /* Prevents zoom on iOS */
   }
 }
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

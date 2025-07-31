@@ -23,7 +23,7 @@ app.use(
     credentials: true,
   })
 );
-app.get('/upload', express.static('uploads'));
+app.use("/api/v1/upload", express.static("public/uploads"));
 
 // routes
 app.get("/", (req, res) => {

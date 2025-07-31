@@ -159,7 +159,7 @@ const CategorisGroups = ({ categoryId, categoryName }) => {
           </div>
 
           {/* Groups List */}
-          <div className="p-3 sm:p-4 flex-1 overflow-y-auto">
+          <div className="p-3 grid grid-rows-[auto_1fr] sm:p-4 flex-1 overflow-y-auto scrollbar-hide">
             {isLoading ? (
               <div className="text-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
@@ -189,20 +189,23 @@ const CategorisGroups = ({ categoryId, categoryName }) => {
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-end space-x-2 sm:space-x-3 min-w-0 flex-1">
-                          <div className="w-8 h-8 sm:w-9 sm:h-9 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
-                            <img src={`${process.env.NEXT_PUBLIC_BASE_URL}/upload${group.image}`} alt="" />
+                          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden border border-gray-200">
+                            <img
+                              src={`${process.env.NEXT_PUBLIC_BASE_URL}/upload/${group.image}`}
+                              alt=""
+                            />
                             {/* <span className="text-xs text-gray-600">G</span> */}
                           </div>
-                          <div className="min-w-0 flex-1">
+                          <div className="min-w-0  ">
                             <div className="text-[.9em] sm:text-[.96em] text-gray-700 truncate">
                               {group.name}
                             </div>
-                            <div className="text-xs text-gray-500">
+                            <div className="flex gap-6 text-xs text-gray-500">
                               Hscode - {group.hscode}
+                              <div className="text-xs text-gray-500 flex-shrink-0">
+                                Members - {group.members.length}
+                              </div>
                             </div>
-                          </div>
-                          <div className="text-xs text-gray-500 flex-shrink-0">
-                            Members - 45
                           </div>
                         </div>
                         <div className="relative menu-container flex-shrink-0 ml-2">

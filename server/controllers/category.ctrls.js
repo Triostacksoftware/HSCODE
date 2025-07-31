@@ -108,7 +108,7 @@ export const updateCategory = async (req, res) => {
 // GET groups in a category
 export const getGroups = async (req, res) => {
   const { id: categoryId } = req.params;
-  console.log("getGroups", categoryId);
+
   try {
     const groups = await LocalGroupModel.find({ categoryId });
     res.json(groups);
