@@ -171,14 +171,14 @@ export const createManyGroup = async (req, res) => {
 
   try {
     const { id, countryCode } = req.user; // Admin ID & country
-    const group = parseFile(req.file.buffer);
+    const group = parseFile(req.file);
 
     const formatted = group.map(g =>(
       {
         name: g.name,
         hscode: g.hscode,
-        image: req.image,
-        categoryId,
+        image: g.image,
+        categoryId: req.params.id,
       }
     ));
 

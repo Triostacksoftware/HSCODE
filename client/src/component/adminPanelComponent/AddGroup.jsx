@@ -190,7 +190,7 @@ const AddGroup = ({ categoryId, categoryName, onClose }) => {
       <div className="flex-1 p-3 sm:p-4 overflow-y-auto">
         <form
           onSubmit={handleSubmit}
-          className="max-w-md mx-auto space-y-4 sm:space-y-6"
+          className="max-w-md mx-auto space-y-4"
         >
           {/* Error Message */}
           {error && (
@@ -209,7 +209,7 @@ const AddGroup = ({ categoryId, categoryName, onClose }) => {
           <div>
             <label
               htmlFor="name"
-              className="block text-sm font-medium text-gray-700 mb-2"
+              className="block text-[.9em] font-medium text-gray-700 mb-2"
             >
               Group Name
             </label>
@@ -220,7 +220,7 @@ const AddGroup = ({ categoryId, categoryName, onClose }) => {
               value={formData.name}
               onChange={handleInputChange}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent text-sm"
               placeholder="Enter group name"
             />
           </div>
@@ -228,7 +228,7 @@ const AddGroup = ({ categoryId, categoryName, onClose }) => {
           <div>
             <label
               htmlFor="hscode"
-              className="block text-sm font-medium text-gray-700 mb-2"
+              className="block text-[.9em] font-medium text-gray-700 mb-2"
             >
               HS Code
             </label>
@@ -239,7 +239,7 @@ const AddGroup = ({ categoryId, categoryName, onClose }) => {
               value={formData.hscode}
               onChange={handleInputChange}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent text-sm"
               placeholder="Enter HS code"
             />
           </div>
@@ -247,7 +247,7 @@ const AddGroup = ({ categoryId, categoryName, onClose }) => {
           <div>
             <label
               htmlFor="image"
-              className="block text-sm font-medium text-gray-700 mb-2"
+              className="block text-[.9em] font-medium text-gray-700 mb-2"
             >
               Group Image
             </label>
