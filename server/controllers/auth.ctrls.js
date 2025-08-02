@@ -3,6 +3,11 @@ import UserModel from "../models/User.js";
 import { generateToken, verifyToken } from "../utilities/jwt.util.js";
 import { generateOTP } from "../utilities/otp.util.js";
 import emailVerificatonMail from "../utilities/sendMail.js";
+import {
+  generateTOTPSecret,
+  generateQRCode,
+  verifyTOTP,
+} from "../utilities/totp.util.js";
 import bcrypt from "bcrypt";
 
 // User Controllers
@@ -87,7 +92,7 @@ export const emailVerification = async (req, res) => {
     await newUser.save();
 
     // 5. Generate JWT with user._id
-    const authToken = generateToken({ id: newUser._id, role: 'user' }, "24h");
+    const authToken = generateToken({ id: newUser._id, role: "user" }, "24h");
 
     // 6. Set JWT in HTTP-only cookie
     res.cookie("auth_token", authToken, {
@@ -128,7 +133,10 @@ export const login = async (req, res) => {
     const reset = req.cookies.reset_confirmed;
     if (reset) {
       // Auth success: issue final token
-      const authToken = generateToken({ id: user._id, role: 'user', countryCode: user.countryCode }, "24h");
+      const authToken = generateToken(
+        { id: user._id, role: "user", countryCode: user.countryCode },
+        "24h"
+      );
 
       // Set final auth cookie
       res.cookie("auth_token", authToken, {
@@ -182,7 +190,10 @@ export const userVerification = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
     // Auth success: issue final token
-    const authToken = generateToken({ id: user._id, role: 'user', countryCode: user.countryCode }, "24h");
+    const authToken = generateToken(
+      { id: user._id, role: "user", countryCode: user.countryCode },
+      "24h"
+    );
 
     // Set final auth cookie
     res.cookie("auth_token", authToken, {
@@ -307,7 +318,10 @@ export const adminLogin = async (req, res) => {
 
     await emailVerificatonMail(email, otp, "login");
 
-    const token = generateToken({ email, otp, countryCode: admin.countryCode }, "5m");
+    const token = generateToken(
+      { email, otp, countryCode: admin.countryCode },
+      "5m"
+    );
 
     res.cookie("auth_otp_token", token, {
       httpOnly: true,
@@ -337,11 +351,14 @@ export const adminVerification = async (req, res) => {
       return res.status(401).json({ message: "Invalid or expired OTP" });
     }
 
-    const admin = await AdminModel.findOne({email: decoded.email});
-    if (! admin) return res.status(404).json('Admin not found');
+    const admin = await AdminModel.findOne({ email: decoded.email });
+    if (!admin) return res.status(404).json("Admin not found");
 
     // Auth success: issue final token
-    const authToken = generateToken({ id: admin._id, role: 'admin', countryCode: admin.countryCode }, "24h");
+    const authToken = generateToken(
+      { id: admin._id, role: "admin", countryCode: admin.countryCode },
+      "24h"
+    );
 
     // Set final auth cookie
     res.cookie("auth_token", authToken, {
@@ -356,5 +373,248 @@ export const adminVerification = async (req, res) => {
     return res.status(200).json({ message: "Login successful" });
   } catch (error) {
     res.status(500).json({ message: "Server Error" });
+  }
+};
+
+// Setup TOTP for admin (first time setup)
+export const setupAdminTOTP = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res
+        .status(400)
+        .json({ message: "Email and password are required" });
+    }
+
+    const admin = await AdminModel.findOne({ email });
+    if (!admin) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    const isMatch = await bcrypt.compare(password, admin.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    // Check if TOTP is already enabled
+    if (admin.totpEnabled) {
+      return res
+        .status(400)
+        .json({ message: "TOTP is already enabled for this admin" });
+    }
+
+    // Generate TOTP secret
+    const totpData = generateTOTPSecret(email);
+
+    // Generate QR code
+    const qrCodeDataURL = await generateQRCode(totpData.otpauth_url);
+
+    // Store secret temporarily (will be confirmed after verification)
+    const tempToken = generateToken(
+      {
+        email,
+        totpSecret: totpData.secret,
+        action: "setup_totp",
+      },
+      "10m"
+    );
+
+    res.cookie("totp_setup_token", tempToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 10 * 60 * 1000, // 10 minutes
+    });
+
+    return res.status(200).json({
+      message: "TOTP setup initiated",
+      qrCode: qrCodeDataURL,
+      secret: totpData.secret, // For manual entry if QR code doesn't work
+      instructions:
+        "Scan the QR code with Google Authenticator app, then verify with a token",
+    });
+  } catch (error) {
+    console.error("TOTP setup error:", error);
+    return res.status(500).json({ message: "Failed to setup TOTP" });
+  }
+};
+
+// Verify and enable TOTP for admin
+export const verifyAndEnableTOTP = async (req, res) => {
+  try {
+    const { token } = req.body; // TOTP token from Google Authenticator
+    const setupToken = req.cookies.totp_setup_token;
+
+    if (!token || !setupToken) {
+      return res
+        .status(400)
+        .json({ message: "TOTP token or setup token missing" });
+    }
+
+    const decoded = verifyToken(setupToken);
+    if (!decoded || decoded.action !== "setup_totp") {
+      return res
+        .status(401)
+        .json({ message: "Invalid or expired setup token" });
+    }
+
+    // Verify the TOTP token
+    const isValid = verifyTOTP(token, decoded.totpSecret);
+    if (!isValid) {
+      return res.status(401).json({ message: "Invalid TOTP token" });
+    }
+
+    // Update admin with TOTP secret and enable it
+    const admin = await AdminModel.findOne({ email: decoded.email });
+    if (!admin) {
+      return res.status(404).json({ message: "Admin not found" });
+    }
+
+    admin.totpSecret = decoded.totpSecret;
+    admin.totpEnabled = true;
+    await admin.save();
+
+    // Clear setup token
+    res.clearCookie("totp_setup_token");
+
+    return res.status(200).json({
+      message: "TOTP enabled successfully for admin",
+    });
+  } catch (error) {
+    console.error("TOTP verification error:", error);
+    return res.status(500).json({ message: "Failed to verify TOTP" });
+  }
+};
+
+// New admin login with TOTP
+export const adminLoginWithTOTP = async (req, res) => {
+  const { email, password, totpToken } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ message: "Email and password are required" });
+  }
+
+  try {
+    const admin = await AdminModel.findOne({ email });
+    if (!admin) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    const isMatch = await bcrypt.compare(password, admin.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    // Check if TOTP is enabled for this admin
+    if (!admin.totpEnabled || !admin.totpSecret) {
+      return res.status(400).json({
+        message: "TOTP not enabled for this admin. Please setup TOTP first.",
+      });
+    }
+
+    // If TOTP token is provided, verify it
+    if (totpToken) {
+      const isValid = verifyTOTP(totpToken, admin.totpSecret);
+      if (!isValid) {
+        return res.status(401).json({ message: "Invalid TOTP token" });
+      }
+
+      // TOTP verified, generate auth token
+      const authToken = generateToken(
+        { id: admin._id, role: "admin", countryCode: admin.countryCode },
+        "24h"
+      );
+
+      res.cookie("auth_token", authToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+        maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      });
+
+      return res.status(200).json({ message: "Login successful" });
+    } else {
+      // TOTP token not provided, request it
+      return res.status(200).json({
+        message: "TOTP token required",
+        requiresTOTP: true,
+      });
+    }
+  } catch (error) {
+    console.error("Admin login error:", error);
+    return res.status(500).json({ message: "Login failed" });
+  }
+};
+
+// Logout function
+export const logout = async (req, res) => {
+  try {
+    // Clear the auth token cookie
+    res.clearCookie("auth_token", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    });
+
+    return res.status(200).json({ message: "Logged out successfully" });
+  } catch (error) {
+    console.error("Logout error:", error);
+    return res.status(500).json({ message: "Logout failed" });
+  }
+};
+
+// Verify authentication status
+export const verifyAuth = async (req, res) => {
+  try {
+    const token = req.cookies.auth_token;
+
+    if (!token) {
+      return res.status(401).json({
+        authenticated: false,
+        message: "No authentication token",
+      });
+    }
+
+    const decoded = verifyToken(token);
+    if (!decoded) {
+      return res.status(401).json({
+        authenticated: false,
+        message: "Invalid or expired token",
+      });
+    }
+
+    // Check if user exists and is admin
+    if (decoded.role === "admin") {
+      const admin = await AdminModel.findById(decoded.id);
+      if (!admin) {
+        return res.status(401).json({
+          authenticated: false,
+          message: "Admin not found",
+        });
+      }
+
+      return res.status(200).json({
+        authenticated: true,
+        user: {
+          id: admin._id,
+          name: admin.name,
+          email: admin.email,
+          role: admin.role,
+          countryCode: admin.countryCode,
+        },
+      });
+    } else {
+      return res.status(403).json({
+        authenticated: false,
+        message: "Access denied - admin role required",
+      });
+    }
+  } catch (error) {
+    console.error("Auth verification error:", error);
+    return res.status(500).json({
+      authenticated: false,
+      message: "Authentication verification failed",
+    });
   }
 };

@@ -34,6 +34,14 @@ const countryAdminSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    totpSecret: {
+      type: String,
+      default: null,
+    },
+    totpEnabled: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );

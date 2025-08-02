@@ -1,5 +1,8 @@
 "use client";
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import axios from "axios";
+import { useAuth } from "../../utilities/authMiddleware";
 import Dashboard from "@/component/adminPanelComponent/Dashboard";
 import HomeContent from "@/component/adminPanelComponent/HomeContent";
 import Categories from "@/component/adminPanelComponent/Categories";
@@ -11,11 +14,32 @@ import {
   MdOutlineSettings,
   MdMenu,
   MdClose,
+  MdLogout,
 } from "react-icons/md";
 
 const AdminPanel = () => {
+  const router = useRouter();
+  const { isAuthenticated, isLoading, user } = useAuth();
   const [activePage, setActivePage] = useState("Dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  // Show loading while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Verifying authentication...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect if not authenticated
+  if (!isAuthenticated) {
+    return null; // Router will handle redirect
+  }
 
   const navigationItems = [
     { name: "Dashboard", icon: MdOutlineDashboard, component: Dashboard },
@@ -40,6 +64,30 @@ const AdminPanel = () => {
     // Close sidebar on mobile after navigation
     if (window.innerWidth < 768) {
       setSidebarOpen(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      setIsLoggingOut(true);
+
+      // Clear the auth token cookie by setting it to expire
+      await axios.post(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/auth/logout`,
+        {},
+        {
+          withCredentials: true,
+        }
+      );
+
+      // Redirect to TOTP admin auth page
+      router.push("/ap-admin-auth-totp");
+    } catch (error) {
+      console.error("Logout error:", error);
+      // Even if logout fails, redirect to login page
+      router.push("/ap-admin-auth-totp");
+    } finally {
+      setIsLoggingOut(false);
     }
   };
 
@@ -79,14 +127,14 @@ const AdminPanel = () => {
         <div className="p-4 text-gray-900 text-sm">
           <div className="flex items-center p-3 rounded-lg gap-2">
             <div className="px-3 py-2 rounded-md text-sm border flex-shrink-0">
-              IN
+              {user?.countryCode || "IN"}
             </div>
             <div className="min-w-0 flex-1">
               <div className="font-semibold montserrat truncate">
-                James Robert
+                {user?.name || "Admin User"}
               </div>
               <div className="text-gray-500 text-xs truncate">
-                jamesrobert@gmail.com
+                {user?.email || "admin@example.com"}
               </div>
             </div>
           </div>
@@ -120,8 +168,13 @@ const AdminPanel = () => {
           <button className="w-full px-3 py-2 rounded-lg transition-colors border hover:bg-gray-300 text-xs sm:text-sm">
             Leads Chat
           </button>
-          <button className="w-full px-3 py-2 rounded-lg transition-colors border hover:bg-gray-300 text-xs sm:text-sm">
-            Logout
+          <button
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+            className="w-full px-3 py-2 rounded-lg transition-colors border hover:bg-gray-300 text-xs sm:text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <MdLogout className="w-4 h-4" />
+            {isLoggingOut ? "Logging out..." : "Logout"}
           </button>
         </div>
       </div>
