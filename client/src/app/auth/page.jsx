@@ -2,6 +2,7 @@
 import Login from "@/component/authComponent/login";
 import Signup from "@/component/authComponent/signup";
 import React, { useState } from "react";
+import socket from '@/utilities/socket.js';
 
 export default function page() {
   const [isLogin, setIsLogin] = useState(true);
