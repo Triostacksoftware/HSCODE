@@ -13,10 +13,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "HSCODE - Admin Panel",
-  description: "HSCODE Admin Panel for managing categories and groups",
-  viewport:
-    "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no",
+  title: 'Login',
+};
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
 };
 
 export default function RootLayout({ children }) {
