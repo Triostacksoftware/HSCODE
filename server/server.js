@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import app from "./app.js";
 import http from "http";
 import { Server as SocketServer } from "socket.io";
+import redisClient from "./configurations/redis.js";
 
 dotenv.config();
 
