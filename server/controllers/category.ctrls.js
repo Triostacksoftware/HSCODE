@@ -247,3 +247,33 @@ export const deleteGroup = async (req, res) => {
     res.status(500).json({ message: "Error deleting group" });
   }
 };
+
+// GET groups by IDs (for user's joined groups)
+export const getGroupsByIds = async (req, res) => {
+  try {
+    const { groupIds } = req.body;
+
+    if (!groupIds || !Array.isArray(groupIds) || groupIds.length === 0) {
+      return res.status(400).json({ message: "Group IDs array is required" });
+    }
+
+    const groups = await LocalGroupModel.find({
+      _id: { $in: groupIds },
+    }).populate("categoryId");
+
+    res.json(groups);
+  } catch (err) {
+    console.error("Error fetching groups by IDs:", err);
+    res.status(500).json({ message: "Error fetching groups" });
+  }
+};
+
+export const getAllCategories = async (req, res) => {
+  const { countryCode } = req.query;
+  try {
+    const categories = await LocalCategoryModel.find();
+    res.json(categories);
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching categories" });
+  }
+};

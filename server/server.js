@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 import app from "./app.js";
 import http from "http";
 import { Server as SocketServer } from "socket.io";
-import redisClient from "./configurations/redis.js";
+// import redisClient from "./configurations/redis.js";
 
 dotenv.config();
 
@@ -42,7 +42,9 @@ mongoose
     const PORT = process.env.PORT || 3000;
 
     server.listen(PORT, () => {
-      console.log(`Server started at ${process.env.DOMAIN || "http://localhost:" + PORT}`);
+      console.log(
+        `Server started at ${process.env.DOMAIN || "http://localhost:" + PORT}`
+      );
     });
   })
   .catch((err) => {

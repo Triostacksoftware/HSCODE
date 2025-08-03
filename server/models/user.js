@@ -1,65 +1,68 @@
-import mongoose from 'mongoose';
-import bcrypt from 'bcrypt';
+import mongoose from "mongoose";
+import bcrypt from "bcrypt";
 
-const userSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-    trim: true,
+const userSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+    },
+
+    phone: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    password: {
+      type: String,
+      required: true,
+    },
+
+    countryCode: {
+      type: String,
+      required: true,
+    },
+
+    membership: {
+      type: String,
+      enum: ["free", "premium"],
+      default: "free",
+    },
+
+    groupsID: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Group",
+      },
+    ],
   },
+  {
+    timestamps: true,
+  }
+);
 
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-    lowercase: true,
-    trim: true,
-  },
+userSchema.pre("save", async function (next) {
+  try {
+    // if modified field is not password
+    if (!this.isModified("password")) return next();
 
-  phone: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-
-  password: {
-    type: String,
-    required: true,
-  },
-
-  countryCode: {
-    type: String,
-    required: true,
-  },
-
-  membership: {
-    type: String,
-    enum: ['free', 'premium'],
-    default: 'free',
-  },
-
-  groupsID: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Group',
-    }
-  ],
-}, {
-  timestamps: true,
+    // if password changed so hash and store
+    this.password = bcrypt.hashSync(this.password, 10);
+    next();
+  } catch (error) {
+    next(error);
+  }
 });
 
-userSchema.pre('save', async function (next) {
-    try {
-        // if modified field is not password 
-        if (!this.isModified('password')) return next();
-
-        // if password changed so hash and store
-        this.password = bcrypt.hashSync(this.password, 10);
-        next();
-    } catch (error) {
-        next(error)
-    }
-})
-
-const UserModel = mongoose.model('User', userSchema);
+const UserModel = mongoose.model("User", userSchema);
 export default UserModel;

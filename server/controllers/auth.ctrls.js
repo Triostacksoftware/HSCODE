@@ -618,3 +618,53 @@ export const verifyAuth = async (req, res) => {
     });
   }
 };
+
+export const verifyUserAuth = async (req, res) => {
+  try {
+    const token = req.cookies.auth_token;
+
+    if (!token) {
+      return res.status(401).json({
+        authenticated: false,
+        message: "No authentication token",
+      });
+    }
+
+    const decoded = verifyToken(token);
+    if (!decoded) {
+      return res.status(401).json({
+        authenticated: false,
+        message: "Invalid or expired token",
+      });
+    }
+
+    // Check if user exists (any role)
+    const user = await UserModel.findById(decoded.id);
+    if (!user) {
+      return res.status(401).json({
+        authenticated: false,
+        message: "User not found",
+      });
+    }
+
+    return res.status(200).json({
+      authenticated: true,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        membership: user.membership,
+        groupsID: user.groupsID,
+        countryCode: user.countryCode,
+        role: decoded.role,
+      },
+    });
+  } catch (error) {
+    console.error("User auth verification error:", error);
+    return res.status(500).json({
+      authenticated: false,
+      message: "User authentication verification failed",
+    });
+  }
+};

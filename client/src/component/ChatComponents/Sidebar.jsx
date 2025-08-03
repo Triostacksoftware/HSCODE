@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { HiMenu, HiChat, HiGlobe, HiUserGroup, HiCog } from "react-icons/hi";
 
 const Sidebar = ({ onTabChange, activeTab }) => {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
 
   const toggleSidebar = () => {
     setIsOpen(!isOpen);
@@ -50,7 +50,7 @@ const Sidebar = ({ onTabChange, activeTab }) => {
       <div className="p-4 ">
         <button
           onClick={toggleSidebar}
-          className="w-8 h-8 flex items-center justify-center bg-blue-100 rounded hover:bg-blue-200 transition-colors"
+          className="cursor-pointer w-8 h-8 flex items-center justify-center bg-blue-100 rounded hover:bg-blue-200 transition-colors"
         >
           <HiMenu className="w-5 h-5 text-gray-600" />
         </button>
@@ -66,13 +66,11 @@ const Sidebar = ({ onTabChange, activeTab }) => {
             >
               <button
                 onClick={() => handleTabClick(item.id)}
-                className={`w-full flex items-center space-x-3 p-2 rounded-lg transition-all duration-300 hover:bg-gray-100`}
+                className={`cursor-pointer w-full flex items-center space-x-3 p-2 rounded-lg transition-all duration-300 hover:bg-gray-100`}
               >
                 <div
                   className={`w-6 h-6 flex items-center justify-center rounded transition-all duration-300 ${
-                    activeTab === item.id
-                      ? "bg-amber-700 text-white"
-                      : item.color
+                    activeTab === item.id ? "bg-black text-white" : item.color
                   }`}
                 >
                   {item.icon}
@@ -91,7 +89,7 @@ const Sidebar = ({ onTabChange, activeTab }) => {
         <div className={`${isOpen ? "py-2 px-4" : "py-1 px-2"}`}>
           <button
             onClick={() => handleTabClick(menuItems[3].id)}
-            className={`w-full flex items-center space-x-3 p-2 rounded-lg transition-all duration-300 hover:bg-gray-100`}
+            className={`cursor-pointer w-full flex items-center space-x-3 p-2 rounded-lg transition-all duration-300 hover:bg-gray-100`}
           >
             <div
               className={`w-6 h-6 flex items-center justify-center rounded transition-all duration-300 ${

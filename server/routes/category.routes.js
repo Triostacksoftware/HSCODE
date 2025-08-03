@@ -11,6 +11,8 @@ import {
   deleteGroup,
   createManyCategory,
   createManyGroup,
+  getGroupsByIds,
+  getAllCategories,
 } from "../controllers/category.ctrls.js";
 import upload from "../configurations/multer.js";
 
@@ -39,5 +41,10 @@ router.post(
 );
 router.patch("/:id/group/:groupId", adminMiddleware, updateGroup);
 router.delete("/:id/group/:groupId", adminMiddleware, deleteGroup);
+
+// User routes (no admin middleware)
+router.post("/groups-by-ids", getGroupsByIds);
+router.get("/all-categories", getAllCategories);
+router.get("/:id/groups", getGroups); // User can access groups
 
 export default router;

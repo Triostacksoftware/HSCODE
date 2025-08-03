@@ -1,5 +1,6 @@
 import { verifyToken } from "../utilities/jwt.util.js";
 import AdminModel from "../models/Admin.js";
+import UserModel from "../models/User.js";
 
 export const authMiddleware = async (req, res, next) => {
   try {
@@ -61,6 +62,38 @@ export const adminMiddleware = async (req, res, next) => {
     next();
   } catch (err) {
     console.error("Admin middleware error:", err);
+    return res.status(401).json({ message: "Unauthorized or token expired" });
+  }
+};
+
+// User-specific middleware
+export const userMiddleware = async (req, res, next) => {
+  try {
+    const token = req.cookies.auth_token;
+
+    if (!token) {
+      return res
+        .status(401)
+        .json({ message: "No token provided. Please log in." });
+    }
+
+    // Verify token
+    const decoded = verifyToken(token);
+    if (!decoded) {
+      return res.status(401).json({ message: "Invalid or expired token" });
+    }
+
+    // Verify user exists in database
+    const user = await UserModel.findById(decoded.id);
+    if (!user) {
+      return res.status(401).json({ message: "User not found" });
+    }
+
+    req.user = decoded;
+    req.userData = user;
+    next();
+  } catch (err) {
+    console.error("User middleware error:", err);
     return res.status(401).json({ message: "Unauthorized or token expired" });
   }
 };

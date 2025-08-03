@@ -14,6 +14,7 @@ import {
   adminLoginWithTOTP,
   logout,
   verifyAuth,
+  verifyUserAuth,
 } from "../controllers/auth.ctrls.js";
 import AdminModel from "../models/Admin.js";
 
@@ -31,6 +32,7 @@ router.post("/logout", logout);
 
 // auth verification
 router.get("/verify", verifyAuth);
+router.get("/verify-user", verifyUserAuth);
 
 // admin auth
 router.post("/admin-login", adminLogin);
