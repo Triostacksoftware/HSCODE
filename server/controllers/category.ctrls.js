@@ -31,9 +31,13 @@ export const createCategory = async (req, res) => {
     let { name } = req.body;
     const { id, countryCode } = req.user; // Admin ID & country
 
-    const newCategory = await LocalCategoryModel.insertOne({name, countryCode, countryCode});
+    const newCategory = await LocalCategoryModel.create({
+      name,
+      countryCode,
+      adminId: id,
+    });
 
-    res.status(201).json({message: 'Category created successfully'});
+    res.status(201).json({ message: "Category created successfully" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Error creating categories" });
@@ -42,19 +46,19 @@ export const createCategory = async (req, res) => {
 
 export const createManyCategory = async (req, res) => {
   if (checkAdmin(req, res)) return;
-  console.log(req.file)
+  console.log(req.file);
 
   try {
     const { id, countryCode } = req.user; // Admin ID & country
     const array = parseFile(req.file);
 
-    const formatted = array.map(ob => {
-      return  {name: ob.name, countryCode, adminId: id}
+    const formatted = array.map((ob) => {
+      return { name: ob.name, countryCode, adminId: id };
     });
 
     const newCategory = await LocalCategoryModel.insertMany(formatted);
 
-    res.status(201).json({message: 'Categories created successfully'});
+    res.status(201).json({ message: "Categories created successfully" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Error creating categories" });
@@ -173,18 +177,16 @@ export const createManyGroup = async (req, res) => {
     const { id, countryCode } = req.user; // Admin ID & country
     const group = parseFile(req.file);
 
-    const formatted = group.map(g =>(
-      {
-        name: g.name,
-        hscode: g.hscode,
-        image: g.image,
-        categoryId: req.params.id,
-      }
-    ));
+    const formatted = group.map((g) => ({
+      name: g.name,
+      hscode: g.hscode,
+      image: g.image,
+      categoryId: req.params.id,
+    }));
 
     const newGroups = await LocalGroupModel.insertMany(formatted);
 
-    res.status(201).json({message: 'Groups created successfully'});
+    res.status(201).json({ message: "Groups created successfully" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Error creating categories" });
