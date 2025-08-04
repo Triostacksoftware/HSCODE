@@ -19,19 +19,37 @@ const io = new SocketServer(server, {
   },
 });
 
-// Setup socket events
-io.on("connection", (socket) => {
-  console.log("🔌 New client connected:", socket.id);
+// Store userId -> socketId
+const onlineUsers = new Map();
 
-  socket.on("send-message", (data) => {
-    console.log("📨 Message from client:", data);
-    socket.broadcast.emit("receive-message", data);
-  });
+io.on('connection', (socket) => {
+  const userId = socket.handshake.query.userId;
 
-  socket.on("disconnect", () => {
-    console.log("Client disconnected:", socket.id);
+  if (!userId) {
+    console.log('Connection rejected: no userId');
+    socket.disconnect();
+    return;
+  }
+
+  console.log(`${userId} connected`);
+
+  // Save user as online
+  onlineUsers.set(userId, socket.id);
+
+  // Send current list of online users to the new user
+  socket.emit('online-users-list', Array.from(onlineUsers.keys()));
+
+  // Notify others
+  socket.broadcast.emit('user-online', userId);
+
+  // Handle disconnect
+  socket.on('disconnect', () => {
+    console.log(`${userId} disconnected`);
+    onlineUsers.delete(userId);
+    socket.broadcast.emit('user-offline', userId);
   });
 });
+
 
 // Connect to MongoDB and start server
 mongoose
