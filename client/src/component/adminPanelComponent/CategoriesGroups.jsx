@@ -78,7 +78,7 @@ const CategorisGroups = ({ categoryId, categoryName }) => {
     try {
       setIsLoading(true);
       const response = await axios.delete(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/categories/${categoryId}/group/${groupToDelete._id}`,
+        `${process.env.NEXT_PUBLIC_BASE_URL}/categories/${categoryId}/groups/${groupToDelete._id}`,
         {
           withCredentials: true,
         }

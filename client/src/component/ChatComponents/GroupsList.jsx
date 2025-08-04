@@ -162,7 +162,7 @@ const GroupsList = ({ categoryId, categoryName, onBack }) => {
                     {/* Group Info */}
                     <div className="min-w-0 flex-1">
                       <div className="text-sm font-medium text-gray-700 truncate">
-                        Item {String(index + 1).padStart(2, "0")}
+                        {group.name}
                       </div>
                       <div className="text-xs text-gray-500">
                         User: {group.creator?.name || "Rice"},{" "}
