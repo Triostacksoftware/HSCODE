@@ -18,11 +18,8 @@ const ChaptersList = ({ onCategorySelect, selectedCategory }) => {
 
       try {
         const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/categories/all-categories`,
+          `${process.env.NEXT_PUBLIC_BASE_URL}/categories`,
           {
-            params: {
-              countryCode: user.countryCode,
-            },
             withCredentials: true,
           }
         );
@@ -85,7 +82,7 @@ const ChaptersList = ({ onCategorySelect, selectedCategory }) => {
                 onClick={() => handleCategorySelect(category)}
               >
                 <div className="text-sm font-medium text-gray-700">
-                  Chapter {String(index + 1).padStart(2, "0")}
+                  {category.name}
                 </div>
               </div>
             ))}

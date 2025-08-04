@@ -1,6 +1,26 @@
 import UserModel from "../models/User.js";
 import LocalGroupModel from "../models/LocalGroup.js";
 
+
+// GET GROUP by IDs (for user's joined groups)
+export const getGroups = async (req, res) => {
+  try {
+    const id = req.user.id;
+
+    const user = await UserModel.findById(id);
+    if (!user) return res.status(404).json({message: 'User not found'});
+
+    const groups = await LocalGroupModel.find({
+      _id: { $in: user.groupsID },
+    }).populate("categoryId");
+
+    res.json(groups);
+  } catch (err) {
+    console.error("Error fetching groups by IDs:", err);
+    res.status(500).json({ message: "Error fetching groups" });
+  }
+};
+
 // JOIN GROUP
 export const joinGroup = async (req, res) => {
   try {

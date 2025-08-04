@@ -22,7 +22,7 @@ const MyGroups = ({ onGroupSelect, selectedGroupId }) => {
       setError("");
 
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/categories/groups-by-ids`,
+        `${process.env.NEXT_PUBLIC_BASE_URL}/user/groups`,
         { groupIds: user.groupsID },
         { withCredentials: true }
       );

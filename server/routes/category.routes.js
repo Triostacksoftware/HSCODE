@@ -1,5 +1,5 @@
 import express from "express";
-import { adminMiddleware } from "../middlewares/auth.mdware.js";
+import { adminMiddleware, authMiddleware } from "../middlewares/auth.mdware.js";
 import {
   getCategories,
   createCategory,
@@ -11,15 +11,13 @@ import {
   deleteGroup,
   createManyCategory,
   createManyGroup,
-  getGroupsByIds,
-  getAllCategories,
 } from "../controllers/category.ctrls.js";
 import upload from "../configurations/multer.js";
 
 const router = express.Router();
 
 // Category routes (admin only)
-router.get("/", adminMiddleware, getCategories);
+router.get("/", authMiddleware, getCategories);
 router.post("/", adminMiddleware, createCategory);
 router.post(
   "/many",
@@ -31,7 +29,7 @@ router.delete("/:id", adminMiddleware, deleteCategory);
 router.patch("/:id", adminMiddleware, updateCategory);
 
 // Group routes inside category (admin only)
-router.get("/:id/group", adminMiddleware, getGroups);
+router.get("/:id/groups", authMiddleware, getGroups);
 router.post("/:id/group", adminMiddleware, upload.single("file"), createGroup);
 router.post(
   "/:id/group/many",
@@ -41,10 +39,5 @@ router.post(
 );
 router.patch("/:id/group/:groupId", adminMiddleware, updateGroup);
 router.delete("/:id/group/:groupId", adminMiddleware, deleteGroup);
-
-// User routes (no admin middleware)
-router.post("/groups-by-ids", getGroupsByIds);
-router.get("/all-categories", getAllCategories);
-router.get("/:id/groups", getGroups); // User can access groups
 
 export default router;

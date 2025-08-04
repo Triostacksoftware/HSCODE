@@ -36,10 +36,7 @@ const DomesticChat = () => {
         <div className="p-4 border-b border-gray-200">
           <div className="flex bg-gray-100 rounded-lg p-1">
             <button
-              onClick={() => {
-                setActiveTab("groups");
-                setSelectedGroupId(null);
-              }}
+              onClick={() => setActiveTab("groups")}
               className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
                 activeTab === "groups"
                   ? "bg-gray-800 text-white"
@@ -49,10 +46,7 @@ const DomesticChat = () => {
               groups
             </button>
             <button
-              onClick={() => {
-                setActiveTab("chapters");
-                setSelectedGroupId(null);
-              }}
+              onClick={() => setActiveTab("chapters")}
               className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
                 activeTab === "chapters"
                   ? "bg-gray-800 text-white"
