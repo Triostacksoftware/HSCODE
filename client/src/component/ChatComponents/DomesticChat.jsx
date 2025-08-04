@@ -3,10 +3,12 @@ import React, { useState } from "react";
 import ChaptersList from "./ChaptersList";
 import MyGroups from "./MyGroups";
 import GroupsList from "./GroupsList";
+import ChatWindow from "./ChatWindow";
 
 const DomesticChat = () => {
   const [activeTab, setActiveTab] = useState("groups"); // "groups" or "chapters"
   const [selectedCategory, setSelectedCategory] = useState(null);
+  const [selectedGroupId, setSelectedGroupId] = useState(null);
 
   const handleCategorySelect = (category) => {
     setSelectedCategory(category);
@@ -14,6 +16,11 @@ const DomesticChat = () => {
 
   const handleBackToChapters = () => {
     setSelectedCategory(null);
+    setSelectedGroupId(null);
+  };
+
+  const handleGroupSelect = (groupId) => {
+    setSelectedGroupId(groupId);
   };
 
   return (
@@ -29,17 +36,10 @@ const DomesticChat = () => {
         <div className="p-4 border-b border-gray-200">
           <div className="flex bg-gray-100 rounded-lg p-1">
             <button
-              onClick={() => setActiveTab("chapters")}
-              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                activeTab === "chapters"
-                  ? "bg-gray-800 text-white"
-                  : "text-gray-600 hover:text-gray-900"
-              }`}
-            >
-              chapters
-            </button>
-            <button
-              onClick={() => setActiveTab("groups")}
+              onClick={() => {
+                setActiveTab("groups");
+                setSelectedGroupId(null);
+              }}
               className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
                 activeTab === "groups"
                   ? "bg-gray-800 text-white"
@@ -47,6 +47,19 @@ const DomesticChat = () => {
               }`}
             >
               groups
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab("chapters");
+                setSelectedGroupId(null);
+              }}
+              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                activeTab === "chapters"
+                  ? "bg-gray-800 text-white"
+                  : "text-gray-600 hover:text-gray-900"
+              }`}
+            >
+              chapters
             </button>
           </div>
         </div>
@@ -59,7 +72,10 @@ const DomesticChat = () => {
               selectedCategory={selectedCategory}
             />
           ) : (
-            <MyGroups />
+            <MyGroups
+              onGroupSelect={handleGroupSelect}
+              selectedGroupId={selectedGroupId}
+            />
           )}
         </div>
       </div>
@@ -71,6 +87,8 @@ const DomesticChat = () => {
             categoryId={selectedCategory._id}
             categoryName={selectedCategory.name}
             onBack={handleBackToChapters}
+            onGroupSelect={handleGroupSelect}
+            selectedGroupId={selectedGroupId}
           />
         </div>
       )}
@@ -78,21 +96,26 @@ const DomesticChat = () => {
       {/* Right Section - Chat Area */}
       <div
         className={`flex flex-col ${
-          activeTab === "chapters" && selectedCategory
+          (activeTab === "chapters" && selectedCategory) ||
+          activeTab === "groups"
             ? "flex-1"
             : "flex-1 ml-0"
         }`}
       >
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <div className="text-2xl font-handwriting text-gray-700 mb-2">
-              Leadsup for website
-            </div>
-            <div className="text-gray-500 text-sm">
-              lorem ipsum dolor sit amet consectetur adipiscing elit
+        {selectedGroupId ? (
+          <ChatWindow selectedGroupId={selectedGroupId} />
+        ) : (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <div className="text-2xl font-handwriting text-gray-700 mb-2">
+                Leadsup for website
+              </div>
+              <div className="text-gray-500 text-sm">
+                lorem ipsum dolor sit amet consectetur adipiscing elit
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

@@ -3,7 +3,13 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useUserAuth } from "../../utilities/userAuthMiddleware";
 
-const GroupsList = ({ categoryId, categoryName, onBack }) => {
+const GroupsList = ({
+  categoryId,
+  categoryName,
+  onBack,
+  onGroupSelect,
+  selectedGroupId,
+}) => {
   const { user, refreshUser } = useUserAuth();
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -66,7 +72,10 @@ const GroupsList = ({ categoryId, categoryName, onBack }) => {
   };
 
   const handleOpenGroup = (group) => {
-    // TODO: Implement open group functionality
+    // Call the onGroupSelect callback with the group ID
+    if (onGroupSelect) {
+      onGroupSelect(group._id);
+    }
     console.log("Opening group:", group);
   };
 
@@ -136,7 +145,11 @@ const GroupsList = ({ categoryId, categoryName, onBack }) => {
             {filteredGroups.map((group, index) => (
               <div
                 key={group._id}
-                className="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all"
+                className={`p-3 border rounded-lg transition-all ${
+                  selectedGroupId === group._id
+                    ? "border-blue-500 bg-blue-50"
+                    : "border-gray-200 hover:bg-gray-50"
+                }`}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3 min-w-0 flex-1">
