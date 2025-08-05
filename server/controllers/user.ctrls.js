@@ -1,6 +1,5 @@
-import UserModel from "../models/User.js";
+import UserModel from "../models/user.js";
 import LocalGroupModel from "../models/LocalGroup.js";
-
 
 // GET GROUP by IDs (for user's joined groups)
 export const getGroups = async (req, res) => {
@@ -8,7 +7,7 @@ export const getGroups = async (req, res) => {
     const id = req.user.id;
 
     const user = await UserModel.findById(id);
-    if (!user) return res.status(404).json({message: 'User not found'});
+    if (!user) return res.status(404).json({ message: "User not found" });
 
     const groups = await LocalGroupModel.find({
       _id: { $in: user.groupsID },

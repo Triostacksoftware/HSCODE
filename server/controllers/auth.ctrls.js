@@ -1,5 +1,5 @@
 import AdminModel from "../models/Admin.js";
-import UserModel from "../models/User.js";
+import UserModel from "../models/user.js";
 import { generateToken, verifyToken } from "../utilities/jwt.util.js";
 import { generateOTP } from "../utilities/otp.util.js";
 import emailVerificatonMail from "../utilities/sendMail.js";

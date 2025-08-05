@@ -13,6 +13,7 @@ import authRoutes from "./routes/auth.routes.js";
 import categoryRoutes from "./routes/category.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import leadsRoutes from "./routes/leads.routes.js";
+import requestedLeadsRoutes from "./routes/requestedLeads.routes.js";
 import { getIpLocation } from "./utilities/ip.util.js";
 
 // middlewares
@@ -69,5 +70,6 @@ app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/categories", categoryRoutes);
 app.use("/api/v1/user", userRoutes);
 app.use("/api/v1/leads", leadsRoutes);
+app.use("/api/v1/requested-leads", requestedLeadsRoutes);
 
 export default app;

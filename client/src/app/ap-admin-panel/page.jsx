@@ -7,6 +7,7 @@ import Dashboard from "@/component/adminPanelComponent/Dashboard";
 import HomeContent from "@/component/adminPanelComponent/HomeContent";
 import Categories from "@/component/adminPanelComponent/Categories";
 import Settings from "@/component/adminPanelComponent/Settings";
+import RequestedLeads from "@/component/adminPanelComponent/RequestedLeads";
 import {
   MdOutlineDashboard,
   MdOutlineHomeMax,
@@ -15,6 +16,7 @@ import {
   MdMenu,
   MdClose,
   MdLogout,
+  MdOutlineRequestPage,
 } from "react-icons/md";
 
 const AdminPanel = () => {
@@ -46,6 +48,11 @@ const AdminPanel = () => {
     { name: "Home Content", icon: MdOutlineHomeMax, component: HomeContent },
     { name: "Categories", icon: MdOutlineCategory, component: Categories },
     { name: "Settings", icon: MdOutlineSettings, component: Settings },
+    {
+      name: "Requested Leads",
+      icon: MdOutlineRequestPage,
+      component: RequestedLeads,
+    },
   ];
 
   const renderComponent = () => {

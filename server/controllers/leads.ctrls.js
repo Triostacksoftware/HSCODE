@@ -10,7 +10,7 @@ export const getLeadsByGroup = async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit)
-      .populate("userId", "name image")
+      .populate("userId", "name image email")
       .exec();
 
     const total = await ApprovedLeads.countDocuments({ groupId });
