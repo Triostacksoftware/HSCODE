@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useUserAuth } from "../../utilities/userAuthMiddleware";
@@ -79,6 +81,7 @@ const RequestedLeads = () => {
       <div className="p-4 border-b border-gray-200">
         <div className="flex bg-gray-100 rounded-lg p-1">
           <button
+            suppressHydrationWarning={true}
             onClick={() => setActiveTab("pending")}
             className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
               activeTab === "pending"
@@ -89,6 +92,7 @@ const RequestedLeads = () => {
             Pending
           </button>
           <button
+            suppressHydrationWarning={true}
             onClick={() => setActiveTab("approved")}
             className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
               activeTab === "approved"
@@ -99,6 +103,7 @@ const RequestedLeads = () => {
             Approved
           </button>
           <button
+            suppressHydrationWarning={true}
             onClick={() => setActiveTab("rejected")}
             className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
               activeTab === "rejected"

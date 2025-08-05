@@ -1,3 +1,4 @@
+"use client";
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { MdAdd, MdEdit, MdDelete, MdSearch, MdMoreVert } from "react-icons/md";
@@ -280,6 +281,7 @@ const CategorisGroups = ({ categoryId, categoryName }) => {
 
             <div className="flex space-x-3">
               <button
+                suppressHydrationWarning={true}
                 onClick={cancelDelete}
                 disabled={isLoading}
                 className="flex-1 px-2 py-2 border cursor-pointer border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
@@ -287,6 +289,7 @@ const CategorisGroups = ({ categoryId, categoryName }) => {
                 Cancel
               </button>
               <button
+                suppressHydrationWarning={true}
                 onClick={confirmDelete}
                 disabled={isLoading}
                 className="flex-1 px-2 py-2 bg-red-600 cursor-pointer text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center"

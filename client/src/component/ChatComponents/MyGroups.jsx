@@ -145,6 +145,7 @@ const MyGroups = ({ onGroupSelect, selectedGroupId }) => {
                   {/* Action Button */}
                   <div className="flex-shrink-0 ml-3">
                     <button
+                      suppressHydrationWarning={true}
                       onClick={() => handleOpenGroup(group)}
                       className="px-4 py-2 bg-green-500 text-white text-xs font-medium rounded-lg hover:bg-green-600 transition-colors"
                     >

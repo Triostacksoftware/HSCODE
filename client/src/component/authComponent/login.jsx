@@ -178,6 +178,7 @@ export default function Login() {
 
           {/* Sign Up Button */}
           <button
+            suppressHydrationWarning={true}
             type="submit"
             disabled={isLoading || showOTP}
             className="w-full bg-blue-600 text-white cursor-pointer font-semibold py-3 sm:py-4 px-4 sm:px-6 rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
@@ -232,6 +233,7 @@ export default function Login() {
               ))}
             </div>
             <button
+              suppressHydrationWarning={true}
               type="submit"
               disabled={isLoading || otp.length !== 6}
               className="w-full bg-blue-600 text-white cursor-pointer font-semibold py-2 sm:py-3 px-3 sm:px-4 rounded-md hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm"

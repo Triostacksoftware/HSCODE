@@ -61,6 +61,7 @@ export const withAuth = (Component) => {
   return function AuthenticatedComponent(props) {
     const { isAuthenticated, isLoading } = useAuth();
 
+    // Always render loading spinner initially
     if (isLoading) {
       return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -72,10 +73,12 @@ export const withAuth = (Component) => {
       );
     }
 
+    // After loading, if not authenticated, render nothing (client will handle redirect)
     if (!isAuthenticated) {
-      return null; // Router will handle redirect
+      return null;
     }
 
+    // Authenticated: render the protected component
     return <Component {...props} />;
   };
 };
