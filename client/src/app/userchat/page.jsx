@@ -7,38 +7,45 @@ import RequestedLeads from "../../component/ChatComponents/RequestedLeads";
 import { useUserAuth } from "../../utilities/userAuthMiddleware.js";
 import { connectUserSocket } from "../../utilities/socket";
 
+// Context to share online user data across components
 export const OnlineUsersContext = createContext({
-  onlineCounts: {},
-  onlineUsers: {},
+  onlineCounts: {},   // groupId -> count
+  onlineUsers: {},    // groupId -> [ { userId, socketId } ]
+  socket: null,
 });
 
 const ChatPage = () => {
   const [activeTab, setActiveTab] = useState("local");
   const [onlineCounts, setOnlineCounts] = useState({});
   const [onlineUsers, setOnlineUsers] = useState({});
+  const [socket, setSocket] = useState(null);
   const { user } = useUserAuth();
 
   useEffect(() => {
-    if (user && user.groupsID && user.groupsID.length > 0) {
-      const socket = connectUserSocket(user._id, user.groupsID);
-      socket.on(
-        "group-online-users",
-        ({ groupId, onlineUserIds, onlineUsers: users }) => {
-          setOnlineCounts((prev) => ({
-            ...prev,
-            [groupId]: onlineUserIds.length,
-          }));
-          setOnlineUsers((prev) => ({
-            ...prev,
-            [groupId]: users || [],
-          }));
-        }
-      );
-      return () => {
-        socket.disconnect();
-      };
-    }
-  }, [user]);
+    if (!user || !user.groupsID?.length) return;
+
+    const socket = connectUserSocket(user._id, user.groupsID);
+    setSocket(socket);
+
+    const handleGroupOnlineUsers = ({ groupId, onlineUserIds, onlineUsers: users }) => {
+      console.log("Users for group", groupId, ":", users);
+      setOnlineCounts((prev) => ({
+        ...prev,
+        [groupId]: onlineUserIds?.length || 0,
+      }));
+      setOnlineUsers((prev) => ({
+        ...prev,
+        [groupId]: users || [],
+      }));
+    };
+
+    socket.on("group-online-users", handleGroupOnlineUsers);
+
+    return () => {
+      socket.off("group-online-users", handleGroupOnlineUsers);
+      socket.disconnect();
+    };
+  }, [user?._id, JSON.stringify(user?.groupsID)]);
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
@@ -58,10 +65,9 @@ const ChatPage = () => {
         return <DomesticChat />;
     }
   };
-  console.log("onlineUsers", onlineUsers);
 
   return (
-    <OnlineUsersContext.Provider value={{ onlineCounts, onlineUsers }}>
+    <OnlineUsersContext.Provider value={{ onlineCounts, onlineUsers, socket }}>
       <div className="flex h-screen bg-gray-50">
         <Sidebar onTabChange={handleTabChange} activeTab={activeTab} />
         <div className="flex-1 overflow-auto">

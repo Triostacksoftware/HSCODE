@@ -3,11 +3,11 @@ import axios from "axios";
 import { useUserAuth } from "../../utilities/userAuthMiddleware";
 import { OnlineUsersContext } from "../../app/userchat/page";
 import toast from "react-hot-toast";
-import { connectUserSocket } from "../../utilities/socket";
+import socket from "../../utilities/socket";
 
 const ChatWindow = ({ selectedGroupId }) => {
   const { user } = useUserAuth();
-  const { onlineCounts, onlineUsers } = useContext(OnlineUsersContext);
+  const { onlineCounts, onlineUsers, socket } = useContext(OnlineUsersContext);
   const [leads, setLeads] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -33,7 +33,6 @@ const ChatWindow = ({ selectedGroupId }) => {
   // Listen for new-approved-lead socket event
   useEffect(() => {
     if (!user || !selectedGroupId) return;
-    const socket = connectUserSocket(user._id, user.groupsID);
     const handler = (lead) => {
       if (
         lead.groupId === selectedGroupId ||
