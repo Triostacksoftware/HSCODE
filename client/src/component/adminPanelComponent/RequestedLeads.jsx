@@ -1,3 +1,4 @@
+"use client";
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { MdCheck, MdClose, MdSearch, MdFilterList } from "react-icons/md";
@@ -195,6 +196,7 @@ const RequestedLeads = () => {
 
                   <div className="flex items-center space-x-2 ml-4">
                     <button
+                      suppressHydrationWarning={true}
                       onClick={() => handleApproveReject(lead._id, "approve")}
                       disabled={loading}
                       className="px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 transition-colors flex items-center space-x-1"
@@ -203,6 +205,7 @@ const RequestedLeads = () => {
                       <span>Approve</span>
                     </button>
                     <button
+                      suppressHydrationWarning={true}
                       onClick={() => openRejectModal(lead)}
                       disabled={loading}
                       className="px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50 transition-colors flex items-center space-x-1"

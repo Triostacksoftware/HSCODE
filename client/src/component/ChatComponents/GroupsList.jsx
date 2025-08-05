@@ -188,6 +188,7 @@ const GroupsList = ({
                   <div className="flex-shrink-0 ml-3">
                     {isUserJoined(group._id) ? (
                       <button
+                        suppressHydrationWarning={true}
                         onClick={() => handleOpenGroup(group)}
                         className="px-4 py-2 bg-green-500 text-white text-xs font-medium rounded-lg hover:bg-green-600 transition-colors"
                       >
@@ -195,6 +196,7 @@ const GroupsList = ({
                       </button>
                     ) : (
                       <button
+                        suppressHydrationWarning={true}
                         onClick={() => handleJoinGroup(group)}
                         className="px-4 py-2 bg-gray-800 text-white text-xs font-medium rounded-lg hover:bg-gray-900 transition-colors"
                       >

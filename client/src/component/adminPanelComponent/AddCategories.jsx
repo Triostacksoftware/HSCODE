@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from "react";
 import {
   MdClose,
@@ -207,6 +209,7 @@ const AddCategories = ({ onClose, onCategoryCreated }) => {
           {/* Action Buttons */}
           <div className="flex space-x-3 pt-4 sm:pt-6">
             <button
+              suppressHydrationWarning={true}
               type="button"
               onClick={onClose}
               disabled={isLoading}
@@ -215,6 +218,7 @@ const AddCategories = ({ onClose, onCategoryCreated }) => {
               Cancel
             </button>
             <button
+              suppressHydrationWarning={true}
               type="submit"
               disabled={isLoading}
               className="flex-1 px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center text-sm sm:text-base"
@@ -307,6 +311,7 @@ const AddCategories = ({ onClose, onCategoryCreated }) => {
 
             {/* Bulk Upload Button */}
             <button
+              suppressHydrationWarning={true}
               type="button"
               onClick={handleBulkSubmit}
               disabled={isBulkLoading || !selectedFile}
