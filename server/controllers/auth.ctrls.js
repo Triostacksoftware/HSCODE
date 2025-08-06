@@ -376,6 +376,66 @@ export const adminVerification = async (req, res) => {
   }
 };
 
+// Superadmin Login
+export const superadminLogin = async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ message: "Email and password are required" });
+  }
+
+  try {
+    // Find admin by email
+    const admin = await AdminModel.findOne({ email });
+    if (!admin) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    // Check if admin is superadmin
+    if (admin.role !== "superadmin") {
+      return res
+        .status(403)
+        .json({ message: "Access denied. Superadmin role required." });
+    }
+
+    // Verify password
+    const isPasswordValid = bcrypt.compareSync(password, admin.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    // Generate JWT with admin._id and role
+    const authToken = generateToken(
+      { id: admin._id, role: "superadmin" },
+      "24h"
+    );
+
+    // Set JWT in HTTP-only cookie
+    res.cookie("auth_token", authToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    });
+
+    // Respond with success
+    res.json({
+      success: true,
+      message: "Superadmin login successful",
+      admin: {
+        _id: admin._id,
+        name: admin.name,
+        email: admin.email,
+        countryCode: admin.countryCode,
+        role: admin.role,
+      },
+    });
+  } catch (error) {
+    console.error("Superadmin login error:", error);
+    res.status(500).json({ message: "Login failed. Please try again." });
+  }
+};
+
 // Setup TOTP for admin (first time setup)
 export const setupAdminTOTP = async (req, res) => {
   try {
@@ -604,10 +664,29 @@ export const verifyAuth = async (req, res) => {
           countryCode: admin.countryCode,
         },
       });
+    } else if (decoded.role === "superadmin") {
+      const admin = await AdminModel.findById(decoded.id);
+      if (!admin) {
+        return res.status(401).json({
+          authenticated: false,
+          message: "Superadmin not found",
+        });
+      }
+
+      return res.status(200).json({
+        authenticated: true,
+        user: {
+          id: admin._id,
+          name: admin.name,
+          email: admin.email,
+          role: admin.role,
+          countryCode: admin.countryCode,
+        },
+      });
     } else {
       return res.status(403).json({
         authenticated: false,
-        message: "Access denied - admin role required",
+        message: "Access denied - admin or superadmin role required",
       });
     }
   } catch (error) {
@@ -656,6 +735,7 @@ export const verifyUserAuth = async (req, res) => {
         phone: user.phone,
         membership: user.membership,
         groupsID: user.groupsID,
+        globalGroupsID: user.globalGroupsID,
         countryCode: user.countryCode,
         role: decoded.role,
       },

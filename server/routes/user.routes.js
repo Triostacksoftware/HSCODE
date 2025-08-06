@@ -4,6 +4,9 @@ import {
   joinGroup,
   leaveGroup,
   getUserById,
+  getGlobalGroups,
+  joinGlobalGroup,
+  leaveGlobalGroup,
 } from "../controllers/user.ctrls.js";
 import { authMiddleware } from "../middlewares/auth.mdware.js";
 
@@ -14,5 +17,10 @@ router.post("/groups", authMiddleware, getGroups);
 router.patch("/join-group", authMiddleware, joinGroup);
 router.patch("/leave-group", authMiddleware, leaveGroup);
 router.get("/:userId", authMiddleware, getUserById);
+
+// Global group routes
+router.post("/global-groups", authMiddleware, getGlobalGroups);
+router.patch("/join-global-group", authMiddleware, joinGlobalGroup);
+router.patch("/leave-global-group", authMiddleware, leaveGlobalGroup);
 
 export default router;

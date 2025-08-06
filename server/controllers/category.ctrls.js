@@ -228,12 +228,11 @@ export const deleteGroup = async (req, res) => {
 };
 
 export const getAllGroups = async (req, res) => {
-  console.log("hit");
   try {
     const categories = await LocalCategoryModel.find({
       countryCode: req.user.countryCode,
     });
-    console.log("categories", categories);
+
     const groups = await LocalGroupModel.find({
       categoryId: { $in: categories },
     });

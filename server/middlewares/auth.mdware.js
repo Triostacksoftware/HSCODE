@@ -63,3 +63,35 @@ export const adminMiddleware = async (req, res, next) => {
     return res.status(401).json({ message: "Unauthorized or token expired" });
   }
 };
+
+// Superadmin-specific middleware
+export const superadminMiddleware = async (req, res, next) => {
+  try {
+    const token = req.cookies.auth_token;
+
+    if (!token) {
+      return res
+        .status(401)
+        .json({ message: "No token provided. Please log in." });
+    }
+
+    // Verify token
+    const decoded = verifyToken(token);
+    if (!decoded) {
+      return res.status(401).json({ message: "Invalid or expired token" });
+    }
+
+    // Check if user is superadmin
+    if (decoded.role !== "superadmin") {
+      return res
+        .status(403)
+        .json({ message: "Access denied. Superadmin role required." });
+    }
+
+    req.user = decoded;
+    next();
+  } catch (err) {
+    console.error("Superadmin middleware error:", err);
+    return res.status(401).json({ message: "Unauthorized or token expired" });
+  }
+};

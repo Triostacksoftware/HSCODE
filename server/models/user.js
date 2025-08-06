@@ -45,6 +45,13 @@ const userSchema = new mongoose.Schema(
         ref: "Group",
       },
     ],
+
+    globalGroupsID: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "GlobalGroup",
+      },
+    ],
   },
   {
     timestamps: true,

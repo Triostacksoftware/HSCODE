@@ -15,6 +15,7 @@ import {
   logout,
   verifyAuth,
   verifyUserAuth,
+  superadminLogin,
 } from "../controllers/auth.ctrls.js";
 import AdminModel from "../models/Admin.js";
 
@@ -37,6 +38,9 @@ router.get("/verify-user", verifyUserAuth);
 // admin auth
 router.post("/admin-login", adminLogin);
 router.post("/admin-verification", adminVerification);
+
+// superadmin auth
+router.post("/superadmin-login", superadminLogin);
 
 // TOTP admin auth (Google Authenticator)
 router.post("/admin-setup-totp", setupAdminTOTP);
