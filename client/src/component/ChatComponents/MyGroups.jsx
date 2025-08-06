@@ -111,7 +111,9 @@ const MyGroups = ({ onGroupSelect, selectedGroupId }) => {
                 }`}
                 onClick={() => handleOpenGroup(group)}
                 tabIndex={0}
-                onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && handleOpenGroup(group)}
+                onKeyDown={(e) =>
+                  (e.key === "Enter" || e.key === " ") && handleOpenGroup(group)
+                }
                 role="button"
                 aria-pressed={selectedGroupId === group._id}
               >
@@ -138,7 +140,8 @@ const MyGroups = ({ onGroupSelect, selectedGroupId }) => {
                   {/* Group Info */}
                   <div className="min-w-0 flex-1 grid">
                     <div className="text-sm font-medium truncate">
-                      {group.name || `Group ${String(index + 1).padStart(2, "0")}`}
+                      {group.name ||
+                        `Group ${String(index + 1).padStart(2, "0")}`}
                     </div>
                     <div className="text-xs text-gray-500 truncate">
                       hscode: {group.hscode}

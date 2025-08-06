@@ -20,6 +20,37 @@ export const getGroups = async (req, res) => {
   }
 };
 
+// GET USER BY ID (for user info sidebar)
+export const getUserById = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const currentUserId = req.user.id;
+
+    // Check if user exists
+    const user = await UserModel.findById(userId).select("-password");
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Return user information (excluding sensitive data)
+    res.json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      countryCode: user.countryCode,
+      image: user.image,
+      about: user.about,
+      groupsID: user.groupsID,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    });
+  } catch (error) {
+    console.error("Error fetching user by ID:", error);
+    res.status(500).json({ message: "Error fetching user information" });
+  }
+};
+
 // JOIN GROUP
 export const joinGroup = async (req, res) => {
   try {

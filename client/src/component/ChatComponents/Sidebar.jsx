@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import {HiCog } from "react-icons/hi";
+import { HiCog } from "react-icons/hi";
 import { HiBars3 } from "react-icons/hi2";
 import { BsGlobeAmericas, BsSendArrowUp } from "react-icons/bs";
 import { MdHomeMax } from "react-icons/md";
@@ -64,10 +64,9 @@ const Sidebar = ({ onTabChange, activeTab }) => {
           >
             <button
               onClick={() => handleTabClick(item.id)}
-              className={`w-full flex items-center space-x-3 p-2 px-3 rounded transition-all duration-300 relative min-h-[40px] text-gray-600` +
-                (activeTab === item.id
-                  ? ' bg-gray-200 '
-                  : ' hover:bg-gray-200')
+              className={
+                `w-full flex items-center space-x-3 p-2 px-3 rounded transition-all duration-300 relative min-h-[40px] text-gray-600` +
+                (activeTab === item.id ? " bg-gray-200 " : " hover:bg-gray-200")
               }
             >
               {activeTab === item.id && (

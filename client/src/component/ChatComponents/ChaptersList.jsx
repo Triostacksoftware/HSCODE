@@ -50,13 +50,13 @@ const ChaptersList = ({ onCategorySelect, selectedCategory }) => {
     <div className="flex flex-col h-full px-3">
       {/* Search Bar */}
       <div className="flex-shrink-0 flex items-center gap-3 p-2 py-[.35em] border border-gray-200 rounded-md text-gray-600 ">
-        <LiaSearchSolid/>
+        <LiaSearchSolid />
         <input
           type="text"
           placeholder="Search or open a chapter"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="text-[.88em] outline-none placeholder:text-gray-500"
+          className="text-[.88em] w-full outline-none placeholder:text-gray-500"
         />
       </div>
 
@@ -83,9 +83,7 @@ const ChaptersList = ({ onCategorySelect, selectedCategory }) => {
                 }`}
                 onClick={() => handleCategorySelect(category)}
               >
-                <div className="text-sm font-medium ">
-                  {category.name}
-                </div>
+                <div className="text-sm font-medium ">{category.name}</div>
               </div>
             ))}
           </div>

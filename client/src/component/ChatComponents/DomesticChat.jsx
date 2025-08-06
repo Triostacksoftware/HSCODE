@@ -99,7 +99,11 @@ const DomesticChat = () => {
         }`}
       >
         {selectedGroup ? (
-          <ChatWindow selectedGroupId={selectedGroup._id} groupName={selectedGroup.name} groupImage={selectedGroup.image} />
+          <ChatWindow
+            selectedGroupId={selectedGroup._id}
+            groupName={selectedGroup.name}
+            groupImage={selectedGroup.image}
+          />
         ) : (
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center">

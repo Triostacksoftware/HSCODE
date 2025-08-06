@@ -113,7 +113,7 @@ const GroupsList = ({
           placeholder="Search or open a group"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="text-[.88em] outline-none placeholder:text-gray-500 bg-transparent flex-1"
+          className="text-[.88em] w-full outline-none placeholder:text-gray-500 bg-transparent flex-1"
         />
       </div>
 
@@ -152,9 +152,17 @@ const GroupsList = ({
                   } ${joined ? "cursor-pointer" : ""}`}
                   onClick={joined ? () => handleOpenGroup(group) : undefined}
                   tabIndex={joined ? 0 : -1}
-                  onKeyDown={joined ? (e => (e.key === 'Enter' || e.key === ' ') && handleOpenGroup(group)) : undefined}
+                  onKeyDown={
+                    joined
+                      ? (e) =>
+                          (e.key === "Enter" || e.key === " ") &&
+                          handleOpenGroup(group)
+                      : undefined
+                  }
                   role={joined ? "button" : undefined}
-                  aria-pressed={joined ? selectedGroupId === group._id : undefined}
+                  aria-pressed={
+                    joined ? selectedGroupId === group._id : undefined
+                  }
                 >
                   <div className="flex items-center space-x-3 min-w-0 flex-1">
                     {/* Group Image/Avatar */}
@@ -179,7 +187,8 @@ const GroupsList = ({
                     {/* Group Info */}
                     <div className="min-w-0 flex-1 grid">
                       <div className="text-sm font-medium truncate">
-                        {group.name || `Group ${String(index + 1).padStart(2, "0")}`}
+                        {group.name ||
+                          `Group ${String(index + 1).padStart(2, "0")}`}
                       </div>
                       <div className="text-xs text-gray-500 truncate">
                         hscode: {group.hscode}
@@ -189,7 +198,10 @@ const GroupsList = ({
                     {!joined && (
                       <button
                         suppressHydrationWarning={true}
-                        onClick={e => { e.stopPropagation(); handleJoinGroup(group); }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleJoinGroup(group);
+                        }}
                         className="ml-3 px-4 py-2 bg-gray-800 text-white text-xs font-medium rounded-md hover:bg-gray-900 transition-colors"
                       >
                         Join
