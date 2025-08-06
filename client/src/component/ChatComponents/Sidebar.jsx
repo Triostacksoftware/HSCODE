@@ -1,10 +1,9 @@
 "use client";
 import React, { useState } from "react";
-import { HiMenu, HiGlobe, HiUserGroup, HiCog } from "react-icons/hi";
-
-import { BsGlobeAmericas } from "react-icons/bs";
-import { TbMessage2Question } from "react-icons/tb";
-import { LuMapPinHouse } from "react-icons/lu";
+import {HiCog } from "react-icons/hi";
+import { HiBars3 } from "react-icons/hi2";
+import { BsGlobeAmericas, BsSendArrowUp } from "react-icons/bs";
+import { MdHomeMax } from "react-icons/md";
 
 const Sidebar = ({ onTabChange, activeTab }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -20,97 +19,71 @@ const Sidebar = ({ onTabChange, activeTab }) => {
   const menuItems = [
     {
       id: "local",
-      label: "Local Chat",
-      icon: <LuMapPinHouse className="w-6 h-6" />,
-      color: "bg-white text-black ",
+      label: "Local Chats",
+      icon: <MdHomeMax className="w-[1.1em] h-[1.1em]" />,
     },
     {
       id: "global",
-      label: "Global Chat",
-      icon: <BsGlobeAmericas className="w-6 h-6" />,
-      color: "bg-white text-black ",
+      label: "Global Chats",
+      icon: <BsGlobeAmericas className="w-[1.1em] h-[1.1em]" />,
     },
     {
       id: "leads",
       label: "Requested Leads",
-      icon: <TbMessage2Question className="w-6 h-6" />,
-      color: "bg-white text-black ",
+      icon: <BsSendArrowUp className="w-[1.1em] h-[1.1em]" />,
     },
     {
       id: "settings",
       label: "Settings",
-      icon: <HiCog className="w-6 h-6" />,
-      color: "bg-white text-black ",
+      icon: <HiCog className="w-[1.1em] h-[1.1em]" />,
     },
   ];
 
   return (
     <div
-      className={`h-screen bg-white border-r border-4 border-gray-200 transition-all duration-300 ${
-        isOpen ? "w-64" : "w-16"
+      className={`h-screen transition-all duration-500 bg-[#f3f3f3] overflow-hidden flex flex-col border-r-1 border-gray-200 ${
+        isOpen ? "w-56" : "w-14"
       }`}
     >
       {/* Hamburger Menu */}
-      <div className="p-4 ">
+      <div className="m-2">
         <button
           onClick={toggleSidebar}
-          className="cursor-pointer w-8 h-8 flex items-center justify-center bg-blue-100 rounded hover:bg-blue-200 transition-colors"
+          className="cursor-pointer p-2 px-3 flex items-center justify-center rounded transition-colors hover:bg-gray-200 hover:text-[#656565]"
         >
-          <HiMenu className="w-5 h-5 text-gray-600" />
+          <HiBars3 className="w-5 h-5 text-gray-600 " />
         </button>
       </div>
 
-      {/* Menu Items */}
-      <div className="flex flex-col h-[calc(100vh-80px)]">
-        <div className="flex-1">
-          {menuItems.slice(0, 3).map((item) => (
-            <div
-              key={item.id}
-              className={`${isOpen ? "py-2 px-4" : "py-1 px-2"}`}
-            >
-              <button
-                onClick={() => handleTabClick(item.id)}
-                className={`cursor-pointer w-full flex items-center space-x-3 p-2 rounded-lg transition-all duration-300 hover:bg-gray-100`}
-              >
-                <div
-                  className={`w-6 h-6  flex items-center justify-center rounded transition-all duration-300 ${
-                    activeTab === item.id ? "bg-black text-white" : item.color
-                  }`}
-                >
-                  {item.icon}
-                </div>
-                {isOpen && (
-                  <span className="text-gray-700 font-medium whitespace-nowrap">
-                    {item.label}
-                  </span>
-                )}
-              </button>
-            </div>
-          ))}
-        </div>
-
-        {/* Settings at bottom */}
-        <div className={`${isOpen ? "py-2 px-4" : "py-1 px-2"}`}>
-          <button
-            onClick={() => handleTabClick(menuItems[3].id)}
-            className={`cursor-pointer w-full flex items-center space-x-3 p-2 rounded-lg transition-all duration-300 hover:bg-gray-100`}
+      {/* Menu Items (including Settings at bottom) */}
+      <div className="flex flex-col h-[calc(100vh-80px)] ">
+        {menuItems.map((item, idx) => (
+          <div
+            key={item.id}
+            className={`m-2${idx === menuItems.length - 1 ? " mt-auto" : ""}`}
           >
-            <div
-              className={`w-6 h-6 flex items-center justify-center rounded transition-all duration-300 ${
-                activeTab === menuItems[3].id
-                  ? "bg-amber-700 text-white"
-                  : menuItems[3].color
-              }`}
+            <button
+              onClick={() => handleTabClick(item.id)}
+              className={`w-full flex items-center space-x-3 p-2 px-3 rounded transition-all duration-300 relative min-h-[40px] text-gray-600` +
+                (activeTab === item.id
+                  ? ' bg-gray-200 '
+                  : ' hover:bg-gray-200')
+              }
             >
-              {menuItems[3].icon}
-            </div>
-            {isOpen && (
-              <span className="text-gray-700 font-medium whitespace-nowrap">
-                {menuItems[3].label}
-              </span>
-            )}
-          </button>
-        </div>
+              {activeTab === item.id && (
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[.2em] rounded-md bg-green-600" />
+              )}
+              <div className="rounded transition-all duration-300">
+                {item.icon}
+              </div>
+              {isOpen && (
+                <span className="text-gray-700 text-sm whitespace-nowrap transition-opacity duration-300 opacity-100">
+                  {item.label}
+                </span>
+              )}
+            </button>
+          </div>
+        ))}
       </div>
     </div>
   );

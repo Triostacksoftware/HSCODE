@@ -8,7 +8,7 @@ import ChatWindow from "./ChatWindow";
 const DomesticChat = () => {
   const [activeTab, setActiveTab] = useState("groups"); // "groups" or "chapters"
   const [selectedCategory, setSelectedCategory] = useState(null);
-  const [selectedGroupId, setSelectedGroupId] = useState(null);
+  const [selectedGroup, setSelectedGroup] = useState(null);
 
   const handleCategorySelect = (category) => {
     setSelectedCategory(category);
@@ -16,46 +16,46 @@ const DomesticChat = () => {
 
   const handleBackToChapters = () => {
     setSelectedCategory(null);
-    setSelectedGroupId(null);
+    setSelectedGroup(null);
   };
 
-  const handleGroupSelect = (groupId) => {
-    setSelectedGroupId(groupId);
+  const handleGroupSelect = (group) => {
+    setSelectedGroup(group);
   };
 
   return (
-    <div className="flex h-screen montserrat">
+    <div className="flex h-screen bg-[#fefefe] ">
       {/* Left Section - Local Chat */}
-      <div className="w-80 border-r border-gray-200 flex flex-col">
+      <div className="flex flex-col w-80 border-r-1 border-gray-200">
         {/* Header */}
-        <div className="p-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-700">Local Chat</h2>
+        <div className="p-4 px-5 ">
+          <h2 className="text-xl font-semibold text-gray-800">Local Chats</h2>
         </div>
 
         {/* Toggle Buttons */}
-        <div className="p-4 border-b border-gray-200">
-          <div className="flex bg-gray-100 rounded-lg p-1">
+        <div className="px-2 mb-4">
+          <div className="flex rounded-lg p-1 gap-5">
             <button
               suppressHydrationWarning={true}
               onClick={() => setActiveTab("groups")}
-              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+              className={`w-full py-[.6em] px-4 rounded-md text-xs font-medium transition-colors ${
                 activeTab === "groups"
                   ? "bg-gray-800 text-white"
-                  : "text-gray-600 hover:text-gray-900"
+                  : "bg-gray-200 hover:text-gray-900"
               }`}
             >
-              groups
+              Groups
             </button>
             <button
               suppressHydrationWarning={true}
               onClick={() => setActiveTab("chapters")}
-              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+              className={`w-full py-[.6em] px-4 rounded-md text-xs font-medium transition-colors ${
                 activeTab === "chapters"
                   ? "bg-gray-800 text-white"
-                  : "text-gray-600 hover:text-gray-900"
+                  : "bg-gray-200 hover:text-gray-900"
               }`}
             >
-              chapters
+              Chapters
             </button>
           </div>
         </div>
@@ -70,7 +70,7 @@ const DomesticChat = () => {
           ) : (
             <MyGroups
               onGroupSelect={handleGroupSelect}
-              selectedGroupId={selectedGroupId}
+              selectedGroupId={selectedGroup?._id}
             />
           )}
         </div>
@@ -84,7 +84,7 @@ const DomesticChat = () => {
             categoryName={selectedCategory.name}
             onBack={handleBackToChapters}
             onGroupSelect={handleGroupSelect}
-            selectedGroupId={selectedGroupId}
+            selectedGroupId={selectedGroup?._id}
           />
         </div>
       )}
@@ -98,8 +98,8 @@ const DomesticChat = () => {
             : "flex-1 ml-0"
         }`}
       >
-        {selectedGroupId ? (
-          <ChatWindow selectedGroupId={selectedGroupId} />
+        {selectedGroup ? (
+          <ChatWindow selectedGroupId={selectedGroup._id} groupName={selectedGroup.name} groupImage={selectedGroup.image} />
         ) : (
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center">

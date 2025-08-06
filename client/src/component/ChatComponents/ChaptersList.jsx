@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useUserAuth } from "../../utilities/userAuthMiddleware";
+import { LiaSearchSolid } from "react-icons/lia";
 
 const ChaptersList = ({ onCategorySelect, selectedCategory }) => {
   const { user } = useUserAuth();
@@ -46,20 +47,21 @@ const ChaptersList = ({ onCategorySelect, selectedCategory }) => {
   );
 
   return (
-    <div className="flex  flex-col  h-full">
+    <div className="flex flex-col h-full px-3">
       {/* Search Bar */}
-      <div className="p-4 border-b border-gray-200 flex-shrink-0">
+      <div className="flex-shrink-0 flex items-center gap-3 p-2 py-[.35em] border border-gray-200 rounded-md text-gray-600 ">
+        <LiaSearchSolid/>
         <input
           type="text"
-          placeholder="search chapter"
+          placeholder="Search or open a chapter"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+          className="text-[.88em] outline-none placeholder:text-gray-500"
         />
       </div>
 
       {/* Categories List */}
-      <div className="flex-1 overflow-y-auto p-4 min-h-0">
+      <div className="flex-1 overflow-y-auto mt-4 min-h-0">
         {loading ? (
           <div className="text-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
@@ -70,18 +72,18 @@ const ChaptersList = ({ onCategorySelect, selectedCategory }) => {
             <p className="text-gray-500 text-sm">No chapters found</p>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-1">
             {filteredCategories.map((category, index) => (
               <div
                 key={category._id}
-                className={`p-3 border border-gray-200 rounded-lg cursor-pointer transition-all hover:shadow-md ${
+                className={`p-3 rounded cursor-pointer transition-all ${
                   selectedCategory?._id === category._id
-                    ? "bg-blue-50 border-blue-300"
-                    : "bg-white hover:bg-gray-50 hover:border-gray-300"
+                    ? "bg-[#eaeaea] text-gray-800"
+                    : "bg-white hover:bg-[#f4f4f4] text-gray-600"
                 }`}
                 onClick={() => handleCategorySelect(category)}
               >
-                <div className="text-sm font-medium text-gray-700">
+                <div className="text-sm font-medium ">
                   {category.name}
                 </div>
               </div>
