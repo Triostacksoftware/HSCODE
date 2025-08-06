@@ -7,6 +7,8 @@ import toast from "react-hot-toast";
 import socket from "../../utilities/socket";
 import { LiaSearchSolid } from "react-icons/lia";
 import { IoMdClose } from "react-icons/io";
+import { FaRegPaperPlane, FaUserFriends } from "react-icons/fa";
+import { MdOutlineGroup } from "react-icons/md";
 
 const ChatWindow = ({ selectedGroupId, groupName, groupImage }) => {
   const { user } = useUserAuth();
@@ -19,6 +21,7 @@ const ChatWindow = ({ selectedGroupId, groupName, groupImage }) => {
   const messagesEndRef = useRef(null);
   const [searchActive, setSearchActive] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [showMembers, setShowMembers] = useState(false);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -168,6 +171,17 @@ const ChatWindow = ({ selectedGroupId, groupName, groupImage }) => {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {/* Members button */}
+          <button
+            className="p-2 rounded hover:bg-gray-100 flex items-center gap-1"
+            onClick={() => setShowMembers((v) => !v)}
+            title="Show members"
+            type="button"
+          >
+            <MdOutlineGroup className="w-5 h-5 text-gray-600" />
+            <span className="text-xs text-gray-700 hidden sm:inline">Members</span>
+          </button>
+          {/* Search icon/button */}
           {searchActive ? (
             <div className="flex items-center gap-2 bg-gray-100 px-2 py-1 rounded">
               <input
@@ -187,32 +201,29 @@ const ChatWindow = ({ selectedGroupId, groupName, groupImage }) => {
               <LiaSearchSolid className="w-5 h-5 text-gray-600" />
             </button>
           )}
+          {/* Members dropdown */}
+          {showMembers && (
+            <div className="absolute right-4 top-14 bg-white border border-gray-200 rounded shadow-lg z-20 min-w-[200px] max-h-72 overflow-y-auto">
+              <div className="p-2 text-gray-700 border-b border-gray-100 text-sm">Online Members</div>
+              {onlineUsers[selectedGroupId] && onlineUsers[selectedGroupId].length > 0 ? (
+                onlineUsers[selectedGroupId].map((user) => (
+                  <div key={user.id} className="flex items-center gap-2 px-3 py-2 hover:bg-gray-50">
+                    <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs font-medium text-gray-700 overflow-hidden">
+                      <span>{user.name?.charAt(0)?.toUpperCase()}</span>
+                    </div>
+                    <span className="text-xs text-gray-800 truncate">{user.name}</span>
+                  </div>
+                ))
+              ) : (
+                <div className="px-3 py-2 text-xs text-gray-500">No members online</div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Online Users List (below top bar) */}
-      <div className="px-4 pt-2 pb-1 border-b border-gray-100 bg-white">
-        {onlineUsers[selectedGroupId] && onlineUsers[selectedGroupId].length > 0 && (
-          <div>
-            <div className="text-xs text-gray-500 mb-1">Online:</div>
-            <div className="flex flex-wrap gap-1">
-              {onlineUsers[selectedGroupId].map((user, index) => (
-                <span
-                  key={user.id}
-                  className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800"
-                >
-                  <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
-                  {user.name}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-        {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
-      </div>
-
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#f7f7fa]">
+      <div className="flex-1 overflow-y-auto p-9 space-y-4 bg-[#faf7f4]"> 
         {loading ? (
           <div className="flex items-center justify-center h-full">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -228,7 +239,7 @@ const ChatWindow = ({ selectedGroupId, groupName, groupImage }) => {
             </div>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-9">
             {/* Date separator logic */}
             {(() => {
               let lastDate = null;
@@ -242,7 +253,7 @@ const ChatWindow = ({ selectedGroupId, groupName, groupImage }) => {
                   <React.Fragment key={lead._id}>
                     {showDate && (
                       <div className="flex justify-center my-2">
-                        <span className="bg-gray-200 text-gray-600 text-xs px-3 py-1 rounded-full shadow-sm">
+                        <span className="bg-[#e0ddd9] text-gray-600 text-xs px-3 py-1 rounded-md shadow-sm">
                           {dateLabel}
                         </span>
                       </div>
@@ -274,10 +285,10 @@ const ChatWindow = ({ selectedGroupId, groupName, groupImage }) => {
                         }`}
                       >
                         <div
-                          className={`rounded-lg px-4 py-2 ${
+                          className={`rounded-xl px-4 py-2 shadow-sm ${
                             isOwnMessage
-                              ? "bg-blue-500 text-white"
-                              : "bg-white text-gray-800"
+                              ? "bg-[#d9fdd3] text-gray-900 rounded-br-sm"
+                              : "bg-white text-gray-900 rounded-bl-sm"
                           }`}
                         >
                           <p className="text-sm">{lead.content}</p>
@@ -307,19 +318,19 @@ const ChatWindow = ({ selectedGroupId, groupName, groupImage }) => {
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Type your message (will be sent for approval)..."
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-gray-500 focus:border-transparent"
             disabled={sending}
           />
           <button
             suppressHydrationWarning={true}
             type="submit"
             disabled={!newMessage.trim() || sending}
-            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="px-4 py-2 bg-gray-800 text-white rounded-lg  disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {sending ? (
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
             ) : (
-              "Send"
+              <FaRegPaperPlane/>
             )}
           </button>
         </form>
