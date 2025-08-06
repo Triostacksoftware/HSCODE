@@ -9,8 +9,8 @@ import { connectUserSocket } from "../../utilities/socket";
 
 // Context to share online user data across components
 export const OnlineUsersContext = createContext({
-  onlineCounts: {},   // groupId -> count
-  onlineUsers: {},    // groupId -> [ { userId, socketId } ]
+  onlineCounts: {}, // groupId -> count
+  onlineUsers: {}, // groupId -> [ { userId, socketId } ]
   socket: null,
 });
 
@@ -27,7 +27,11 @@ const ChatPage = () => {
     const socket = connectUserSocket(user._id, user.groupsID);
     setSocket(socket);
 
-    const handleGroupOnlineUsers = ({ groupId, onlineUserIds, onlineUsers: users }) => {
+    const handleGroupOnlineUsers = ({
+      groupId,
+      onlineUserIds,
+      onlineUsers: users,
+    }) => {
       console.log("Users for group", groupId, ":", users);
       setOnlineCounts((prev) => ({
         ...prev,

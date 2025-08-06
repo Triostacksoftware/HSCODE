@@ -181,7 +181,7 @@ const Categories = () => {
           <div>
             <h2 className="text-base sm:text-lg text-gray-700">Categories</h2>
             <h2 className="text-[.7em] sm:text-[.8em] text-gray-500">
-              No. of Categories - 03
+              No. of Categories - {categories.length}
             </h2>
           </div>
           <button

@@ -41,7 +41,7 @@ const CategorisGroups = ({ categoryId, categoryName }) => {
       setError("");
 
       const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/categories/${categoryId}/group`,
+        `${process.env.NEXT_PUBLIC_BASE_URL}/categories/${categoryId}/groups`,
         {
           withCredentials: true,
         }
@@ -192,7 +192,11 @@ const CategorisGroups = ({ categoryId, categoryName }) => {
                         <div className="flex items-end space-x-2 sm:space-x-3 min-w-0 flex-1">
                           <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden border border-gray-200">
                             <img
-                              src={ group.image.includes('https') ? group.image :`${process.env.NEXT_PUBLIC_BASE_URL}/upload/${group.image}`}
+                              src={
+                                group.image.includes("https")
+                                  ? group.image
+                                  : `${process.env.NEXT_PUBLIC_BASE_URL}/upload/${group.image}`
+                              }
                               alt="image"
                             />
                             {/* <span className="text-xs text-gray-600">G</span> */}

@@ -1,6 +1,10 @@
 "use client";
 import React, { useState } from "react";
-import { HiMenu, HiChat, HiGlobe, HiUserGroup, HiCog } from "react-icons/hi";
+import { HiMenu, HiGlobe, HiUserGroup, HiCog } from "react-icons/hi";
+
+import { BsGlobeAmericas } from "react-icons/bs";
+import { TbMessage2Question } from "react-icons/tb";
+import { LuMapPinHouse } from "react-icons/lu";
 
 const Sidebar = ({ onTabChange, activeTab }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -17,26 +21,26 @@ const Sidebar = ({ onTabChange, activeTab }) => {
     {
       id: "local",
       label: "Local Chat",
-      icon: <HiChat className="w-4 h-4" />,
-      color: "bg-white text-black border border-black",
+      icon: <LuMapPinHouse className="w-6 h-6" />,
+      color: "bg-white text-black ",
     },
     {
       id: "global",
       label: "Global Chat",
-      icon: <HiGlobe className="w-4 h-4" />,
-      color: "bg-white text-black border border-black",
+      icon: <BsGlobeAmericas className="w-6 h-6" />,
+      color: "bg-white text-black ",
     },
     {
       id: "leads",
       label: "Requested Leads",
-      icon: <HiUserGroup className="w-4 h-4" />,
-      color: "bg-white text-black border border-black",
+      icon: <TbMessage2Question className="w-6 h-6" />,
+      color: "bg-white text-black ",
     },
     {
       id: "settings",
       label: "Settings",
-      icon: <HiCog className="w-4 h-4" />,
-      color: "bg-white text-black border border-black",
+      icon: <HiCog className="w-6 h-6" />,
+      color: "bg-white text-black ",
     },
   ];
 
@@ -69,7 +73,7 @@ const Sidebar = ({ onTabChange, activeTab }) => {
                 className={`cursor-pointer w-full flex items-center space-x-3 p-2 rounded-lg transition-all duration-300 hover:bg-gray-100`}
               >
                 <div
-                  className={`w-6 h-6 flex items-center justify-center rounded transition-all duration-300 ${
+                  className={`w-6 h-6  flex items-center justify-center rounded transition-all duration-300 ${
                     activeTab === item.id ? "bg-black text-white" : item.color
                   }`}
                 >

@@ -2,16 +2,15 @@ import LocalCategoryModel from "../models/LocalCategory.js";
 import LocalGroupModel from "../models/LocalGroup.js";
 import { parseFile } from "../utilities/xlsx.util.js";
 
-
 // -------- CATEGORY CONTROLLERS --------
 
 // GET all categories
 export const getCategories = async (req, res) => {
   try {
     const countryCode = req.user.countryCode;
-    console.log(countryCode)
+    console.log(countryCode);
 
-    const categories = await LocalCategoryModel.find({ countryCode: 'US' });
+    const categories = await LocalCategoryModel.find({ countryCode: "US" });
     res.json(categories);
   } catch (err) {
     res.status(500).json({ message: "Error fetching categories" });
@@ -20,7 +19,6 @@ export const getCategories = async (req, res) => {
 
 // CREATE categories (Admin only)
 export const createCategory = async (req, res) => {
-
   try {
     let { name } = req.body;
     const { id, countryCode } = req.user; // Admin ID & country
@@ -60,7 +58,6 @@ export const createManyCategory = async (req, res) => {
 
 // DELETE category (Admin & correct country)
 export const deleteCategory = async (req, res) => {
-
   const { id: categoryId } = req.params;
   try {
     const category = await LocalCategoryModel.findById(categoryId);
@@ -82,7 +79,6 @@ export const deleteCategory = async (req, res) => {
 
 // UPDATE category (Admin & correct country)
 export const updateCategory = async (req, res) => {
-
   const { id: categoryId } = req.params;
   const { name } = req.body;
 
@@ -111,7 +107,7 @@ export const updateCategory = async (req, res) => {
 // GET groups in a category
 export const getGroups = async (req, res) => {
   const { id: categoryId } = req.params;
-
+  console.log("categoryId", categoryId);
   try {
     const groups = await LocalGroupModel.find({ categoryId });
     res.json(groups);
@@ -122,7 +118,6 @@ export const getGroups = async (req, res) => {
 
 // CREATE groups (Admin only, supports array)
 export const createGroup = async (req, res) => {
-
   const { id: categoryId } = req.params;
   let groups = req.body; // Can be single object or array
 
@@ -161,7 +156,6 @@ export const createGroup = async (req, res) => {
 
 // CREATE MANY groups (Admin only, supports array)
 export const createManyGroup = async (req, res) => {
-
   try {
     const { id, countryCode } = req.user; // Admin ID & country
     const group = parseFile(req.file);
@@ -184,7 +178,6 @@ export const createManyGroup = async (req, res) => {
 
 // UPDATE group (Admin only)
 export const updateGroup = async (req, res) => {
-
   const { groupId } = req.params;
   const { name, hscode, image } = req.body;
 
@@ -213,7 +206,6 @@ export const updateGroup = async (req, res) => {
 
 // DELETE group (Admin only)
 export const deleteGroup = async (req, res) => {
-
   const { groupId } = req.params;
 
   try {
@@ -232,5 +224,22 @@ export const deleteGroup = async (req, res) => {
     res.json({ message: "Group deleted successfully" });
   } catch (err) {
     res.status(500).json({ message: "Error deleting group" });
+  }
+};
+
+export const getAllGroups = async (req, res) => {
+  console.log("hit");
+  try {
+    const categories = await LocalCategoryModel.find({
+      countryCode: req.user.countryCode,
+    });
+    console.log("categories", categories);
+    const groups = await LocalGroupModel.find({
+      categoryId: { $in: categories },
+    });
+    console.log("groups", groups);
+    res.json(groups);
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching groups" });
   }
 };

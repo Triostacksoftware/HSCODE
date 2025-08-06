@@ -11,6 +11,7 @@ import {
   deleteGroup,
   createManyCategory,
   createManyGroup,
+  getAllGroups,
 } from "../controllers/category.ctrls.js";
 import upload from "../configurations/multer.js";
 
@@ -39,5 +40,7 @@ router.post(
 );
 router.patch("/:id/group/:groupId", adminMiddleware, updateGroup);
 router.delete("/:id/group/:groupId", adminMiddleware, deleteGroup);
+
+router.get("/allgroups", adminMiddleware, getAllGroups);
 
 export default router;

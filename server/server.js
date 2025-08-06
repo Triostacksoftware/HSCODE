@@ -91,7 +91,10 @@ async function broadcastGroupOnlineUsers(groupId) {
       onlineUsers: formattedUsers,
     });
   } catch (error) {
-    console.error(`Error broadcasting online users for group ${groupId}:`, error);
+    console.error(
+      `Error broadcasting online users for group ${groupId}:`,
+      error
+    );
     io.to(`group-${groupId}`).emit("group-online-users", {
       groupId,
       onlineUserIds: [],
@@ -110,7 +113,9 @@ mongoose
 
     server.listen(PORT, () => {
       console.log(
-        `🚀 Server running at ${process.env.DOMAIN || "http://localhost:" + PORT}`
+        `🚀 Server running at ${
+          process.env.DOMAIN || "http://localhost:" + PORT
+        }`
       );
     });
   })

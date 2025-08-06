@@ -28,6 +28,7 @@ const RequestedLeads = () => {
       if (selectedGroup) {
         params.append("groupId", selectedGroup);
       }
+      console.log("params", params.toString());
       const response = await axios.get(
         `${
           process.env.NEXT_PUBLIC_BASE_URL
@@ -46,16 +47,11 @@ const RequestedLeads = () => {
   const fetchGroups = async () => {
     try {
       const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/categories`,
+        `${process.env.NEXT_PUBLIC_BASE_URL}/categories/allgroups`,
         { withCredentials: true }
       );
-      const allGroups = [];
-      response.data.forEach((category) => {
-        if (category.groups) {
-          allGroups.push(...category.groups);
-        }
-      });
-      setGroups(allGroups);
+
+      setGroups(response.data);
     } catch (error) {
       console.error("Error fetching groups:", error);
     }
