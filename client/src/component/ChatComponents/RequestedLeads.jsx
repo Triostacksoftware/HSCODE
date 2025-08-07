@@ -85,7 +85,7 @@ const RequestedLeads = () => {
             onClick={() => setActiveTab("pending")}
             className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
               activeTab === "pending"
-                ? "bg-white text-gray-900 shadow-sm"
+                ? "bg-gray-600 text-white shadow-sm"
                 : "text-gray-600 hover:text-gray-900"
             }`}
           >
@@ -96,7 +96,7 @@ const RequestedLeads = () => {
             onClick={() => setActiveTab("approved")}
             className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
               activeTab === "approved"
-                ? "bg-white text-gray-900 shadow-sm"
+                ? "bg-gray-600 text-white shadow-sm"
                 : "text-gray-600 hover:text-gray-900"
             }`}
           >
@@ -107,7 +107,7 @@ const RequestedLeads = () => {
             onClick={() => setActiveTab("rejected")}
             className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
               activeTab === "rejected"
-                ? "bg-white text-gray-900 shadow-sm"
+                ? "bg-gray-600 text-white shadow-sm"
                 : "text-gray-600 hover:text-gray-900"
             }`}
           >
@@ -159,7 +159,7 @@ const RequestedLeads = () => {
                   <div className="flex-1">
                     <div className="flex items-center space-x-2 mb-2">
                       <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                        className={`px-2 py-1 rounded-md text-xs font-medium ${getStatusColor(
                           lead.status
                         )}`}
                       >
