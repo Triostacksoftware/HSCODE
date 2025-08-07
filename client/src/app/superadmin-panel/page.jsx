@@ -2,28 +2,26 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
-import { useAuth } from "../../utilities/authMiddleware";
-import Dashboard from "@/component/adminPanelComponent/Dashboard";
-import HomeContent from "@/component/adminPanelComponent/HomeContent";
-import Categories from "@/component/adminPanelComponent/Categories";
-import Settings from "@/component/adminPanelComponent/Settings";
-import RequestedLeads from "@/component/adminPanelComponent/RequestedLeads";
-import GlobalRequestedLeads from "@/component/adminPanelComponent/GlobalRequestedLeads";
+import { useSuperadminAuth } from "../../utilities/superadminAuthMiddleware";
+import SuperDashboard from "@/component/superadminPanelComponent/SuperDashboard";
+import SuperCategories from "@/component/superadminPanelComponent/SuperCategories";
+import SuperSettings from "@/component/superadminPanelComponent/SuperSettings";
+import SuperGlobalRequestedLeads from "@/component/superadminPanelComponent/SuperGlobalRequestedLeads";
+import ManageAdmins from "@/component/superadminPanelComponent/ManageAdmins";
 import {
   MdOutlineDashboard,
-  MdOutlineHomeMax,
   MdOutlineCategory,
   MdOutlineSettings,
   MdMenu,
   MdClose,
   MdLogout,
   MdOutlineRequestPage,
-  MdOutlinePublic,
+  MdOutlineAdminPanelSettings,
 } from "react-icons/md";
 
-const AdminPanel = () => {
+const SuperAdminPanel = () => {
   const router = useRouter();
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { isAuthenticated, isLoading, user } = useSuperadminAuth();
   const [activePage, setActivePage] = useState("Dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -40,25 +38,25 @@ const AdminPanel = () => {
     );
   }
 
-  // Redirect if not authenticated
-  if (!isAuthenticated) {
-    return null; // Router will handle redirect
+  // Redirect if not authenticated or not superadmin
+  if (!isAuthenticated || user?.role !== "superadmin") {
+    router.push("/superadmin-auth");
+    return null;
   }
 
   const navigationItems = [
-    { name: "Dashboard", icon: MdOutlineDashboard, component: Dashboard },
-    { name: "Home Content", icon: MdOutlineHomeMax, component: HomeContent },
-    { name: "Categories", icon: MdOutlineCategory, component: Categories },
-    { name: "Settings", icon: MdOutlineSettings, component: Settings },
-    {
-      name: "Requested Leads",
-      icon: MdOutlineRequestPage,
-      component: RequestedLeads,
-    },
+    { name: "Dashboard", icon: MdOutlineDashboard, component: SuperDashboard },
+    { name: "Categories", icon: MdOutlineCategory, component: SuperCategories },
+    { name: "Settings", icon: MdOutlineSettings, component: SuperSettings },
     {
       name: "Global Requested Leads",
-      icon: MdOutlinePublic,
-      component: GlobalRequestedLeads,
+      icon: MdOutlineRequestPage,
+      component: SuperGlobalRequestedLeads,
+    },
+    {
+      name: "Manage Admins",
+      icon: MdOutlineAdminPanelSettings,
+      component: ManageAdmins,
     },
   ];
 
@@ -70,7 +68,7 @@ const AdminPanel = () => {
       const Component = currentItem.component;
       return <Component />;
     }
-    return <Dashboard />;
+    return <SuperDashboard />;
   };
 
   const handleNavigation = (pageName) => {
@@ -94,12 +92,12 @@ const AdminPanel = () => {
         }
       );
 
-      // Redirect to TOTP admin auth page
-      router.push("/ap-admin-auth-totp");
+      // Redirect to superadmin login page
+      router.push("/superadmin-auth");
     } catch (error) {
       console.error("Logout error:", error);
       // Even if logout fails, redirect to login page
-      router.push("/ap-admin-auth-totp");
+      router.push("/superadmin-auth");
     } finally {
       setIsLoggingOut(false);
     }
@@ -125,7 +123,7 @@ const AdminPanel = () => {
       >
         {/* Mobile Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200 md:hidden">
-          <div className="font-semibold">HSCODE</div>
+          <div className="font-semibold">HSCODE SuperAdmin</div>
           <button
             onClick={() => setSidebarOpen(false)}
             className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
@@ -135,20 +133,22 @@ const AdminPanel = () => {
         </div>
 
         {/* Logo and App Name */}
-        <div className="p-4 md:p-6 font-semibold hidden md:block">HSCODE</div>
+        <div className="p-4 md:p-6 font-semibold hidden md:block">
+          HSCODE SuperAdmin
+        </div>
 
         {/* User Profile Section */}
         <div className="p-4 text-gray-900 text-sm">
           <div className="flex items-center p-3 rounded-lg gap-2">
-            <div className="px-3 py-2 rounded-md text-sm border flex-shrink-0">
-              {user?.countryCode || "IN"}
+            <div className="px-3 py-2 rounded-md text-sm border flex-shrink-0 bg-blue-100 text-blue-800">
+              SuperAdmin
             </div>
             <div className="min-w-0 flex-1">
               <div className="font-semibold montserrat truncate">
-                {user?.name || "Admin User"}
+                {user?.name || "Super Admin"}
               </div>
               <div className="text-gray-500 text-xs truncate">
-                {user?.email || "admin@example.com"}
+                {user?.email || "superadmin@example.com"}
               </div>
             </div>
           </div>
@@ -180,7 +180,7 @@ const AdminPanel = () => {
         {/* Support and Community */}
         <div className="p-4 mt-auto text-sm space-y-2 absolute bottom-0 left-0 right-0 text-gray-600">
           <button className="w-full px-3 py-2 rounded-lg transition-colors border hover:bg-gray-300 text-xs sm:text-sm">
-            Leads Chat
+            Global Chat
           </button>
           <button
             onClick={handleLogout}
@@ -203,7 +203,7 @@ const AdminPanel = () => {
           >
             <MdMenu className="w-5 h-5" />
           </button>
-          <div className="font-semibold">HSCODE</div>
+          <div className="font-semibold">HSCODE SuperAdmin</div>
           <div className="w-10"></div> {/* Spacer for centering */}
         </div>
 
@@ -214,4 +214,4 @@ const AdminPanel = () => {
   );
 };
 
-export default AdminPanel;
+export default SuperAdminPanel;
