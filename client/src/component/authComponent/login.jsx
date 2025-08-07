@@ -42,7 +42,7 @@ export default function Login() {
 
       if (response.status === 200 && response.data?.message === "LoggedIn") {
         console.log("Login successful:", response.data.message);
-        return router.push("/dashboard");
+        return router.push("/userchat");
       }
 
       // Show OTP input after successful login

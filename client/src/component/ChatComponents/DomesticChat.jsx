@@ -24,7 +24,7 @@ const DomesticChat = () => {
   };
 
   return (
-    <div className="flex h-screen bg-[#fefefe] ">
+    <div className="flex h-screen">
       {/* Left Section - Local Chat */}
       <div className="flex flex-col w-80 border-r-1 border-gray-200">
         {/* Header */}

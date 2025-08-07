@@ -34,7 +34,7 @@ const GlobalChat = () => {
   };
 
   return (
-    <div className="flex h-full bg-[#fefefe] relative">
+    <div className="flex h-full relative">
       {/* Left Section - Global Chat */}
       <div
         className={`

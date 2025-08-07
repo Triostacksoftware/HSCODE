@@ -10,24 +10,36 @@ const RequestedLeads = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState("pending"); // pending, approved, rejected
+  const [requestState, setRequestState] = useState("local");
 
   useEffect(() => {
     fetchRequestedLeads();
-  }, [activeTab]);
+  }, [activeTab, requestState]);
 
   const fetchRequestedLeads = async () => {
     try {
       setLoading(true);
       setError("");
 
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/requested-leads/user?status=${activeTab}`,
-        {
-          withCredentials: true,
-        }
-      );
+      if (requestState == 'local'){
+        const response = await axios.get(
+          `${process.env.NEXT_PUBLIC_BASE_URL}/requested-leads/user?status=${activeTab}`,
+          {
+            withCredentials: true,
+          }
+        );
+        setRequestedLeads(response.data.requestedLeads || []);
+      }
+      else if (requestState == 'global'){
+        const response = await axios.get(
+          `${process.env.NEXT_PUBLIC_BASE_URL}/global-leads/user/requested?status=${activeTab}`,
+          {
+            withCredentials: true,
+          }
+        );
+        setRequestedLeads(response.data.requestedLeads || []);
+      }
 
-      setRequestedLeads(response.data.requestedLeads || []);
     } catch (error) {
       console.error("Error fetching requested leads:", error);
       setError("Failed to load requested leads");
@@ -71,9 +83,36 @@ const RequestedLeads = () => {
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="p-4 border-b border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-700">
-          My Requested Leads
-        </h3>
+        <div className="flex justify-between items-center">
+          <h3 className="text-lg font-semibold text-gray-800">
+            My Requested Leads
+          </h3>
+          <div className="flex outline outline-gray-500 rounded-md relative text-sm w-52">
+            <button
+              onClick={() => setRequestState("local")}
+              className={`py-1 w-1/2 cursor-pointer z-10 ${
+                requestState === "local" ? "text-white" : ""
+              }`}
+            >
+              Local
+            </button>
+            <button
+              onClick={() => setRequestState("global")}
+              className={`py-1 w-1/2 cursor-pointer z-10 ${
+                requestState === "global" ? "text-white" : ""
+              }`}
+            >
+              Global
+            </button>
+
+            {/* Animated background span */}
+            <span
+              className={`absolute top-0 h-full w-1/2 bg-gray-800 rounded-md transition-all duration-300 ease-in-out ${
+                requestState === "global" ? "left-1/2" : "left-0"
+              }`}
+            ></span>
+          </div>
+        </div>
         {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
       </div>
 
@@ -83,9 +122,9 @@ const RequestedLeads = () => {
           <button
             suppressHydrationWarning={true}
             onClick={() => setActiveTab("pending")}
-            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+            className={`flex-1 py-2 px-4 rounded-md cursor-pointer text-sm font-medium transition-colors ${
               activeTab === "pending"
-                ? "bg-gray-600 text-white shadow-sm"
+                ? "bg-gray-600 text-white"
                 : "text-gray-600 hover:text-gray-900"
             }`}
           >
@@ -94,9 +133,9 @@ const RequestedLeads = () => {
           <button
             suppressHydrationWarning={true}
             onClick={() => setActiveTab("approved")}
-            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+            className={`flex-1 py-2 px-4 rounded-md cursor-pointer text-sm font-medium transition-colors ${
               activeTab === "approved"
-                ? "bg-gray-600 text-white shadow-sm"
+                ? "bg-gray-600 text-white"
                 : "text-gray-600 hover:text-gray-900"
             }`}
           >
@@ -105,9 +144,9 @@ const RequestedLeads = () => {
           <button
             suppressHydrationWarning={true}
             onClick={() => setActiveTab("rejected")}
-            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+            className={`flex-1 py-2 px-4 rounded-md cursor-pointer text-sm font-medium transition-colors ${
               activeTab === "rejected"
-                ? "bg-gray-600 text-white shadow-sm"
+                ? "bg-gray-600 text-white"
                 : "text-gray-600 hover:text-gray-900"
             }`}
           >
