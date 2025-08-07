@@ -22,9 +22,16 @@ const ChatPage = () => {
   const { user } = useUserAuth();
 
   useEffect(() => {
-    if (!user || !user.groupsID?.length) return;
+    if (!user || (!user.groupsID?.length && !user.globalGroupsID?.length))
+      return;
 
-    const socket = connectUserSocket(user._id, user.groupsID);
+    // Combine local and global group IDs
+    const allGroupIds = [
+      ...(user.groupsID || []),
+      ...(user.globalGroupsID || []),
+    ];
+
+    const socket = connectUserSocket(user._id, allGroupIds);
     setSocket(socket);
 
     const handleGroupOnlineUsers = ({
@@ -32,7 +39,6 @@ const ChatPage = () => {
       onlineUserIds,
       onlineUsers: users,
     }) => {
-      console.log("Users for group", groupId, ":", users);
       setOnlineCounts((prev) => ({
         ...prev,
         [groupId]: onlineUserIds?.length || 0,
@@ -49,7 +55,11 @@ const ChatPage = () => {
       socket.off("group-online-users", handleGroupOnlineUsers);
       socket.disconnect();
     };
-  }, [user?._id, JSON.stringify(user?.groupsID)]);
+  }, [
+    user?._id,
+    JSON.stringify(user?.groupsID),
+    JSON.stringify(user?.globalGroupsID),
+  ]);
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
