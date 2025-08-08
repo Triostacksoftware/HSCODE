@@ -73,7 +73,7 @@ export default function Login() {
         }
       );
 
-      router.push("/dashboard");
+      router.push("/userchat");
     } catch (error) {
       console.error(
         "OTP verification failed:",

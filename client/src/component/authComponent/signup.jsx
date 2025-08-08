@@ -111,7 +111,7 @@ export default function Signup() {
         }
       );
 
-      window.location.href = "/dashboard";
+      window.location.href = "/userchat";
     } catch (error) {
       setMessage(error.response?.data?.message || "Failed to create account");
     } finally {
