@@ -5,26 +5,69 @@ import { io } from "../server.js";
 // Post new requested lead (user submits for approval)
 export const postRequestedLead = async (req, res) => {
   try {
-    const { groupId, content } = req.body;
     const userId = req.user.id;
+    const {
+      groupId,
+      type,
+      hscode,
+      description,
+      quantity,
+      packing,
+      targetPrice,
+      negotiable,
+      buyerDeliveryAddress,
+      buyerLat,
+      buyerLng,
+      sellerPickupAddress,
+      sellerLat,
+      sellerLng,
+      specialRequest,
+      remarks,
+      content, // legacy
+    } = req.body;
 
-    if (!groupId || !content) {
-      return res
-        .status(400)
-        .json({ message: "groupId and content are required" });
+    if (!groupId) {
+      return res.status(400).json({ message: "groupId is required" });
     }
+
+    const documents = (req.files || []).map((f) => f.filename);
 
     const newRequestedLead = new RequestedLeads({
       groupId,
       userId,
+      type,
+      hscode,
+      description,
+      quantity,
+      packing,
+      targetPrice,
+      negotiable: negotiable === "true" || negotiable === true,
+      buyerDeliveryLocation: buyerDeliveryAddress
+        ? {
+            address: buyerDeliveryAddress,
+            geo:
+              buyerLng && buyerLat
+                ? { type: "Point", coordinates: [Number(buyerLng), Number(buyerLat)] }
+                : undefined,
+          }
+        : undefined,
+      sellerPickupLocation: sellerPickupAddress
+        ? {
+            address: sellerPickupAddress,
+            geo:
+              sellerLng && sellerLat
+                ? { type: "Point", coordinates: [Number(sellerLng), Number(sellerLat)] }
+                : undefined,
+          }
+        : undefined,
+      specialRequest,
+      remarks,
       content,
+      documents,
     });
 
     const savedLead = await newRequestedLead.save();
-
-    // Populate user info for response
     await savedLead.populate("userId", "name image");
-
     res.status(201).json(savedLead);
   } catch (error) {
     console.error("Error posting requested lead:", error);
@@ -132,6 +175,18 @@ export const approveRejectLead = async (req, res) => {
         groupId: requestedLead.groupId._id || requestedLead.groupId,
         userId: requestedLead.userId._id || requestedLead.userId,
         content: requestedLead.content,
+        type: requestedLead.type,
+        hscode: requestedLead.hscode,
+        description: requestedLead.description,
+        quantity: requestedLead.quantity,
+        packing: requestedLead.packing,
+        targetPrice: requestedLead.targetPrice,
+        negotiable: requestedLead.negotiable,
+        buyerDeliveryLocation: requestedLead.buyerDeliveryLocation,
+        sellerPickupLocation: requestedLead.sellerPickupLocation,
+        specialRequest: requestedLead.specialRequest,
+        remarks: requestedLead.remarks,
+        documents: requestedLead.documents,
       });
       const savedApprovedLead = await newApprovedLead.save();
       await savedApprovedLead.populate("userId", "name image");
@@ -143,6 +198,18 @@ export const approveRejectLead = async (req, res) => {
           groupId: requestedLead.groupId._id || requestedLead.groupId,
           userId: savedApprovedLead.userId,
           content: savedApprovedLead.content,
+          type: savedApprovedLead.type,
+          hscode: savedApprovedLead.hscode,
+          description: savedApprovedLead.description,
+          quantity: savedApprovedLead.quantity,
+          packing: savedApprovedLead.packing,
+          targetPrice: savedApprovedLead.targetPrice,
+          negotiable: savedApprovedLead.negotiable,
+          buyerDeliveryLocation: savedApprovedLead.buyerDeliveryLocation,
+          sellerPickupLocation: savedApprovedLead.sellerPickupLocation,
+          specialRequest: savedApprovedLead.specialRequest,
+          remarks: savedApprovedLead.remarks,
+          documents: savedApprovedLead.documents,
           createdAt: savedApprovedLead.createdAt,
           updatedAt: savedApprovedLead.updatedAt,
         }

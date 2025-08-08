@@ -12,11 +12,33 @@ const requestedLeadsSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-    content: {
-      type: String,
-      required: true,
-      trim: true,
+    // legacy content support
+    content: { type: String, trim: true, default: null },
+    // structured fields
+    type: { type: String, enum: ["buy", "sell"], required: false },
+    hscode: { type: String },
+    description: { type: String },
+    quantity: { type: String },
+    packing: { type: String },
+    targetPrice: { type: String },
+    negotiable: { type: Boolean, default: false },
+    buyerDeliveryLocation: {
+      address: { type: String },
+      geo: {
+        type: { type: String, enum: ["Point"], default: "Point" },
+        coordinates: { type: [Number], default: undefined },
+      },
     },
+    sellerPickupLocation: {
+      address: { type: String },
+      geo: {
+        type: { type: String, enum: ["Point"], default: "Point" },
+        coordinates: { type: [Number], default: undefined },
+      },
+    },
+    specialRequest: { type: String },
+    remarks: { type: String },
+    documents: [{ type: String }],
     status: {
       type: String,
       enum: ["pending", "approved", "rejected"],

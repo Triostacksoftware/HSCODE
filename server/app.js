@@ -41,6 +41,7 @@ app.use(
   })
 );
 app.use("/api/v1/upload", express.static("public/uploads"));
+app.use("/api/v1/leadDocuments", express.static("public/leadDocuments"));
 
 // routes
 app.get("/", (req, res) => {

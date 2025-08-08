@@ -6,11 +6,18 @@ import {
   getAllPendingLeads,
   approveRejectLead,
 } from "../controllers/requestedLeads.ctrls.js";
+import leadDocsUpload from "../configurations/multerLeadDocs.js";
 
 const router = express.Router();
 
 // User routes
-router.post("/", authMiddleware, postRequestedLead);
+// Multer middleware to accept multiple documents
+router.post(
+  "/",
+  authMiddleware,
+  leadDocsUpload.array("documents", 10),
+  postRequestedLead
+);
 router.get("/user", authMiddleware, getUserRequestedLeads);
 
 // Admin routes

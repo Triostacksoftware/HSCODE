@@ -27,7 +27,7 @@ export const getLeadsByGroup = async (req, res) => {
   }
 };
 
-// Post new lead
+// Post new lead (direct, not via approval)
 export const postNewLead = async (req, res) => {
   try {
     const { groupId, content } = req.body;
@@ -39,11 +39,7 @@ export const postNewLead = async (req, res) => {
         .json({ message: "groupId and content are required" });
     }
 
-    const newLead = new ApprovedLeads({
-      groupId,
-      userId,
-      content,
-    });
+    const newLead = new ApprovedLeads({ groupId, userId, content });
 
     const savedLead = await newLead.save();
 

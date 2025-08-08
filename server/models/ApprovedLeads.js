@@ -12,11 +12,37 @@ const approvedLeadsSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    // legacy text message support
     content: {
       type: String,
-      required: true,
       trim: true,
+      default: null,
     },
+    // structured lead fields
+    type: { type: String, enum: ["buy", "sell"], required: false },
+    hscode: { type: String },
+    description: { type: String },
+    quantity: { type: String },
+    packing: { type: String },
+    targetPrice: { type: String },
+    negotiable: { type: Boolean, default: false },
+    buyerDeliveryLocation: {
+      address: { type: String },
+      geo: {
+        type: { type: String, enum: ["Point"], default: "Point" },
+        coordinates: { type: [Number], default: undefined }, // [lng, lat]
+      },
+    },
+    sellerPickupLocation: {
+      address: { type: String },
+      geo: {
+        type: { type: String, enum: ["Point"], default: "Point" },
+        coordinates: { type: [Number], default: undefined },
+      },
+    },
+    specialRequest: { type: String },
+    remarks: { type: String },
+    documents: [{ type: String }], // stored filenames served via /api/v1/leadDocuments
   },
   {
     timestamps: true,
