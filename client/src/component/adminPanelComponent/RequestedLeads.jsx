@@ -90,11 +90,14 @@ const RequestedLeads = () => {
   };
 
   const filteredLeads = requestedLeads.filter((lead) => {
-    const matchesSearch =
-      lead.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      lead.userId?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      lead.userId?.email?.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesSearch;
+    const hay = (
+      lead.description || lead.content || ""
+    ).toLowerCase();
+    const hs = (lead.hscode || "").toLowerCase();
+    const name = (lead.userId?.name || "").toLowerCase();
+    const email = (lead.userId?.email || "").toLowerCase();
+    const q = searchTerm.toLowerCase();
+    return hay.includes(q) || hs.includes(q) || name.includes(q) || email.includes(q);
   });
 
   return (
@@ -176,18 +179,61 @@ const RequestedLeads = () => {
                       </span>
                     </div>
 
-                    <p className="text-gray-800 mb-2">{lead.content}</p>
-
-                    <div className="text-sm text-gray-600 space-y-1">
-                      <div>
-                        <span className="font-medium">User:</span>{" "}
-                        {lead.userId?.name} ({lead.userId?.email})
+                    {lead.hscode || lead.description ? (
+                      <div className="text-sm space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className={`text-[11px] px-2 py-0.5 rounded ${lead.type==='buy'?'bg-blue-100 text-blue-800':'bg-green-100 text-green-800'}`}>{(lead.type||'lead').toUpperCase()}</span>
+                          <span className="text-xs text-gray-600">HS: {lead.hscode || '-'}</span>
+                        </div>
+                        {lead.description && (
+                          <div className="text-gray-800">{lead.description}</div>
+                        )}
+                        <div className="grid grid-cols-2 gap-2 text-xs text-gray-700">
+                          {lead.quantity && <div>Qty: {lead.quantity}</div>}
+                          {lead.packing && <div>Packing: {lead.packing}</div>}
+                          {(lead.targetPrice || lead.negotiable !== undefined) && (
+                            <div>
+                              Target: {lead.targetPrice || '-'} {lead.negotiable ? '(Negotiable)' : ''}
+                            </div>
+                          )}
+                        </div>
+                        <div className="text-xs text-gray-700 space-y-1">
+                          {lead.buyerDeliveryLocation?.address && (
+                            <div>Delivery: {lead.buyerDeliveryLocation.address}</div>
+                          )}
+                          {lead.sellerPickupLocation?.address && (
+                            <div>Pickup: {lead.sellerPickupLocation.address}</div>
+                          )}
+                        </div>
+                        {Array.isArray(lead.documents) && lead.documents.length > 0 && (
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {lead.documents.map((doc, i) => (
+                              <a key={i} href={`${process.env.NEXT_PUBLIC_BASE_URL}/leadDocuments/${doc}`} target="_blank" rel="noreferrer" className="text-xs text-blue-700 underline break-all">{doc}</a>
+                            ))}
+                          </div>
+                        )}
+                        <div className="text-sm text-gray-600 space-y-1">
+                          <div>
+                            <span className="font-medium">User:</span> {lead.userId?.name} ({lead.userId?.email})
+                          </div>
+                          <div>
+                            <span className="font-medium">Group:</span> {lead.groupId?.name}
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <span className="font-medium">Group:</span>{" "}
-                        {lead.groupId?.name}
-                      </div>
-                    </div>
+                    ) : (
+                      <>
+                        <p className="text-gray-800 mb-2">{lead.content}</p>
+                        <div className="text-sm text-gray-600 space-y-1">
+                          <div>
+                            <span className="font-medium">User:</span> {lead.userId?.name} ({lead.userId?.email})
+                          </div>
+                          <div>
+                            <span className="font-medium">Group:</span> {lead.groupId?.name}
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </div>
 
                   <div className="flex items-center space-x-2 ml-4">

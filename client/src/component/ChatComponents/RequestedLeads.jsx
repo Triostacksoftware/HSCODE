@@ -196,24 +196,71 @@ const RequestedLeads = () => {
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <span
-                        className={`px-2 py-1 rounded-md text-xs font-medium ${getStatusColor(
-                          lead.status
-                        )}`}
-                      >
-                        {getStatusText(lead.status)}
-                      </span>
-                      <span className="text-xs text-gray-500">
-                        {formatTime(lead.createdAt)}
-                      </span>
+                <div className="flex items-center space-x-2 mb-2">
+                  <span
+                    className={`px-2 py-1 rounded-md text-xs font-medium ${getStatusColor(
+                      lead.status
+                    )}`}
+                  >
+                    {getStatusText(lead.status)}
+                  </span>
+                  <span className="text-xs text-gray-500">
+                    {formatTime(lead.createdAt)}
+                  </span>
+                </div>
+
+                {/* Structured lead view */}
+                {lead.hscode || lead.description ? (
+                  <div className="text-sm space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className={`text-[11px] px-2 py-0.5 rounded ${lead.type==='buy'?'bg-blue-100 text-blue-800':'bg-green-100 text-green-800'}`}>{(lead.type||'lead').toUpperCase()}</span>
+                      <span className="text-xs text-gray-600">HS: {lead.hscode || '-'}</span>
                     </div>
-
-                    <p className="text-gray-800 mb-2">{lead.content}</p>
-
+                    {lead.description && (
+                      <div className="text-gray-800">{lead.description}</div>
+                    )}
+                    <div className="grid grid-cols-2 gap-2 text-xs text-gray-700">
+                      {lead.quantity && <div>Qty: {lead.quantity}</div>}
+                      {lead.packing && <div>Packing: {lead.packing}</div>}
+                      {(lead.targetPrice || lead.negotiable !== undefined) && (
+                        <div>
+                          Target: {lead.targetPrice || '-'} {lead.negotiable ? '(Negotiable)' : ''}
+                        </div>
+                      )}
+                    </div>
+                    <div className="text-xs text-gray-700 space-y-1">
+                      {lead.buyerDeliveryLocation?.address && (
+                        <div>Delivery: {lead.buyerDeliveryLocation.address}</div>
+                      )}
+                      {lead.sellerPickupLocation?.address && (
+                        <div>Pickup: {lead.sellerPickupLocation.address}</div>
+                      )}
+                    </div>
+                    {Array.isArray(lead.documents) && lead.documents.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {lead.documents.map((doc, i) => (
+                          <a
+                            key={i}
+                            href={`${process.env.NEXT_PUBLIC_BASE_URL}/leadDocuments/${doc}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-xs text-blue-700 underline break-all"
+                          >
+                            {doc}
+                          </a>
+                        ))}
+                      </div>
+                    )}
                     <div className="text-xs text-gray-500">
-                      Group: {lead.groupId?.name || "Unknown Group"}
+                      Group: {lead.groupId?.name || 'Unknown Group'}
                     </div>
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-gray-800 mb-2">{lead.content}</p>
+                    <div className="text-xs text-gray-500">Group: {lead.groupId?.name || 'Unknown Group'}</div>
+                  </>
+                )}
 
                     {lead.adminComment && (
                       <div className="mt-2 p-2 bg-gray-100 rounded text-sm">

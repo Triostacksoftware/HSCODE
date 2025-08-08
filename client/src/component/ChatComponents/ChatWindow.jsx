@@ -516,7 +516,7 @@ const ChatWindow = ({ selectedGroupId, groupName, groupImage, onBack }) => {
                               )}
                             </div>
                           ) : (
-                            <p className="text-sm break-words">{lead.content}</p>
+                          <p className="text-sm break-words">{lead.content}</p>
                           )}
                         </div>
                         <div
@@ -644,7 +644,7 @@ const ChatWindow = ({ selectedGroupId, groupName, groupImage, onBack }) => {
                 <div className="mt-1 grid grid-cols-1 md:grid-cols-3 gap-3">
                   <div className="md:col-span-1">
                     <div className="flex items-center gap-2">
-                      <input
+          <input
                         key={documents.length}
                         type="file"
                         accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt"
@@ -680,22 +680,22 @@ const ChatWindow = ({ selectedGroupId, groupName, groupImage, onBack }) => {
               <div className="flex justify-between items-end">
                 <p className="text-xs text-gray-500">Leads are reviewed by admins before appearing in the chat.</p>
 
-                <button
-                  suppressHydrationWarning={true}
-                  type="submit"
+          <button
+            suppressHydrationWarning={true}
+            type="submit"
                   disabled={sending}
                   className="px-4 py-2 bg-gray-900 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {sending ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  ) : (
+          >
+            {sending ? (
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+            ) : (
                     <span>Submit for approval</span>
-                  )}
-                </button>
+            )}
+          </button>
               </div>
-            </form>
+        </form>
           </div>
-        </div>
+      </div>
       )}
 
       {/* User Info Sidebar */}

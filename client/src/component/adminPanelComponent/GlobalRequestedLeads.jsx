@@ -94,11 +94,12 @@ const GlobalRequestedLeads = () => {
   };
 
   const filteredLeads = requestedLeads.filter((lead) => {
-    const matchesSearch =
-      lead.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      lead.userId?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      lead.userId?.email?.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesSearch;
+    const hay = (lead.description || lead.content || "").toLowerCase();
+    const hs = (lead.hscode || "").toLowerCase();
+    const name = (lead.userId?.name || "").toLowerCase();
+    const email = (lead.userId?.email || "").toLowerCase();
+    const q = searchTerm.toLowerCase();
+    return hay.includes(q) || hs.includes(q) || name.includes(q) || email.includes(q);
   });
 
   return (
@@ -172,9 +173,9 @@ const GlobalRequestedLeads = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Group
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Content
-                  </th>
+                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Lead
+                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Date
                   </th>
@@ -221,9 +222,35 @@ const GlobalRequestedLeads = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900 max-w-xs truncate">
-                        {lead.content}
-                      </div>
+                      {lead.hscode || lead.description ? (
+                        <div className="text-sm text-gray-900 max-w-md">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className={`text-[11px] px-2 py-0.5 rounded ${lead.type==='buy'?'bg-blue-100 text-blue-800':'bg-green-100 text-green-800'}`}>{(lead.type||'lead').toUpperCase()}</span>
+                            <span className="text-xs text-gray-600">HS: {lead.hscode || '-'}</span>
+                          </div>
+                          {lead.description && (<div className="text-gray-800">{lead.description}</div>)}
+                          <div className="grid grid-cols-2 gap-2 text-xs text-gray-700 mt-1">
+                            {lead.quantity && <div>Qty: {lead.quantity}</div>}
+                            {lead.packing && <div>Packing: {lead.packing}</div>}
+                            {(lead.targetPrice || lead.negotiable !== undefined) && (
+                              <div>Target: {lead.targetPrice || '-'} {lead.negotiable ? '(Negotiable)' : ''}</div>
+                            )}
+                          </div>
+                          <div className="text-xs text-gray-700 mt-1">
+                            {lead.buyerDeliveryLocation?.address && (<div>Delivery: {lead.buyerDeliveryLocation.address}</div>)}
+                            {lead.sellerPickupLocation?.address && (<div>Pickup: {lead.sellerPickupLocation.address}</div>)}
+                          </div>
+                          {Array.isArray(lead.documents) && lead.documents.length > 0 && (
+                            <div className="mt-1 flex flex-wrap gap-2">
+                              {lead.documents.map((doc, i) => (
+                                <a key={i} href={`${process.env.NEXT_PUBLIC_BASE_URL}/leadDocuments/${doc}`} target="_blank" rel="noreferrer" className="text-xs text-blue-700 underline break-all">{doc}</a>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="text-sm text-gray-900 max-w-xs truncate">{lead.content}</div>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {new Date(lead.createdAt).toLocaleDateString()}

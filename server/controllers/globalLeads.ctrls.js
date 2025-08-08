@@ -32,28 +32,55 @@ export const getGlobalLeadsByGroup = async (req, res) => {
 // Post new global requested lead (user submits for approval)
 export const postGlobalRequestedLead = async (req, res) => {
   try {
-    const { groupId, content } = req.body;
     const userId = req.user.id;
     const countryCode = req.user.countryCode;
+    const {
+      groupId,
+      type,
+      hscode,
+      description,
+      quantity,
+      packing,
+      targetPrice,
+      negotiable,
+      buyerDeliveryAddress,
+      sellerPickupAddress,
+      specialRequest,
+      remarks,
+      content,
+    } = req.body;
 
-    if (!groupId || !content) {
-      return res
-        .status(400)
-        .json({ message: "groupId and content are required" });
+    if (!groupId) {
+      return res.status(400).json({ message: "groupId is required" });
     }
+
+    const documents = (req.files || []).map((f) => f.filename);
 
     const newRequestedLead = new GlobalRequestedLeads({
       groupId,
       userId,
       content,
       countryCode,
+      type,
+      hscode,
+      description,
+      quantity,
+      packing,
+      targetPrice,
+      negotiable: negotiable === "true" || negotiable === true,
+      buyerDeliveryLocation: buyerDeliveryAddress
+        ? { address: buyerDeliveryAddress }
+        : undefined,
+      sellerPickupLocation: sellerPickupAddress
+        ? { address: sellerPickupAddress }
+        : undefined,
+      specialRequest,
+      remarks,
+      documents,
     });
 
     const savedLead = await newRequestedLead.save();
-
-    // Populate user info for response
     await savedLead.populate("userId", "name image");
-
     res.status(201).json(savedLead);
   } catch (error) {
     console.error("Error posting global requested lead:", error);
@@ -175,18 +202,42 @@ export const approveRejectGlobalLead = async (req, res) => {
         userId: requestedLead.userId._id || requestedLead.userId,
         content: requestedLead.content,
         countryCode: requestedLead.countryCode,
+        type: requestedLead.type,
+        hscode: requestedLead.hscode,
+        description: requestedLead.description,
+        quantity: requestedLead.quantity,
+        packing: requestedLead.packing,
+        targetPrice: requestedLead.targetPrice,
+        negotiable: requestedLead.negotiable,
+        buyerDeliveryLocation: requestedLead.buyerDeliveryLocation,
+        sellerPickupLocation: requestedLead.sellerPickupLocation,
+        specialRequest: requestedLead.specialRequest,
+        remarks: requestedLead.remarks,
+        documents: requestedLead.documents,
       });
       const savedApprovedLead = await newApprovedLead.save();
       await savedApprovedLead.populate("userId", "name image");
 
       // Emit socket event to group from backend
-      io.to(
-        `global-group-${requestedLead.groupId._id || requestedLead.groupId}`
-      ).emit("new-approved-global-lead", {
+        io.to(
+          `global-group-${requestedLead.groupId._id || requestedLead.groupId}`
+        ).emit("new-approved-global-lead", {
         _id: savedApprovedLead._id,
         groupId: requestedLead.groupId._id || requestedLead.groupId,
         userId: savedApprovedLead.userId,
-        content: savedApprovedLead.content,
+          content: savedApprovedLead.content,
+          type: savedApprovedLead.type,
+          hscode: savedApprovedLead.hscode,
+          description: savedApprovedLead.description,
+          quantity: savedApprovedLead.quantity,
+          packing: savedApprovedLead.packing,
+          targetPrice: savedApprovedLead.targetPrice,
+          negotiable: savedApprovedLead.negotiable,
+          buyerDeliveryLocation: savedApprovedLead.buyerDeliveryLocation,
+          sellerPickupLocation: savedApprovedLead.sellerPickupLocation,
+          specialRequest: savedApprovedLead.specialRequest,
+          remarks: savedApprovedLead.remarks,
+          documents: savedApprovedLead.documents,
         createdAt: savedApprovedLead.createdAt,
         updatedAt: savedApprovedLead.updatedAt,
       });
