@@ -40,6 +40,7 @@ const globalApprovedLeadsSchema = new mongoose.Schema(
     specialRequest: { type: String },
     remarks: { type: String },
     documents: [{ type: String }],
+    leadCode: { type: String, index: true },
   },
   {
     timestamps: true,

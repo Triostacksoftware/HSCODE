@@ -56,6 +56,23 @@ export const postGlobalRequestedLead = async (req, res) => {
 
     const documents = (req.files || []).map((f) => f.filename);
 
+    // Prefer chapterNo from client (same as domestic flow). Fallback to HS slice.
+    const chapter = (req.body.chapterNo && String(req.body.chapterNo)) || (hscode || "").slice(0, 2) || "00";
+    // For GLOBAL leads use BLG/SLG (Buy Lead Global / Sell Lead Global)
+    const typePrefix = type === "buy" ? "BLG" : "SLG";
+    const existingRequestedCount = await GlobalRequestedLeads.countDocuments({
+      type,
+      hscode: { $regex: `^${chapter}` },
+      countryCode,
+    });
+    const existingApprovedCount = await GlobalApprovedLeads.countDocuments({
+      type,
+      hscode: { $regex: `^${chapter}` },
+      countryCode,
+    });
+    const sequence = String(existingRequestedCount + existingApprovedCount + 1).padStart(2, "0");
+    const leadCode = `${typePrefix}-${countryCode}-${chapter}-${sequence}`;
+
     const newRequestedLead = new GlobalRequestedLeads({
       groupId,
       userId,
@@ -77,6 +94,7 @@ export const postGlobalRequestedLead = async (req, res) => {
       specialRequest,
       remarks,
       documents,
+      leadCode,
     });
 
     const savedLead = await newRequestedLead.save();
@@ -214,6 +232,7 @@ export const approveRejectGlobalLead = async (req, res) => {
         specialRequest: requestedLead.specialRequest,
         remarks: requestedLead.remarks,
         documents: requestedLead.documents,
+        leadCode: requestedLead.leadCode,
       });
       const savedApprovedLead = await newApprovedLead.save();
       await savedApprovedLead.populate("userId", "name image");
@@ -238,6 +257,7 @@ export const approveRejectGlobalLead = async (req, res) => {
           specialRequest: savedApprovedLead.specialRequest,
           remarks: savedApprovedLead.remarks,
           documents: savedApprovedLead.documents,
+          leadCode: savedApprovedLead.leadCode,
         createdAt: savedApprovedLead.createdAt,
         updatedAt: savedApprovedLead.updatedAt,
       });

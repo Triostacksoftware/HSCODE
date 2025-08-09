@@ -10,6 +10,7 @@ import {
   createGlobalGroup,
   updateGlobalGroup,
   deleteGlobalGroup,
+  bulkCreateGlobalGroups,
 } from "../controllers/globalGroup.ctrls.js";
 import upload from "../configurations/multer.js";
 
@@ -26,5 +27,13 @@ router.post(
 ); // Admin only
 router.patch("/:groupId", superadminMiddleware, updateGlobalGroup); // Admin only
 router.delete("/:groupId", superadminMiddleware, deleteGlobalGroup); // Admin only
+
+// Bulk create groups under a category
+router.post(
+  "/:categoryId/bulk",
+  superadminMiddleware,
+  upload.single("file"),
+  bulkCreateGlobalGroups
+);
 
 export default router;

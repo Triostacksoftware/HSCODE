@@ -13,6 +13,7 @@ import { OnlineUsersContext } from "../../app/userchat/page";
 import toast from "react-hot-toast";
 
 const GlobalChatWindow = ({
+  chapterNo,
   selectedGroupId,
   groupName,
   groupImage,
@@ -114,6 +115,9 @@ const GlobalChatWindow = ({
       const form = new FormData();
       form.append("groupId", selectedGroupId);
       form.append("type", leadType);
+      if (chapterNo) {
+        form.append("chapterNo", chapterNo);
+      }
       form.append("hscode", hscode.trim());
       form.append("description", description.trim());
       form.append("quantity", quantity);
@@ -412,28 +416,31 @@ const GlobalChatWindow = ({
                         }`}
                       >
                         <div
-                          className={`rounded-xl px-3 md:px-4 py-2 shadow-sm ${
+                          className={`rounded-xl px-3 md:px-4 py-2 shadow-sm border ${
                             msg.type === "buy"
-                              ? "bg-[#dbeafe] text-gray-900 rounded-bl-sm"
+                              ? "bg-blue-50 border-blue-100 text-gray-900"
                               : msg.type === "sell"
-                              ? "bg-[#d9fdd3] text-gray-900 rounded-br-sm"
-                              : isOwnMessage
-                              ? "bg-[#d9fdd3] text-gray-900 rounded-br-sm"
-                              : "bg-white text-gray-900 rounded-bl-sm"
+                              ? "bg-green-50 border-green-100 text-gray-900"
+                              : "bg-white border-gray-200 text-gray-900"
                           }`}
                         >
                           {msg.hscode || msg.description ? (
-                            <div className="text-sm space-y-1">
-                              <div className="flex items-center justify-between">
-                                <span className="font-semibold uppercase">{msg.type || "Lead"}</span>
+                            <div className="text-sm space-y-2">
+                              <div className="flex items-center gap-2">
+                                <span className={`px-2 py-0.5 rounded-full text-[11px] ${
+                                  msg.type === "buy" ? "bg-blue-100 text-blue-700" : "bg-green-100 text-green-700"
+                                }`}>{(msg.type || "Lead").toUpperCase()}</span>
                                 {msg.hscode && (
-                                  <span className="text-xs text-gray-600">HS: {msg.hscode}</span>
+                                  <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-[11px]">HS: {msg.hscode}</span>
+                                )}
+                                {msg.leadCode && (
+                                  <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-[11px]">ID: {msg.leadCode}</span>
                                 )}
                               </div>
                               {msg.description && (
-                                <div className="text-gray-900">{msg.description}</div>
+                                <div className="text-gray-800 font-medium leading-6">{msg.description}</div>
                               )}
-                              <div className="grid grid-cols-2 gap-2 text-xs text-gray-700">
+                              <div className="flex flex-wrap gap-2 text-[11px] text-gray-700">
                                 {msg.quantity && <div>Qty: {msg.quantity}</div>}
                                 {msg.packing && <div>Packing: {msg.packing}</div>}
                                 {(msg.targetPrice || msg.negotiable !== undefined) && (
@@ -467,7 +474,7 @@ const GlobalChatWindow = ({
                               )}
                             </div>
                           ) : (
-                            <p className="text-sm break-words">{msg.content}</p>
+                          <p className="text-sm break-words">{msg.content}</p>
                           )}
                         </div>
                         <div
@@ -492,7 +499,7 @@ const GlobalChatWindow = ({
         <button
           type="button"
           onClick={() => setLeadModalOpen(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-black/90"
+          className={`items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-black/90 ${leadModalOpen? "hidden":"inline-flex"}`}
         >
           <FaRegPaperPlane className="w-4 h-4" /> Post Lead
         </button>
@@ -585,7 +592,7 @@ const GlobalChatWindow = ({
                 <div className="mt-1 grid grid-cols-1 md:grid-cols-3 gap-3">
                   <div className="md:col-span-1">
                     <div className="flex items-center gap-2">
-                      <input
+          <input
                         key={documents.length}
                         type="file"
                         accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt"
@@ -621,11 +628,11 @@ const GlobalChatWindow = ({
                 <p className="text-xs text-gray-500">Leads are reviewed by admins before appearing in the chat.</p>
                 <button suppressHydrationWarning={true} type="submit" disabled={sending} className="px-4 py-2 bg-gray-900 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed">
                   {sending ? (<div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>) : (<span>Submit for approval</span>)}
-                </button>
+          </button>
               </div>
-            </form>
+        </form>
           </div>
-        </div>
+      </div>
       )}
 
       {/* Map Picker Modal */}

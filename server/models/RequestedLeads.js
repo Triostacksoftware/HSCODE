@@ -39,6 +39,7 @@ const requestedLeadsSchema = new mongoose.Schema(
     specialRequest: { type: String },
     remarks: { type: String },
     documents: [{ type: String }],
+    leadCode: { type: String, index: true },
     status: {
       type: String,
       enum: ["pending", "approved", "rejected"],

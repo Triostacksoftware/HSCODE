@@ -10,7 +10,7 @@ export const getCategories = async (req, res) => {
     const countryCode = req.user.countryCode;
     console.log(countryCode);
 
-    const categories = await LocalCategoryModel.find({ countryCode: "US" });
+    const categories = await LocalCategoryModel.find({ countryCode });
     res.json(categories);
   } catch (err) {
     res.status(500).json({ message: "Error fetching categories" });
@@ -20,13 +20,14 @@ export const getCategories = async (req, res) => {
 // CREATE categories (Admin only)
 export const createCategory = async (req, res) => {
   try {
-    let { name } = req.body;
+    let { name, chapter } = req.body;
     const { id, countryCode } = req.user; // Admin ID & country
 
     const newCategory = await LocalCategoryModel.create({
       name,
       countryCode,
       adminId: id,
+      chapter,
     });
 
     res.status(201).json({ message: "Category created successfully" });
@@ -44,7 +45,7 @@ export const createManyCategory = async (req, res) => {
     const array = parseFile(req.file);
 
     const formatted = array.map((ob) => {
-      return { name: ob.name, countryCode, adminId: id };
+      return { name: ob.name, chapter: ob.chapter, countryCode, adminId: id };
     });
 
     const newCategory = await LocalCategoryModel.insertMany(formatted);
@@ -80,7 +81,7 @@ export const deleteCategory = async (req, res) => {
 // UPDATE category (Admin & correct country)
 export const updateCategory = async (req, res) => {
   const { id: categoryId } = req.params;
-  const { name } = req.body;
+  const { name, chapter } = req.body;
 
   try {
     const category = await LocalCategoryModel.findById(categoryId);
@@ -94,6 +95,7 @@ export const updateCategory = async (req, res) => {
     }
 
     category.name = name || category.name;
+    category.chapter = chapter || category.chapter;
     await category.save();
 
     res.json(category);
@@ -109,7 +111,7 @@ export const getGroups = async (req, res) => {
   const { id: categoryId } = req.params;
   console.log("categoryId", categoryId);
   try {
-    const groups = await LocalGroupModel.find({ categoryId });
+    const groups = await LocalGroupModel.find({ categoryId }).populate("categoryId", "chapter");
     res.json(groups);
   } catch (err) {
     res.status(500).json({ message: "Error fetching groups" });
@@ -141,7 +143,7 @@ export const createGroup = async (req, res) => {
     // Format group objects
     const formatted = groups.map((g) => ({
       name: g.name,
-      hscode: g.hscode,
+      heading: g.heading || g.hscode,
       image: req.file?.filename || null,
       categoryId,
     }));
@@ -162,7 +164,7 @@ export const createManyGroup = async (req, res) => {
 
     const formatted = group.map((g) => ({
       name: g.name,
-      hscode: g.hscode,
+      heading: g.heading || g.hscode,
       image: g.image,
       categoryId: req.params.id,
     }));
@@ -179,7 +181,7 @@ export const createManyGroup = async (req, res) => {
 // UPDATE group (Admin only)
 export const updateGroup = async (req, res) => {
   const { groupId } = req.params;
-  const { name, hscode, image } = req.body;
+  const { name, heading, hscode, image } = req.body;
 
   try {
     const group = await LocalGroupModel.findById(groupId).populate(
@@ -194,7 +196,7 @@ export const updateGroup = async (req, res) => {
     }
 
     group.name = name || group.name;
-    group.hscode = hscode || group.hscode;
+    group.heading = heading || hscode || group.heading;
     group.image = image || group.image;
 
     await group.save();

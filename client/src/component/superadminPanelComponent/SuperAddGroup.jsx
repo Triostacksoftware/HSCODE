@@ -13,7 +13,7 @@ import axios from "axios";
 const SuperAddGroup = ({ categoryId, categoryName, onClose }) => {
   const [formData, setFormData] = useState({
     name: "",
-    hscode: "",
+    heading: "",
   });
   const [selectedFile, setSelectedFile] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -65,7 +65,7 @@ const SuperAddGroup = ({ categoryId, categoryName, onClose }) => {
     try {
       const submitFormData = new FormData();
       submitFormData.append("name", formData.name);
-      submitFormData.append("hscode", formData.hscode);
+    submitFormData.append("heading", formData.heading);
       submitFormData.append("categoryId", categoryId);
 
       if (selectedFile) {
@@ -201,8 +201,8 @@ const SuperAddGroup = ({ categoryId, categoryName, onClose }) => {
               </label>
               <input
                 type="text"
-                name="hscode"
-                value={formData.hscode}
+                name="heading"
+                value={formData.heading}
                 onChange={handleInputChange}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Enter HSCode"
@@ -247,7 +247,7 @@ const SuperAddGroup = ({ categoryId, categoryName, onClose }) => {
             <button
               type="submit"
               disabled={
-                isLoading || !formData.name.trim() || !formData.hscode.trim()
+                isLoading || !formData.name.trim() || !formData.heading.trim()
               }
               className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >

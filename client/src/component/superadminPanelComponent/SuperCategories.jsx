@@ -229,6 +229,9 @@ const SuperCategories = () => {
                       <span className="text-[.9em] sm:text-[.96em] text-gray-700 truncate block">
                         {category.name}
                       </span>
+                      <span className="text-[.7em] text-gray-700 truncate block">
+                        Chapter: {category.chapter}
+                      </span>
                     </div>
                     <div className="relative menu-container cursor-pointer flex-shrink-0 ml-2">
                       <button

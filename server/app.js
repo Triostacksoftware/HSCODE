@@ -12,7 +12,7 @@ const app = express();
 import authRoutes from "./routes/auth.routes.js";
 import categoryRoutes from "./routes/category.routes.js";
 import userRoutes from "./routes/user.routes.js";
-import leadsRoutes from "./routes/leads.routes.js";
+import leadsRoutes from "./routes/approvedLeads.js";
 import requestedLeadsRoutes from "./routes/requestedLeads.routes.js";
 import globalCategoryRoutes from "./routes/globalCategory.routes.js";
 import globalGroupRoutes from "./routes/globalGroup.routes.js";

@@ -43,7 +43,7 @@ const GlobalChat = () => {
         `}
       >
         {/* Header */}
-        <div className="p-4 px-5 border-b border-gray-200">
+        <div className="p-4 px-5">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold text-gray-800">
               Global Chats
@@ -60,7 +60,7 @@ const GlobalChat = () => {
         </div>
 
         {/* Toggle Buttons */}
-        <div className="px-2 mb-4 pt-2">
+        <div className="px-2 mb-4">
           <div className="flex rounded-lg p-1 gap-1 md:gap-5">
             <button
               suppressHydrationWarning={true}
@@ -130,6 +130,7 @@ const GlobalChat = () => {
       >
         {selectedGroup ? (
           <GlobalChatWindow
+            chapterNo={selectedGroup?.categoryId?.chapter}
             selectedGroupId={selectedGroup._id}
             groupName={selectedGroup.name}
             groupImage={selectedGroup.image}

@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const GlobalGroupSchema = mongoose.Schema({
   name: { type: String, required: true },
-  hscode: { type: String, required: true },
+  heading: { type: String, required: true },
   image: { type: String }, // path string
   members: [
     {

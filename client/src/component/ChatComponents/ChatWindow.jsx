@@ -13,7 +13,7 @@ import { IoArrowBack } from "react-icons/io5";
 import UserInfoSidebar from "./UserInfoSidebar";
 import MapPicker from "./MapPicker";
 
-const ChatWindow = ({ selectedGroupId, groupName, groupImage, onBack }) => {
+const ChatWindow = ({chapterNo, selectedGroupId, groupName, groupImage, onBack }) => {
   const { user } = useUserAuth();
   const { onlineCounts, onlineUsers, socket } = useContext(OnlineUsersContext);
   const [leads, setLeads] = useState([]);
@@ -184,6 +184,7 @@ const ChatWindow = ({ selectedGroupId, groupName, groupImage, onBack }) => {
       }
       form.append("specialRequest", specialRequest);
       form.append("remarks", remarks);
+      form.append("chapterNo", chapterNo);
       if (documents && documents.length > 0) {
         documents.forEach((file) => form.append("documents", file));
       }
@@ -461,34 +462,34 @@ const ChatWindow = ({ selectedGroupId, groupName, groupImage, onBack }) => {
                         }`}
                       >
                         <div
-                          className={`rounded-xl px-3 md:px-4 py-2 shadow-sm ${
+                          className={`rounded-xl px-3 md:px-4 py-2 shadow-sm border ${
                             lead.type === "buy"
-                              ? "bg-[#dbeafe] text-gray-900 rounded-bl-sm" // blue
+                              ? "bg-blue-50 border-blue-100 text-gray-900"
                               : lead.type === "sell"
-                              ? "bg-[#d9fdd3] text-gray-900 rounded-br-sm" // green
-                              : isOwnMessage
-                              ? "bg-[#d9fdd3] text-gray-900 rounded-br-sm"
-                              : "bg-white text-gray-900 rounded-bl-sm"
+                              ? "bg-green-50 border-green-100 text-gray-900"
+                              : "bg-white border-gray-200 text-gray-900"
                           }`}
                         >
                           {lead.hscode || lead.description ? (
-                            <div className="text-sm space-y-1">
-                              <div className="flex items-center justify-between">
-                                <span className="font-semibold uppercase">{lead.type || "Lead"}</span>
+                            <div className="text-sm space-y-2">
+                              <div className="flex items-center gap-2">
+                                <span className={`px-2 py-0.5 rounded-full text-[11px] ${
+                                  lead.type === "buy"
+                                    ? "bg-blue-100 text-blue-700"
+                                    : "bg-green-100 text-green-700"
+                                }`}>{(lead.type || "Lead").toUpperCase()}</span>
                                 {lead.hscode && (
-                                  <span className="text-xs text-gray-600">HS: {lead.hscode}</span>
+                                  <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-[11px]">HS: {lead.hscode}</span>
                                 )}
                               </div>
                               {lead.description && (
-                                <div className="text-gray-900">{lead.description}</div>
+                                <div className="text-gray-800 font-medium leading-6">{lead.description}</div>
                               )}
-                              <div className="grid grid-cols-2 gap-2 text-xs text-gray-700">
+                              <div className="flex flex-wrap gap-2 text-[11px] text-gray-700">
                                 {lead.quantity && <div>Qty: {lead.quantity}</div>}
                                 {lead.packing && <div>Packing: {lead.packing}</div>}
                                 {(lead.targetPrice || lead.negotiable !== undefined) && (
-                                  <div>
-                                    Target: {lead.targetPrice || "-"} {lead.negotiable ? "(Negotiable)" : ""}
-                                  </div>
+                                  <div>Target: {lead.targetPrice || "-"} {lead.negotiable ? "(Negotiable)" : ""}</div>
                                 )}
                               </div>
                               <div className="text-xs text-gray-700 space-y-1">
@@ -500,16 +501,17 @@ const ChatWindow = ({ selectedGroupId, groupName, groupImage, onBack }) => {
                                 )}
                               </div>
                               {Array.isArray(lead.documents) && lead.documents.length > 0 && (
-                                <div className="mt-2 flex flex-col gap-1">
+                                <div className="mt-2 flex flex-wrap gap-2">
                                   {lead.documents.map((doc, i) => (
                                     <a
                                       key={i}
                                       href={`${process.env.NEXT_PUBLIC_BASE_URL}/leadDocuments/${doc}`}
                                       target="_blank"
                                       rel="noreferrer"
-                                      className="text-xs text-blue-700 underline break-all"
+                                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-blue-700 hover:bg-gray-200 text-[11px]"
                                     >
-                                      {doc}
+                                      <span>📄</span>
+                                      <span className="truncate max-w-[140px]">{doc}</span>
                                     </a>
                                   ))}
                                 </div>
@@ -541,7 +543,7 @@ const ChatWindow = ({ selectedGroupId, groupName, groupImage, onBack }) => {
         <button
           type="button"
           onClick={() => setLeadModalOpen(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-black/90"
+          className={`items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-black/90 ${leadModalOpen? "hidden":"inline-flex"}`}
         >
           <FaRegPaperPlane className="w-4 h-4" /> Post Lead
         </button>

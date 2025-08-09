@@ -13,6 +13,7 @@ import axios from "axios";
 const SuperAddCategories = ({ onClose, onCategoryCreated }) => {
   const [formData, setFormData] = useState({
     name: "",
+    chapter: "",
   });
   const [selectedFile, setSelectedFile] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -64,7 +65,7 @@ const SuperAddCategories = ({ onClose, onCategoryCreated }) => {
     try {
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_BASE_URL}/global-categories`,
-        formData,
+        { name: formData.name, chapter: formData.chapter },
         {
           withCredentials: true,
           headers: {
@@ -197,9 +198,27 @@ const SuperAddCategories = ({ onClose, onCategoryCreated }) => {
               />
             </div>
 
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Chapter No
+              </label>
+              <input
+                type="text"
+                name="chapter"
+                value={formData.chapter}
+                onChange={handleInputChange}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="e.g. 10"
+                required
+              />
+              <p className="text-xs text-gray-500 mt-1">Use two digits if available (e.g., 01, 10, 99).</p>
+            </div>
+
             <button
               type="submit"
-              disabled={isLoading || !formData.name.trim()}
+              disabled={
+                isLoading || !formData.name.trim() || !formData.chapter.trim()
+              }
               className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               {isLoading ? (

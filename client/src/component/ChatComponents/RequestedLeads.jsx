@@ -188,23 +188,18 @@ const RequestedLeads = () => {
             </div>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {requestedLeads.map((lead) => (
               <div
                 key={lead._id}
-                className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all"
+                className={`p-4 bg-white border border-gray-200 rounded-lg hover:shadow-sm transition-all border-l-4`}
+                style={{ borderLeftColor: lead.type === 'buy' ? '#3b82f6' : lead.type === 'sell' ? '#22c55e' : '#e5e7eb' }}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                <div className="flex items-center space-x-2 mb-2">
-                  <span
-                    className={`px-2 py-1 rounded-md text-xs font-medium ${getStatusColor(
-                      lead.status
-                    )}`}
-                  >
-                    {getStatusText(lead.status)}
-                  </span>
-                  <span className="text-xs text-gray-500">
+                <div className="flex justify-between items-center mb-2">
+                    <span className={`text-[.9em] font-semibold px-2 py-0.5 rounded ${lead.type==='buy'?'bg-blue-100 text-blue-800':'bg-green-100 text-green-800'}`}>{(lead.type||'lead').toUpperCase()}</span>
+                    <span className="text-xs text-gray-500">
                     {formatTime(lead.createdAt)}
                   </span>
                 </div>
@@ -212,22 +207,24 @@ const RequestedLeads = () => {
                 {/* Structured lead view */}
                 {lead.hscode || lead.description ? (
                   <div className="text-sm space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className={`text-[11px] px-2 py-0.5 rounded ${lead.type==='buy'?'bg-blue-100 text-blue-800':'bg-green-100 text-green-800'}`}>{(lead.type||'lead').toUpperCase()}</span>
-                      <span className="text-xs text-gray-600">HS: {lead.hscode || '-'}</span>
-                    </div>
-                    {lead.description && (
-                      <div className="text-gray-800">{lead.description}</div>
-                    )}
-                    <div className="grid grid-cols-2 gap-2 text-xs text-gray-700">
-                      {lead.quantity && <div>Qty: {lead.quantity}</div>}
-                      {lead.packing && <div>Packing: {lead.packing}</div>}
-                      {(lead.targetPrice || lead.negotiable !== undefined) && (
-                        <div>
-                          Target: {lead.targetPrice || '-'} {lead.negotiable ? '(Negotiable)' : ''}
-                        </div>
+                      <div className="flex items-center gap-2 rounded bg-gray-100 w-fit">
+                        <span className="text-xs text-gray-600 inline-block px-2">HS: {lead.hscode || '-'}</span>
+                        {lead.description && (
+                          <div className="bg-gray-700 px-2 py-1 text-white rounded-r">{lead.description}</div>
+                        )}
+                      </div>
+                      {lead.leadCode && (
+                        <div className="text-[11px] text-gray-600">Lead ID: <span className="font-medium">{lead.leadCode}</span></div>
                       )}
-                    </div>
+                      <div className="flex gap-20 justify-between text-xs text-gray-700 mt-2">
+                        {lead.quantity && <div>Quantity: {lead.quantity}</div>}
+                        {lead.packing && <div>Packing: {lead.packing}</div>}
+                        {(lead.targetPrice || lead.negotiable !== undefined) && (
+                          <div>
+                            Target: {lead.targetPrice || '-'} {lead.negotiable ? '(Negotiable)' : ''}
+                          </div>
+                        )}
+                      </div>
                     <div className="text-xs text-gray-700 space-y-1">
                       {lead.buyerDeliveryLocation?.address && (
                         <div>Delivery: {lead.buyerDeliveryLocation.address}</div>
@@ -244,9 +241,9 @@ const RequestedLeads = () => {
                             href={`${process.env.NEXT_PUBLIC_BASE_URL}/leadDocuments/${doc}`}
                             target="_blank"
                             rel="noreferrer"
-                            className="text-xs text-blue-700 underline break-all"
+                            className="text-xs p-2 rounded bg-[#eee] text-blue-700 underline break-all"
                           >
-                            {doc}
+                            Document {i+1}
                           </a>
                         ))}
                       </div>

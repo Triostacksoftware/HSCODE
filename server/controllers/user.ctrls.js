@@ -12,7 +12,7 @@ export const getGroups = async (req, res) => {
 
     const groups = await LocalGroupModel.find({
       _id: { $in: user.groupsID },
-    }).populate("categoryId");
+    }).populate("categoryId", "chapter");
 
     res.json(groups);
   } catch (err) {

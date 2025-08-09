@@ -7,6 +7,10 @@ const LocalCategorySchema = mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Admin',
         required: true
+    },
+    chapter: {
+        type: String,
+        required: true
     }
 });
 

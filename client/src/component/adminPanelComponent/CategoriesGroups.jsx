@@ -118,7 +118,7 @@ const CategorisGroups = ({ categoryId, categoryName }) => {
   const filteredGroups = groups.filter(
     (group) =>
       group.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      group.hscode?.toLowerCase().includes(searchTerm.toLowerCase())
+      group.heading?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const displayGroups = groups;
@@ -206,7 +206,7 @@ const CategorisGroups = ({ categoryId, categoryName }) => {
                               {group.name}
                             </div>
                             <div className="flex gap-6 text-xs text-gray-500">
-                              Hscode - {group.hscode}
+                              Heading - {group.heading}
                               <div className="text-xs text-gray-500 flex-shrink-0">
                                 Members - {group.members.length}
                               </div>

@@ -1,11 +1,12 @@
 import GlobalGroup from "../models/GlobalGroup.js";
 import GlobalCategory from "../models/GlobalCategory.js";
+import { parseFile } from "../utilities/xlsx.util.js";
 
 // Get all global groups (for superadmin)
 export const getAllGlobalGroups = async (req, res) => {
   try {
     const groups = await GlobalGroup.find()
-      .populate("categoryId", "name")
+      .populate("categoryId", "name chapter")
       .sort({ createdAt: -1 });
 
     res.json(groups);
@@ -21,7 +22,7 @@ export const getGlobalGroups = async (req, res) => {
     const { categoryId } = req.params;
 
     const groups = await GlobalGroup.find({ categoryId })
-      .populate("categoryId", "name")
+      .populate("categoryId", "name chapter")
       .sort({ createdAt: -1 });
 
     res.json(groups);
@@ -35,7 +36,7 @@ export const getGlobalGroups = async (req, res) => {
 export const createGlobalGroup = async (req, res) => {
   try {
     const { categoryId } = req.params;
-    const { name, hscode } = req.body;
+  const { name, heading, hscode } = req.body;
     const image = req.file ? req.file.filename : null;
 
     // Check if category exists
@@ -46,7 +47,7 @@ export const createGlobalGroup = async (req, res) => {
 
     const newGroup = new GlobalGroup({
       name,
-      hscode,
+      heading: heading || hscode,
       image,
       categoryId,
     });
@@ -65,7 +66,7 @@ export const createGlobalGroup = async (req, res) => {
 export const updateGlobalGroup = async (req, res) => {
   try {
     const { groupId } = req.params;
-    const { name, hscode, categoryId } = req.body;
+  const { name, heading, hscode, categoryId } = req.body;
     const image = req.file ? req.file.filename : null;
 
     const group = await GlobalGroup.findById(groupId);
@@ -75,7 +76,7 @@ export const updateGlobalGroup = async (req, res) => {
 
     // Update fields
     if (name) group.name = name;
-    if (hscode) group.hscode = hscode;
+  if (heading || hscode) group.heading = heading || hscode;
     if (categoryId) group.categoryId = categoryId;
     if (image) group.image = image;
 
@@ -105,5 +106,27 @@ export const deleteGlobalGroup = async (req, res) => {
   } catch (error) {
     console.error("Error deleting global group:", error);
     res.status(500).json({ message: "Error deleting global group" });
+  }
+};
+
+// Bulk create global groups via CSV/Excel (superadmin)
+export const bulkCreateGlobalGroups = async (req, res) => {
+  try {
+    const { categoryId } = req.params;
+    const rows = parseFile(req.file);
+    const docs = rows
+      .map((r) => ({
+        name: r.name,
+        heading: r.heading,
+        image: r.image,
+        categoryId,
+      }))
+      .filter((d) => d.name && d.heading);
+    if (!docs.length) return res.status(400).json({ message: "No valid rows found" });
+    const created = await GlobalGroup.insertMany(docs);
+    res.status(201).json({ message: "Global groups imported successfully", count: created.length });
+  } catch (error) {
+    console.error("Error bulk creating global groups:", error);
+    res.status(500).json({ message: "Error importing global groups" });
   }
 };

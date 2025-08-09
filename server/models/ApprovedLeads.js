@@ -43,6 +43,7 @@ const approvedLeadsSchema = new mongoose.Schema(
     specialRequest: { type: String },
     remarks: { type: String },
     documents: [{ type: String }], // stored filenames served via /api/v1/leadDocuments
+    leadCode: { type: String, index: true },
   },
   {
     timestamps: true,

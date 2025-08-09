@@ -1,6 +1,6 @@
 import express from "express";
 import { authMiddleware } from "../middlewares/auth.mdware.js";
-import { getLeadsByGroup, postNewLead } from "../controllers/leads.ctrls.js";
+import { getLeadsByGroup, postNewLead } from "../controllers/approvedLeads.js";
 
 const router = express.Router();
 

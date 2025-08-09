@@ -151,8 +151,8 @@ const GlobalRequestedLeads = () => {
         </div>
       )}
 
-      {/* Leads Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      {/* Leads Card Grid */}
+      <div>
         {loading ? (
           <div className="p-8 text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
@@ -163,129 +163,67 @@ const GlobalRequestedLeads = () => {
             <p className="text-gray-500">No global leads found</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    User
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Group
-                  </th>
-                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Lead
-                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Date
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredLeads.map((lead) => (
-                  <tr key={lead._id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
-                          {lead.userId?.image ? (
-                            <img
-                              src={
-                                lead.userId.image.includes("https")
-                                  ? lead.userId.image
-                                  : `${process.env.NEXT_PUBLIC_BASE_URL}/upload/${lead.userId.image}`
-                              }
-                              alt={lead.userId.name}
-                              className="w-full h-full object-cover rounded-full"
-                            />
-                          ) : (
-                            <span className="text-sm text-gray-600 font-medium">
-                              {lead.userId?.name?.charAt(0)?.toUpperCase()}
-                            </span>
-                          )}
-                        </div>
-                        <div className="ml-3">
-                          <div className="text-sm font-medium text-gray-900">
-                            {lead.userId?.name}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            {lead.userId?.email}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {lead.groupId?.name}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      {lead.hscode || lead.description ? (
-                        <div className="text-sm text-gray-900 max-w-md">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className={`text-[11px] px-2 py-0.5 rounded ${lead.type==='buy'?'bg-blue-100 text-blue-800':'bg-green-100 text-green-800'}`}>{(lead.type||'lead').toUpperCase()}</span>
-                            <span className="text-xs text-gray-600">HS: {lead.hscode || '-'}</span>
-                          </div>
-                          {lead.description && (<div className="text-gray-800">{lead.description}</div>)}
-                          <div className="grid grid-cols-2 gap-2 text-xs text-gray-700 mt-1">
-                            {lead.quantity && <div>Qty: {lead.quantity}</div>}
-                            {lead.packing && <div>Packing: {lead.packing}</div>}
-                            {(lead.targetPrice || lead.negotiable !== undefined) && (
-                              <div>Target: {lead.targetPrice || '-'} {lead.negotiable ? '(Negotiable)' : ''}</div>
-                            )}
-                          </div>
-                          <div className="text-xs text-gray-700 mt-1">
-                            {lead.buyerDeliveryLocation?.address && (<div>Delivery: {lead.buyerDeliveryLocation.address}</div>)}
-                            {lead.sellerPickupLocation?.address && (<div>Pickup: {lead.sellerPickupLocation.address}</div>)}
-                          </div>
-                          {Array.isArray(lead.documents) && lead.documents.length > 0 && (
-                            <div className="mt-1 flex flex-wrap gap-2">
-                              {lead.documents.map((doc, i) => (
-                                <a key={i} href={`${process.env.NEXT_PUBLIC_BASE_URL}/leadDocuments/${doc}`} target="_blank" rel="noreferrer" className="text-xs text-blue-700 underline break-all">{doc}</a>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="text-sm text-gray-900 max-w-xs truncate">{lead.content}</div>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(lead.createdAt).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() =>
-                            handleApproveReject(lead._id, "approve")
-                          }
-                          className="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-50"
-                          title="Approve"
-                        >
-                          <MdCheck className="w-5 h-5" />
-                        </button>
-                        <button
-                          onClick={() => openRejectModal(lead)}
-                          className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50"
-                          title="Reject"
-                        >
-                          <MdClose className="w-5 h-5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {filteredLeads.map((lead) => (
+              <div key={lead._id} className="relative p-4 bg-white border border-gray-200 rounded-lg hover:shadow-sm transition-all" style={{ borderLeft: `4px solid ${lead.type==='buy'?'#3b82f6': lead.type==='sell'?'#22c55e':'#e5e7eb'}` }}>
+                {/* Header */}
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className={`text-[11px] px-2 py-0.5 rounded ${lead.type==='buy'?'bg-blue-100 text-blue-800':'bg-green-100 text-green-800'}`}>{(lead.type||'lead').toUpperCase()}</span>
+                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">HS: {lead.hscode || '-'}</span>
+                    {lead.leadCode && <span className="text-[11px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">ID: {lead.leadCode}</span>}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-500">{new Date(lead.createdAt).toLocaleString()}</span>
+                  </div>
+                </div>
+
+                {/* Body */}
+                <div className="text-sm space-y-2">
+                  {lead.description && (<div className="text-gray-900 font-medium leading-6">{lead.description}</div>)}
+                  <div className="flex flex-wrap gap-2 text-[11px] text-gray-700">
+                    {lead.quantity && <span className="px-2 py-0.5 rounded-full bg-gray-100">Qty: {lead.quantity}</span>}
+                    {lead.packing && <span className="px-2 py-0.5 rounded-full bg-gray-100">Packing: {lead.packing}</span>}
+                    {(lead.targetPrice || lead.negotiable !== undefined) && (
+                      <span className="px-2 py-0.5 rounded-full bg-gray-100">Target: {lead.targetPrice || '-'} {lead.negotiable ? '(Negotiable)' : ''}</span>
+                    )}
+                  </div>
+                  <div className="text-xs text-gray-700 space-y-1">
+                    {lead.buyerDeliveryLocation?.address && (<div>Delivery: {lead.buyerDeliveryLocation.address}</div>)}
+                    {lead.sellerPickupLocation?.address && (<div>Pickup: {lead.sellerPickupLocation.address}</div>)}
+                  </div>
+                  {Array.isArray(lead.documents) && lead.documents.length > 0 && (
+                    <div className="mt-1 flex flex-wrap gap-2">
+                      {lead.documents.map((doc, i) => (
+                        <a key={i} href={`${process.env.NEXT_PUBLIC_BASE_URL}/leadDocuments/${doc}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 text-[11px]">
+                          <span>📄</span>
+                          <span className="truncate max-w-[140px]">{doc}</span>
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Footer */}
+                <div className="mt-3 flex items-end justify-between">
+                  <div className="text-xs text-gray-600">
+                    <div><span className="font-medium">User:</span> {lead.userId?.name} ({lead.userId?.email})</div>
+                    <div><span className="font-medium">Group:</span> {lead.groupId?.name}</div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => handleApproveReject(lead._id, 'approve')} className="px-3 py-1 border border-gray-600 hover:text-white rounded-md hover:bg-gray-800 text-xs">Approve</button>
+                    <button onClick={() => openRejectModal(lead)} className="px-3 py-1 border border-gray-600 hover:text-white rounded-md hover:bg-gray-800 text-xs">Reject</button>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
 
       {/* Reject Comment Modal */}
       {showCommentModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/20 bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
             <h3 className="text-lg font-semibold mb-4">Reject Lead</h3>
             <textarea
@@ -308,7 +246,7 @@ const GlobalRequestedLeads = () => {
               </button>
               <button
                 onClick={() => handleApproveReject(selectedLead._id, "reject")}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                className="px-3 py-1 text-white rounded-md bg-gray-800 text-base"
               >
                 Reject
               </button>

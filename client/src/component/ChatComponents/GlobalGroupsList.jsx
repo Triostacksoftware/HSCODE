@@ -109,7 +109,7 @@ const GlobalGroupsList = ({
   const filteredGroups = groups.filter(
     (group) =>
       group.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      group.hscode?.toLowerCase().includes(searchTerm.toLowerCase())
+      (group.heading || group.hscode)?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -217,7 +217,7 @@ const GlobalGroupsList = ({
                           `Global Group ${String(index + 1).padStart(2, "0")}`}
                       </div>
                       <div className="text-xs text-gray-500 truncate">
-                        hscode: {group.hscode}
+                        heading: {group.heading || group.hscode}
                       </div>
                     </div>
                     {/* Action Button for not joined */}

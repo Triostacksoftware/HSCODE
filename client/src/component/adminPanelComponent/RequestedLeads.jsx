@@ -162,98 +162,85 @@ const RequestedLeads = () => {
             </div>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {filteredLeads.map((lead) => (
               <div
                 key={lead._id}
-                className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all"
+                className="relative p-4 bg-white border border-gray-200 rounded-lg hover:shadow-sm transition-all"
+                style={{ borderLeft: `4px solid ${lead.type==='buy'?'#3b82f6': lead.type==='sell'?'#22c55e':'#e5e7eb'}` }}
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium">
-                        Pending
-                      </span>
-                      <span className="text-xs text-gray-500">
-                        {new Date(lead.createdAt).toLocaleString()}
-                      </span>
-                    </div>
-
-                    {lead.hscode || lead.description ? (
-                      <div className="text-sm space-y-1">
-                        <div className="flex items-center gap-2">
-                          <span className={`text-[11px] px-2 py-0.5 rounded ${lead.type==='buy'?'bg-blue-100 text-blue-800':'bg-green-100 text-green-800'}`}>{(lead.type||'lead').toUpperCase()}</span>
-                          <span className="text-xs text-gray-600">HS: {lead.hscode || '-'}</span>
-                        </div>
-                        {lead.description && (
-                          <div className="text-gray-800">{lead.description}</div>
-                        )}
-                        <div className="grid grid-cols-2 gap-2 text-xs text-gray-700">
-                          {lead.quantity && <div>Qty: {lead.quantity}</div>}
-                          {lead.packing && <div>Packing: {lead.packing}</div>}
-                          {(lead.targetPrice || lead.negotiable !== undefined) && (
-                            <div>
-                              Target: {lead.targetPrice || '-'} {lead.negotiable ? '(Negotiable)' : ''}
-                            </div>
-                          )}
-                        </div>
-                        <div className="text-xs text-gray-700 space-y-1">
-                          {lead.buyerDeliveryLocation?.address && (
-                            <div>Delivery: {lead.buyerDeliveryLocation.address}</div>
-                          )}
-                          {lead.sellerPickupLocation?.address && (
-                            <div>Pickup: {lead.sellerPickupLocation.address}</div>
-                          )}
-                        </div>
-                        {Array.isArray(lead.documents) && lead.documents.length > 0 && (
-                          <div className="mt-2 flex flex-wrap gap-2">
-                            {lead.documents.map((doc, i) => (
-                              <a key={i} href={`${process.env.NEXT_PUBLIC_BASE_URL}/leadDocuments/${doc}`} target="_blank" rel="noreferrer" className="text-xs text-blue-700 underline break-all">{doc}</a>
-                            ))}
-                          </div>
-                        )}
-                        <div className="text-sm text-gray-600 space-y-1">
-                          <div>
-                            <span className="font-medium">User:</span> {lead.userId?.name} ({lead.userId?.email})
-                          </div>
-                          <div>
-                            <span className="font-medium">Group:</span> {lead.groupId?.name}
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <>
-                        <p className="text-gray-800 mb-2">{lead.content}</p>
-                        <div className="text-sm text-gray-600 space-y-1">
-                          <div>
-                            <span className="font-medium">User:</span> {lead.userId?.name} ({lead.userId?.email})
-                          </div>
-                          <div>
-                            <span className="font-medium">Group:</span> {lead.groupId?.name}
-                          </div>
-                        </div>
-                      </>
+                {/* Header */}
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className={`text-[11px] px-2 py-0.5 rounded ${lead.type==='buy'?'bg-blue-100 text-blue-800':'bg-green-100 text-green-800'}`}>{(lead.type||'lead').toUpperCase()}</span>
+                    {lead.hscode && (
+                      <span className="text-[11px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">HS: {lead.hscode}</span>
                     )}
                   </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-500">{new Date(lead.createdAt).toLocaleString()}</span>
+                  </div>
+                </div>
 
-                  <div className="flex items-center space-x-2 ml-4">
+                {/* Body */}
+                <div className="text-sm space-y-2">
+                  {lead.description && (
+                    <div className="text-gray-900 font-medium leading-6">{lead.description}</div>
+                  )}
+                  <div className="flex flex-wrap gap-2 text-[11px] text-gray-700">
+                    {lead.quantity && <span className="px-2 py-0.5 rounded-full bg-gray-100">Qty: {lead.quantity}</span>}
+                    {lead.packing && <span className="px-2 py-0.5 rounded-full bg-gray-100">Packing: {lead.packing}</span>}
+                    {(lead.targetPrice || lead.negotiable !== undefined) && (
+                      <span className="px-2 py-0.5 rounded-full bg-gray-100">Target: {lead.targetPrice || '-'} {lead.negotiable ? '(Negotiable)' : ''}</span>
+                    )}
+                    {lead.leadCode && <span className="px-2 py-0.5 rounded-full bg-gray-100">ID: {lead.leadCode}</span>}
+                  </div>
+                  <div className="text-xs text-gray-700 space-y-1">
+                    {lead.buyerDeliveryLocation?.address && (
+                      <div>Delivery: {lead.buyerDeliveryLocation.address}</div>
+                    )}
+                    {lead.sellerPickupLocation?.address && (
+                      <div>Pickup: {lead.sellerPickupLocation.address}</div>
+                    )}
+                  </div>
+                  {Array.isArray(lead.documents) && lead.documents.length > 0 && (
+                    <div className="mt-1 flex flex-wrap gap-2">
+                      {lead.documents.map((doc, i) => (
+                        <a key={i} href={`${process.env.NEXT_PUBLIC_BASE_URL}/leadDocuments/${doc}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 text-[11px]">
+                          <span>📄</span>
+                          <span className="truncate max-w-[140px]">{doc}</span>
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Footer */}
+                <div className="mt-3 flex items-end justify-between">
+                  <div className="text-xs text-gray-600">
+                    <div>
+                      <span className="font-medium">User:</span> {lead.userId?.name} ({lead.userId?.email})
+                    </div>
+                    <div>
+                      <span className="font-medium">Group:</span> {lead.groupId?.name}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
                     <button
                       suppressHydrationWarning={true}
-                      onClick={() => handleApproveReject(lead._id, "approve")}
+                      onClick={() => handleApproveReject(lead._id, 'approve')}
                       disabled={loading}
-                      className="px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 transition-colors flex items-center space-x-1"
+                      className="px-3 py-1 border border-gray-600 hover:text-white rounded-md hover:bg-gray-800 text-xs"
                     >
-                      <MdCheck size={16} />
-                      <span>Approve</span>
+                      Approve
                     </button>
                     <button
                       suppressHydrationWarning={true}
                       onClick={() => openRejectModal(lead)}
                       disabled={loading}
-                      className="px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50 transition-colors flex items-center space-x-1"
+                      className="px-3 py-1 border border-gray-600 hover:text-white rounded-md hover:bg-gray-800 text-xs"
                     >
-                      <MdClose size={16} />
-                      <span>Reject</span>
+                      Reject
                     </button>
                   </div>
                 </div>
@@ -292,7 +279,7 @@ const RequestedLeads = () => {
               <button
                 onClick={() => handleApproveReject(selectedLead._id, "reject")}
                 disabled={!comment.trim() || loading}
-                className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50 transition-colors"
+                className="px-3 py-1 text-white rounded-md bg-gray-800 text-base"
               >
                 Reject
               </button>

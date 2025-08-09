@@ -117,7 +117,7 @@ const SuperCategoriesGroups = ({ categoryId, categoryName }) => {
   const filteredGroups = groups.filter(
     (group) =>
       group.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      group.hscode.toLowerCase().includes(searchTerm.toLowerCase())
+      (group.heading || group.hscode).toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -191,23 +191,33 @@ const SuperCategoriesGroups = ({ categoryId, categoryName }) => {
                 <div className="flex items-center justify-between">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center space-x-3">
-                      {group.image && (
-                        <img
-                          src={`${process.env.NEXT_PUBLIC_BASE_URL}/${group.image}`}
-                          alt={group.name}
-                          className="w-10 h-10 rounded-lg object-cover"
-                        />
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <span className="text-[.9em] sm:text-[.96em] text-gray-700 truncate block font-medium">
+                      <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden border border-gray-200 bg-gray-100">
+                        {group.image ? (
+                          <img
+                            src={
+                              group.image.startsWith("https")
+                                ? group.image
+                                : `${process.env.NEXT_PUBLIC_BASE_URL}/upload/${group.image}`
+                            }
+                            alt={group.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-xs text-gray-600 font-medium">
+                            {group.name?.charAt(0)?.toUpperCase()}
+                          </span>
+                        )}
+                      </div>
+                     <div className="min-w-0  ">
+                        <div className="text-[.9em] sm:text-[.96em] text-gray-700 truncate">
                           {group.name}
-                        </span>
-                        <span className="text-[.8em] sm:text-[.85em] text-gray-500 truncate block">
-                          HSCode: {group.hscode}
-                        </span>
-                        <span className="text-[.75em] sm:text-[.8em] text-gray-400 truncate block">
-                          Members: {group.members?.length || 0}
-                        </span>
+                        </div>
+                        <div className="flex gap-6 text-xs text-gray-500">
+                          Heading - {group.heading}
+                          <div className="text-xs text-gray-500 flex-shrink-0">
+                            Members - {group.members.length}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>

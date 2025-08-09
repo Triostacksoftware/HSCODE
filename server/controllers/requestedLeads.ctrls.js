@@ -32,6 +32,27 @@ export const postRequestedLead = async (req, res) => {
 
     const documents = (req.files || []).map((f) => f.filename);
 
+    // Build leadCode
+    // Prefix: BLD for buy, SLD for sell; scope: domestic; country from user
+    const countryCode = req.user.countryCode || "";
+    const chapter = req.body.chapterNo;
+    const typePrefix = (type === "buy" ? "BLD" : "SLD");
+    // Find sequence for this day and chapter + country + type
+    const seqBase = { type, hscode: { $regex: `^${chapter}` }, documents: { $exists: true } };
+    // Count existing leads for chapter and country to generate next sequence
+    const existingRequestedCount = await RequestedLeads.countDocuments({
+      type,
+      hscode: { $regex: `^${chapter}` },
+      // domestic scope uses user's country; optional filter by user country if stored
+    });
+    const existingApprovedCount = await ApprovedLeads.countDocuments({
+      type,
+      hscode: { $regex: `^${chapter}` },
+      // domestic scope uses user's country; optional filter by user country if stored
+    });
+    const sequence = String(existingRequestedCount + existingApprovedCount + 1).padStart(2, "0");
+    const leadCode = `${typePrefix}-${countryCode}-${chapter}-${sequence}`;
+
     const newRequestedLead = new RequestedLeads({
       groupId,
       userId,
@@ -64,6 +85,7 @@ export const postRequestedLead = async (req, res) => {
       remarks,
       content,
       documents,
+      leadCode,
     });
 
     const savedLead = await newRequestedLead.save();
@@ -187,6 +209,7 @@ export const approveRejectLead = async (req, res) => {
         specialRequest: requestedLead.specialRequest,
         remarks: requestedLead.remarks,
         documents: requestedLead.documents,
+        leadCode: requestedLead.leadCode,
       });
       const savedApprovedLead = await newApprovedLead.save();
       await savedApprovedLead.populate("userId", "name image");
@@ -210,6 +233,7 @@ export const approveRejectLead = async (req, res) => {
           specialRequest: savedApprovedLead.specialRequest,
           remarks: savedApprovedLead.remarks,
           documents: savedApprovedLead.documents,
+          leadCode: savedApprovedLead.leadCode,
           createdAt: savedApprovedLead.createdAt,
           updatedAt: savedApprovedLead.updatedAt,
         }

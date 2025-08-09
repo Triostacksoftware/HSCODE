@@ -100,6 +100,7 @@ const DomesticChat = () => {
       >
         {selectedGroup ? (
           <ChatWindow
+            chapterNo={selectedGroup.categoryId.chapter}
             selectedGroupId={selectedGroup._id}
             groupName={selectedGroup.name}
             groupImage={selectedGroup.image}

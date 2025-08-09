@@ -14,7 +14,7 @@ import axios from "axios";
 const AddGroup = ({ categoryId, categoryName, onClose }) => {
   const [formData, setFormData] = useState({
     name: "",
-    hscode: "",
+    heading: "",
   });
   const [selectedFile, setSelectedFile] = useState(null);
   const [selectedBulkFile, setSelectedBulkFile] = useState(null);
@@ -86,7 +86,7 @@ const AddGroup = ({ categoryId, categoryName, onClose }) => {
     try {
       const formDataToSend = new FormData();
       formDataToSend.append("name", formData.name);
-      formDataToSend.append("hscode", formData.hscode);
+      formDataToSend.append("heading", formData.heading);
 
       if (selectedFile) {
         formDataToSend.append("file", selectedFile);
@@ -229,20 +229,20 @@ const AddGroup = ({ categoryId, categoryName, onClose }) => {
 
           <div>
             <label
-              htmlFor="hscode"
+              htmlFor="heading"
               className="block text-[.9em] font-medium text-gray-700 mb-2"
             >
-              HS Code
+              Heading
             </label>
             <input
               type="text"
-              id="hscode"
-              name="hscode"
-              value={formData.hscode}
+              id="heading"
+              name="heading"
+              value={formData.heading}
               onChange={handleInputChange}
               required
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent text-sm"
-              placeholder="Enter HS code"
+              placeholder="Enter Heading"
             />
           </div>
 
@@ -366,7 +366,7 @@ const AddGroup = ({ categoryId, categoryName, onClose }) => {
                     className="hidden"
                   />
                   <label
-                    htmlFor="bulkFile"
+                    htmlFor="bulkFile"    
                     className="flex items-center justify-center w-full px-3 py-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
                   >
                     <MdUpload className="w-5 h-5 mr-2 text-gray-500" />
@@ -401,7 +401,7 @@ const AddGroup = ({ categoryId, categoryName, onClose }) => {
                 )}
 
                 <p className="text-xs text-gray-500">
-                  Upload a CSV or Excel file with group names and HS codes (max
+                  Upload a CSV or Excel file with group names and Heading (max
                   10MB)
                 </p>
               </div>

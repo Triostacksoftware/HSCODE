@@ -13,6 +13,7 @@ import axios from "axios";
 const AddCategories = ({ onClose, onCategoryCreated }) => {
   const [formData, setFormData] = useState({
     name: "",
+    chapter: "",
   });
   const [selectedFile, setSelectedFile] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -203,6 +204,24 @@ const AddCategories = ({ onClose, onCategoryCreated }) => {
               required
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
               placeholder="Enter category name"
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="name"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
+              Chapter No.
+            </label>
+            <input
+              type="text"
+              id="name"
+              name="name"
+              value={formData.chapter}
+              onChange={handleInputChange}
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
+              placeholder="Enter chapter number"
             />
           </div>
 
