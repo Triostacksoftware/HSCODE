@@ -52,6 +52,20 @@ const userSchema = new mongoose.Schema(
         ref: "GlobalGroup",
       },
     ],
+
+    // Per-group last read timestamp for unread counts
+    groupReads: [
+      {
+        groupId: { type: mongoose.Schema.Types.ObjectId, ref: "LocalGroup" },
+        lastReadAt: { type: Date, default: null },
+      },
+    ],
+    globalGroupReads: [
+      {
+        groupId: { type: mongoose.Schema.Types.ObjectId, ref: "GlobalGroup" },
+        lastReadAt: { type: Date, default: null },
+      },
+    ],
   },
   {
     timestamps: true,

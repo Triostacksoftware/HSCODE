@@ -137,6 +137,8 @@ const SuperLocalRequestedLeads = () => {
                   <div className="text-xs text-gray-700 space-y-1">
                     {lead.buyerDeliveryLocation?.address && (<div>Delivery: {lead.buyerDeliveryLocation.address}</div>)}
                     {lead.sellerPickupLocation?.address && (<div>Pickup: {lead.sellerPickupLocation.address}</div>)}
+                    {lead.specialRequest && (<div>Special request: {lead.specialRequest}</div>)}
+                    {lead.remarks && (<div>Notes: {lead.remarks}</div>)}
                   </div>
                   {Array.isArray(lead.documents) && lead.documents.length > 0 && (
                     <div className="mt-1 flex flex-wrap gap-2">

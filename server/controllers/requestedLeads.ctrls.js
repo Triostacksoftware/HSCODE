@@ -250,3 +250,97 @@ export const approveRejectLead = async (req, res) => {
     res.status(500).json({ message: "Error processing lead" });
   }
 };
+
+// Resend a rejected requested lead (user can edit and resubmit). Keeps the same lead document
+export const resendRequestedLead = async (req, res) => {
+  try {
+    const { leadId } = req.params;
+    const userId = req.user.id;
+
+    const lead = await RequestedLeads.findById(leadId);
+    if (!lead) return res.status(404).json({ message: "Requested lead not found" });
+    if (String(lead.userId) !== String(userId)) {
+      return res.status(403).json({ message: "You can only edit your own lead" });
+    }
+    if (lead.status !== "rejected") {
+      return res.status(400).json({ message: "Only rejected leads can be resent" });
+    }
+
+    // Parse retained docs coming from client
+    let retained = [];
+    try {
+      if (req.body.retainDocuments) {
+        const parsed = JSON.parse(req.body.retainDocuments);
+        if (Array.isArray(parsed)) retained = parsed;
+      }
+    } catch (_) {}
+
+    const newDocs = (req.files || []).map((f) => f.filename);
+    const documents = [...retained, ...newDocs];
+
+    // Update fields if provided
+    const fields = [
+      "type",
+      "hscode",
+      "description",
+      "quantity",
+      "packing",
+      "targetPrice",
+      "negotiable",
+      "specialRequest",
+      "remarks",
+    ];
+    fields.forEach((key) => {
+      if (typeof req.body[key] !== "undefined") {
+        lead[key] = key === "negotiable" ? (req.body[key] === "true" || req.body[key] === true) : req.body[key];
+      }
+    });
+
+    // Addresses
+    if (typeof req.body.buyerDeliveryAddress !== "undefined") {
+      const buyerAddr = req.body.buyerDeliveryAddress;
+      const buyerLat = req.body.buyerLat;
+      const buyerLng = req.body.buyerLng;
+      lead.buyerDeliveryLocation = buyerAddr
+        ? {
+            address: buyerAddr,
+            geo:
+              buyerLng && buyerLat
+                ? { type: "Point", coordinates: [Number(buyerLng), Number(buyerLat)] }
+                : undefined,
+          }
+        : undefined;
+    }
+    if (typeof req.body.sellerPickupAddress !== "undefined") {
+      const sellerAddr = req.body.sellerPickupAddress;
+      const sellerLat = req.body.sellerLat;
+      const sellerLng = req.body.sellerLng;
+      lead.sellerPickupLocation = sellerAddr
+        ? {
+            address: sellerAddr,
+            geo:
+              sellerLng && sellerLat
+                ? { type: "Point", coordinates: [Number(sellerLng), Number(sellerLat)] }
+                : undefined,
+          }
+        : undefined;
+    }
+
+    // Documents
+    lead.documents = documents;
+
+    // Reset status and admin metadata; keep same leadCode
+    lead.status = "pending";
+    lead.adminId = null;
+    lead.adminComment = null;
+
+    await lead.save();
+    await lead.populate("userId", "name image");
+    await lead.populate("groupId", "name");
+
+    res.json({ message: "Lead resent successfully", requestedLead: lead });
+  } catch (error) {
+    console.error("Error resending requested lead:", error);
+    res.status(500).json({ message: "Error resending requested lead" });
+  }
+};

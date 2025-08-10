@@ -22,7 +22,7 @@ export const getDashboardStats = async (req, res) => {
       UserModel.countDocuments(),
       GlobalCategory.countDocuments(),
       GlobalGroup.countDocuments(),
-      0,
+      UserModel.countDocuments({ role: "admin" }),
     ]);
 
     res.json({
@@ -113,15 +113,17 @@ export const getPendingLocalRequestedLeadsByCountry = async (req, res) => {
   }
 };
 
-// Get all admins
+// Get all admins (from UserModel with role: 'admin')
 export const getAdmins = async (req, res) => {
   try {
-    const admins = await AdminModel.find().select("-password");
+    const admins = await UserModel.find({ role: "admin" }).select(
+      "name email countryCode phone role image"
+    );
 
-    // Get local leads count for each admin
+    // Compute pending local requested leads per admin's country
     const adminsWithStats = await Promise.all(
       admins.map(async (admin) => {
-        const localLeadsCount = await GlobalRequestedLeads.countDocuments({
+        const localLeadsCount = await RequestedLeads.countDocuments({
           countryCode: admin.countryCode,
           status: "pending",
         });

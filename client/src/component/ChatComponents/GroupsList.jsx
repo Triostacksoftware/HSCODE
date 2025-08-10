@@ -72,12 +72,22 @@ const GroupsList = ({
     }
   };
 
-  const handleOpenGroup = (group) => {
+  const handleOpenGroup = async (group) => {
     // Call the onGroupSelect callback with the group object
     if (onGroupSelect) {
       onGroupSelect(group);
     }
     console.log("Opening group:", group);
+    try {
+      if (isUserJoined(group._id)) {
+        await axios.patch(
+          `${process.env.NEXT_PUBLIC_BASE_URL}/user/mark-group-read`,
+          { groupId: group._id },
+          { withCredentials: true }
+        );
+        setGroups((prev) => prev.map((g) => g._id === group._id ? { ...g, unreadBuyCount: 0, unreadSellCount: 0 } : g));
+      }
+    } catch (_) {}
   };
 
   const isUserJoined = (groupId) => {
@@ -185,7 +195,7 @@ const GroupsList = ({
                     </div>
 
                     {/* Group Info */}
-                    <div className="min-w-0 flex-1 grid">
+                  <div className="min-w-0 flex-1 grid">
                       <div className="text-sm font-medium truncate">
                         {group.name ||
                           `Group ${String(index + 1).padStart(2, "0")}`}
@@ -194,6 +204,20 @@ const GroupsList = ({
                         heading: {group.heading || group.hscode}
                       </div>
                     </div>
+                  {isUserJoined(group._id) && (group.unreadBuyCount > 0 || group.unreadSellCount > 0) && (
+                    <div className="ml-auto flex items-center gap-1">
+                      {group.unreadBuyCount > 0 && (
+                        <span title="New buy leads" className="inline-flex items-center justify-center min-w-[20px] h-5 px-1 rounded-full text-white text-[10px] bg-blue-600">
+                          {group.unreadBuyCount}
+                        </span>
+                      )}
+                      {group.unreadSellCount > 0 && (
+                        <span title="New sell leads" className="inline-flex items-center justify-center min-w-[20px] h-5 px-1 rounded-full text-white text-[10px] bg-green-600">
+                          {group.unreadSellCount}
+                        </span>
+                      )}
+                    </div>
+                  )}
                     {/* Action Button for not joined */}
                     {!joined && (
                       <button

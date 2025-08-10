@@ -38,11 +38,21 @@ const MyGroups = ({ onGroupSelect, selectedGroupId }) => {
     }
   };
 
-  const handleOpenGroup = (group) => {
+  const handleOpenGroup = async (group) => {
     // Call the onGroupSelect callback with the group object
     if (onGroupSelect) {
       onGroupSelect(group);
     }
+    // mark as read
+    try {
+      await axios.patch(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/user/mark-group-read`,
+        { groupId: group._id },
+        { withCredentials: true }
+      );
+      // update local badge
+      setGroups((prev) => prev.map((g) => g._id === group._id ? { ...g, unreadCount: 0 } : g));
+    } catch (_) {}
     console.log("Opening group:", group);
   };
 
@@ -147,6 +157,20 @@ const MyGroups = ({ onGroupSelect, selectedGroupId }) => {
                       heading: {group.heading || group.hscode}
                     </div>
                   </div>
+                  {(group.unreadBuyCount > 0 || group.unreadSellCount > 0) && (
+                    <div className="ml-auto flex items-center gap-1">
+                      {group.unreadBuyCount > 0 && (
+                        <span title="New buy leads" className="inline-flex items-center justify-center min-w-[22px] h-5 px-1 rounded-full text-white text-[11px] bg-blue-600">
+                          {group.unreadBuyCount}
+                        </span>
+                      )}
+                      {group.unreadSellCount > 0 && (
+                        <span title="New sell leads" className="inline-flex items-center justify-center min-w-[22px] h-5 px-1 rounded-full text-white text-[11px] bg-green-600">
+                          {group.unreadSellCount}
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             ))}

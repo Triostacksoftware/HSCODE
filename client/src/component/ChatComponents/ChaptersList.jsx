@@ -84,6 +84,7 @@ const ChaptersList = ({ onCategorySelect, selectedCategory }) => {
                 onClick={() => handleCategorySelect(category)}
               >
                 <div className="text-sm font-medium ">{category.name}</div>
+                <div className="text-[.7em] text-gray-400 font-medium ">Chapter No. - {category.chapter}</div>
               </div>
             ))}
           </div>

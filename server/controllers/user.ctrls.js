@@ -1,6 +1,8 @@
 import UserModel from "../models/user.js";
 import LocalGroupModel from "../models/LocalGroup.js";
 import GlobalGroupModel from "../models/GlobalGroup.js";
+import ApprovedLeads from "../models/ApprovedLeads.js";
+import GlobalApprovedLeads from "../models/GlobalApprovedLeads.js";
 
 // GET GROUP by IDs (for user's joined groups)
 export const getGroups = async (req, res) => {
@@ -10,11 +12,29 @@ export const getGroups = async (req, res) => {
     const user = await UserModel.findById(id);
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    const groups = await LocalGroupModel.find({
-      _id: { $in: user.groupsID },
-    }).populate("categoryId", "chapter");
+    const groups = await LocalGroupModel.find({ _id: { $in: user.groupsID } }).populate("categoryId", "chapter");
 
-    res.json(groups);
+    // compute unread counts: approved leads after lastReadAt
+    const groupIdToLastRead = new Map((user.groupReads || []).map((gr) => [String(gr.groupId), gr.lastReadAt]));
+    const unreadMap = {};
+    await Promise.all(
+      groups.map(async (g) => {
+        const lastRead = groupIdToLastRead.get(String(g._id)) || new Date(0);
+        const [buy, sell] = await Promise.all([
+          ApprovedLeads.countDocuments({ groupId: g._id, createdAt: { $gt: lastRead }, type: "buy", userId: { $ne: user._id } }),
+          ApprovedLeads.countDocuments({ groupId: g._id, createdAt: { $gt: lastRead }, type: "sell", userId: { $ne: user._id } }),
+        ]);
+        unreadMap[String(g._id)] = { buy, sell };
+      })
+    );
+
+    const enriched = groups.map((g) => ({
+      ...g.toObject(),
+      unreadBuyCount: unreadMap[String(g._id)]?.buy || 0,
+      unreadSellCount: unreadMap[String(g._id)]?.sell || 0,
+    }));
+
+    res.json(enriched);
   } catch (err) {
     console.error("Error fetching groups by IDs:", err);
     res.status(500).json({ message: "Error fetching groups" });
@@ -31,14 +51,72 @@ export const getGlobalGroups = async (req, res) => {
     const user = await UserModel.findById(userId);
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    const groups = await GlobalGroupModel.find({
-      _id: { $in: groupIds },
-    }).populate("categoryId");
-    console.log("super groups", groups);
-    res.json(groups);
+    const groups = await GlobalGroupModel.find({ _id: { $in: groupIds } }).populate("categoryId");
+
+    // unread for global groups
+    const groupIdToLastRead = new Map((user.globalGroupReads || []).map((gr) => [String(gr.groupId), gr.lastReadAt]));
+    const unreadMap = {};
+    await Promise.all(
+      groups.map(async (g) => {
+        const lastRead = groupIdToLastRead.get(String(g._id)) || new Date(0);
+        const [buy, sell] = await Promise.all([
+          GlobalApprovedLeads.countDocuments({ groupId: g._id, createdAt: { $gt: lastRead }, type: "buy", userId: { $ne: user._id } }),
+          GlobalApprovedLeads.countDocuments({ groupId: g._id, createdAt: { $gt: lastRead }, type: "sell", userId: { $ne: user._id } }),
+        ]);
+        unreadMap[String(g._id)] = { buy, sell };
+      })
+    );
+    const enriched = groups.map((g) => ({
+      ...g.toObject(),
+      unreadBuyCount: unreadMap[String(g._id)]?.buy || 0,
+      unreadSellCount: unreadMap[String(g._id)]?.sell || 0,
+    }));
+    res.json(enriched);
   } catch (err) {
     console.error("Error fetching global groups by IDs:", err);
     res.status(500).json({ message: "Error fetching global groups" });
+  }
+};
+
+// MARK local group as read (update lastReadAt)
+export const markGroupRead = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { groupId } = req.body;
+    const user = await UserModel.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+    const idx = (user.groupReads || []).findIndex((gr) => String(gr.groupId) === String(groupId));
+    if (idx >= 0) {
+      user.groupReads[idx].lastReadAt = new Date();
+    } else {
+      user.groupReads.push({ groupId, lastReadAt: new Date() });
+    }
+    await user.save();
+    res.json({ message: "Marked read" });
+  } catch (err) {
+    console.error("Error marking group read:", err);
+    res.status(500).json({ message: "Error marking group read" });
+  }
+};
+
+// MARK global group as read
+export const markGlobalGroupRead = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { groupId } = req.body;
+    const user = await UserModel.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+    const idx = (user.globalGroupReads || []).findIndex((gr) => String(gr.groupId) === String(groupId));
+    if (idx >= 0) {
+      user.globalGroupReads[idx].lastReadAt = new Date();
+    } else {
+      user.globalGroupReads.push({ groupId, lastReadAt: new Date() });
+    }
+    await user.save();
+    res.json({ message: "Marked read" });
+  } catch (err) {
+    console.error("Error marking global group read:", err);
+    res.status(500).json({ message: "Error marking global group read" });
   }
 };
 

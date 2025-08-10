@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useUserAuth } from "../../utilities/userAuthMiddleware";
+import LeadFormModal from "./LeadFormModal";
 
 const RequestedLeads = () => {
   const { user } = useUserAuth();
@@ -11,6 +12,8 @@ const RequestedLeads = () => {
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState("pending"); // pending, approved, rejected
   const [requestState, setRequestState] = useState("local");
+  const [resendOpen, setResendOpen] = useState(false);
+  const [resendLead, setResendLead] = useState(null);
 
   useEffect(() => {
     fetchRequestedLeads();
@@ -45,6 +48,54 @@ const RequestedLeads = () => {
       setError("Failed to load requested leads");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const openResend = (lead) => {
+    setResendLead(lead);
+    setResendOpen(true);
+  };
+
+  const submitResend = async (values) => {
+    if (!resendLead) return;
+    try {
+      const form = new FormData();
+      form.append("type", values.leadType);
+      form.append("hscode", values.hscode);
+      form.append("description", values.description);
+      form.append("quantity", values.quantity);
+      form.append("packing", values.packing);
+      form.append("targetPrice", values.targetPrice);
+      form.append("negotiable", values.negotiable);
+      form.append("buyerDeliveryAddress", values.buyerDeliveryAddress);
+      if (values.buyerLat && values.buyerLng) {
+        form.append("buyerLat", values.buyerLat);
+        form.append("buyerLng", values.buyerLng);
+      }
+      form.append("sellerPickupAddress", values.sellerPickupAddress);
+      if (values.sellerLat && values.sellerLng) {
+        form.append("sellerLat", values.sellerLat);
+        form.append("sellerLng", values.sellerLng);
+      }
+      form.append("specialRequest", values.specialRequest);
+      form.append("remarks", values.remarks);
+      if (values.retaiDocuments && Array.isArray(values.retaiDocuments)) {
+        // no-op, handled below (typo safeguard)
+      }
+      form.append("retainDocuments", JSON.stringify(values.retainDocuments || []));
+      (values.documents || []).forEach((file) => form.append("documents", file));
+
+      await axios.post(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/requested-leads/user/${resendLead._id}/resend`,
+        form,
+        { withCredentials: true, headers: { "Content-Type": "multipart/form-data" } }
+      );
+      setResendOpen(false);
+      setResendLead(null);
+      await fetchRequestedLeads();
+    } catch (err) {
+      console.error("Resend error:", err);
+      alert("Failed to resend lead");
     }
   };
 
@@ -232,6 +283,12 @@ const RequestedLeads = () => {
                       {lead.sellerPickupLocation?.address && (
                         <div>Pickup: {lead.sellerPickupLocation.address}</div>
                       )}
+                          {lead.specialRequest && (
+                            <div>Special request: {lead.specialRequest}</div>
+                          )}
+                          {lead.remarks && (
+                            <div>Notes: {lead.remarks}</div>
+                          )}
                     </div>
                     {Array.isArray(lead.documents) && lead.documents.length > 0 && (
                       <div className="mt-2 flex flex-wrap gap-2">
@@ -269,6 +326,11 @@ const RequestedLeads = () => {
                         </p>
                       </div>
                     )}
+                    {lead.status === 'rejected' && (
+                      <div className="mt-2">
+                        <button onClick={() => openResend(lead)} className="px-3 py-1 border border-gray-600 hover:text-white rounded-md hover:bg-gray-800 text-xs">Edit & Resend</button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -276,6 +338,15 @@ const RequestedLeads = () => {
           </div>
         )}
       </div>
+
+      {/* Resend Modal */}
+      <LeadFormModal
+        isOpen={resendOpen}
+        onClose={() => setResendOpen(false)}
+        initial={resendLead}
+        onSubmit={submitResend}
+        sending={false}
+      />
     </div>
   );
 };
