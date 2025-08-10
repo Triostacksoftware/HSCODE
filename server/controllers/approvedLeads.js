@@ -56,6 +56,7 @@ export const postNewLead = async (req, res) => {
       groupId,
       userId,
       content: content || null,
+      countryCode: req.user.countryCode || undefined,
       type,
       hscode,
       description,

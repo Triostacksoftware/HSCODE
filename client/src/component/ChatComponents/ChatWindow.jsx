@@ -611,16 +611,16 @@ const ChatWindow = ({chapterNo, selectedGroupId, groupName, groupImage, onBack }
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {leadType === 'buy' ? (
                   <div className="md:col-span-2">
-                    <label className="text-[.8em] font-medium">Delivery address</label>
-                    <input className="mt-1 w-full border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 rounded text-sm" placeholder="Type full address or pick from map" value={buyerDeliveryAddress} onChange={(e)=>setBuyerDeliveryAddress(e.target.value)} />
+                    <label className="text-[.8em] font-medium">Delivery address<span className="text-red-500">*</span></label>
+                    <input className="mt-1 w-full border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 rounded text-sm" placeholder="Type full address or pick from map" value={buyerDeliveryAddress} onChange={(e)=>setBuyerDeliveryAddress(e.target.value)} required/>
                     <div className="flex items-center gap-3 mt-2">
                       <button type="button" onClick={()=> setMapPicker({ open: true, role: 'buyer' })} className="text-xs underline text-blue-700">Pick on map (auto-fills address)</button>
                     </div>
                   </div>
                 ) : (
                   <div className="md:col-span-2">
-                    <label className="text-[.8em] font-medium">Pickup address</label>
-                    <input className="mt-1 w-full border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 rounded text-sm" placeholder="Type full address or pick from map" value={sellerPickupAddress} onChange={(e)=>setSellerPickupAddress(e.target.value)} />
+                    <label className="text-[.8em] font-medium">Pickup address <span className="text-red-500">*</span></label>
+                    <input className="mt-1 w-full border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 rounded text-sm" placeholder="Type full address or pick from map" value={sellerPickupAddress} onChange={(e)=>setSellerPickupAddress(e.target.value)} required/>
                     <div className="flex items-center gap-3 mt-2">
                       <button type="button" onClick={()=> setMapPicker({ open: true, role: 'seller' })} className="text-xs underline text-blue-700">Pick on map (auto-fills address)</button>
                     </div>

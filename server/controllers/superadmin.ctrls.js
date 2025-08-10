@@ -261,11 +261,24 @@ export const approveRejectGlobalLead = async (req, res) => {
         userId: requestedLead.userId._id || requestedLead.userId,
         content: requestedLead.content,
         countryCode: requestedLead.countryCode,
+        type: requestedLead.type,
+        hscode: requestedLead.hscode,
+        description: requestedLead.description,
+        quantity: requestedLead.quantity,
+        packing: requestedLead.packing,
+        targetPrice: requestedLead.targetPrice,
+        negotiable: requestedLead.negotiable,
+        buyerDeliveryLocation: requestedLead.buyerDeliveryLocation,
+        sellerPickupLocation: requestedLead.sellerPickupLocation,
+        specialRequest: requestedLead.specialRequest,
+        remarks: requestedLead.remarks,
+        documents: requestedLead.documents,
+        leadCode: requestedLead.leadCode,
       });
       const savedApprovedLead = await newApprovedLead.save();
       await savedApprovedLead.populate("userId", "name image");
 
-      // Emit socket event to group from backend
+      // Emit socket event to group from backend with full structured payload
       io.to(
         `global-group-${requestedLead.groupId._id || requestedLead.groupId}`
       ).emit("new-approved-global-lead", {
@@ -273,6 +286,19 @@ export const approveRejectGlobalLead = async (req, res) => {
         groupId: requestedLead.groupId._id || requestedLead.groupId,
         userId: savedApprovedLead.userId,
         content: savedApprovedLead.content,
+        type: savedApprovedLead.type,
+        hscode: savedApprovedLead.hscode,
+        description: savedApprovedLead.description,
+        quantity: savedApprovedLead.quantity,
+        packing: savedApprovedLead.packing,
+        targetPrice: savedApprovedLead.targetPrice,
+        negotiable: savedApprovedLead.negotiable,
+        buyerDeliveryLocation: savedApprovedLead.buyerDeliveryLocation,
+        sellerPickupLocation: savedApprovedLead.sellerPickupLocation,
+        specialRequest: savedApprovedLead.specialRequest,
+        remarks: savedApprovedLead.remarks,
+        documents: savedApprovedLead.documents,
+        leadCode: savedApprovedLead.leadCode,
         createdAt: savedApprovedLead.createdAt,
         updatedAt: savedApprovedLead.updatedAt,
       });

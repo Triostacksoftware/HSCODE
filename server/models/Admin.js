@@ -42,6 +42,19 @@ const countryAdminSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    groupsID: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Group",
+      },
+    ],
+
+    globalGroupsID: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "GlobalGroup",
+      },
+    ],
   },
   { timestamps: true }
 );

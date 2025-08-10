@@ -19,6 +19,7 @@ const approvedLeadsSchema = new mongoose.Schema(
       default: null,
     },
     // structured lead fields
+    countryCode: { type: String },
     type: { type: String, enum: ["buy", "sell"], required: false },
     hscode: { type: String },
     description: { type: String },

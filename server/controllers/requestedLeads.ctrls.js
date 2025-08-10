@@ -89,8 +89,8 @@ export const postRequestedLead = async (req, res) => {
     });
 
     const savedLead = await newRequestedLead.save();
-    await savedLead.populate("userId", "name image");
-    res.status(201).json(savedLead);
+    await savedLead.populate("userId", "name");
+    res.status(201).json("savedLead");
   } catch (error) {
     console.error("Error posting requested lead:", error);
     res.status(500).json({ message: "Error posting requested lead" });

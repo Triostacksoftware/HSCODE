@@ -56,19 +56,21 @@ export const postGlobalRequestedLead = async (req, res) => {
 
     const documents = (req.files || []).map((f) => f.filename);
 
-    // Prefer chapterNo from client (same as domestic flow). Fallback to HS slice.
-    const chapter = (req.body.chapterNo && String(req.body.chapterNo)) || (hscode || "").slice(0, 2) || "00";
+    // Prefer chapterNo from client (same as domestic flow). Fallback to HS slice. Normalize to 2 digits
+    const chapter = (
+      (req.body.chapterNo && String(req.body.chapterNo)) ||
+      (hscode || "").slice(0, 2) ||
+      "00"
+    ).padStart(2, "0");
     // For GLOBAL leads use BLG/SLG (Buy Lead Global / Sell Lead Global)
     const typePrefix = type === "buy" ? "BLG" : "SLG";
+    // Count by leadCode prefix so HS code does not affect sequencing
+    const leadPrefix = `${typePrefix}-${countryCode}-${chapter}-`;
     const existingRequestedCount = await GlobalRequestedLeads.countDocuments({
-      type,
-      hscode: { $regex: `^${chapter}` },
-      countryCode,
+      leadCode: { $regex: `^${leadPrefix}` },
     });
     const existingApprovedCount = await GlobalApprovedLeads.countDocuments({
-      type,
-      hscode: { $regex: `^${chapter}` },
-      countryCode,
+      leadCode: { $regex: `^${leadPrefix}` },
     });
     const sequence = String(existingRequestedCount + existingApprovedCount + 1).padStart(2, "0");
     const leadCode = `${typePrefix}-${countryCode}-${chapter}-${sequence}`;
