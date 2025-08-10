@@ -63,6 +63,7 @@ export const postRequestedLead = async (req, res) => {
       packing,
       targetPrice,
       negotiable: negotiable === "true" || negotiable === true,
+      countryCode,
       buyerDeliveryLocation: buyerDeliveryAddress
         ? {
             address: buyerDeliveryAddress,
