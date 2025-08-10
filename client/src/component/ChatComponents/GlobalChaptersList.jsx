@@ -90,6 +90,8 @@ const GlobalChaptersList = ({ onCategorySelect, selectedCategory }) => {
                 <div className="text-sm md:text-sm font-medium">
                   {category.name}
                 </div>
+                <div className="text-[.7em] text-gray-400 font-medium ">Chapter No. - {category.chapter}</div>
+
               </div>
             ))}
           </div>
