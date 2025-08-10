@@ -9,6 +9,53 @@ import {
   verifyTOTP,
 } from "../utilities/totp.util.js";
 import bcrypt from "bcrypt";
+// Get current user profile (for settings)
+export const getMe = async (req, res) => {
+  try {
+    const token = req.cookies.auth_token;
+    const decoded = verifyToken(token);
+    if (!decoded?.id) return res.status(401).json({ message: "Unauthorized" });
+    const user = await UserModel.findById(decoded.id).select("-password");
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.json({ user });
+  } catch (e) {
+    res.status(500).json({ message: "Failed to fetch profile" });
+  }
+};
+
+// Update user profile (allow change everything except countryCode)
+export const updateProfile = async (req, res) => {
+  try {
+    const token = req.cookies.auth_token;
+    const decoded = verifyToken(token);
+    if (!decoded?.id) return res.status(401).json({ message: "Unauthorized" });
+    const user = await UserModel.findById(decoded.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    let { name, email, phone, password, about, preferences, image } = req.body;
+    if (typeof preferences === 'string') {
+      try { preferences = JSON.parse(preferences); } catch (_) { preferences = undefined; }
+    }
+    if (name) user.name = name;
+    if (email) user.email = email;
+    if (phone) user.phone = phone;
+    if (typeof about !== 'undefined') user.about = about;
+    if (preferences && typeof preferences === 'object') {
+      user.preferences = { ...(user.preferences || {}), ...preferences };
+    }
+    if (image) {
+      user.image = image;
+    }
+    if (password && password.trim() !== "") {
+      user.password = password; // pre-save hook will hash
+    }
+    await user.save();
+    res.json({ message: "Profile updated" });
+  } catch (e) {
+    console.error("Profile update error:", e);
+    res.status(500).json({ message: "Failed to update profile" });
+  }
+};
 
 // User Controllers
 export const signup = async (req, res) => {

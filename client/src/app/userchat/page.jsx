@@ -4,6 +4,7 @@ import Sidebar from "../../component/ChatComponents/Sidebar";
 import DomesticChat from "../../component/ChatComponents/DomesticChat";
 import GlobalChat from "../../component/ChatComponents/GlobalChat";
 import RequestedLeads from "../../component/ChatComponents/RequestedLeads";
+import UserChatSettings from "../../component/ChatComponents/UserChatSettings";
 import { useUserAuth } from "../../utilities/userAuthMiddleware.js";
 import { connectUserSocket } from "../../utilities/socket";
 
@@ -74,7 +75,7 @@ const ChatPage = () => {
       case "leads":
         return <RequestedLeads />;
       case "settings":
-        return <div className="p-8">Settings Component</div>;
+        return <UserChatSettings />;
       default:
         return <DomesticChat />;
     }

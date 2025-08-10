@@ -440,7 +440,7 @@ const ChatWindow = ({chapterNo, selectedGroupId, groupName, groupImage, onBack }
                           >
                             {lead.userId?.image ? (
                               <img
-                                src={lead.userId.image}
+                                src={`${process.env.NEXT_PUBLIC_BASE_URL}/upload/${lead.userId.image}`}
                                 alt={lead.userId.name}
                                 className="w-8 h-8 rounded-full object-cover"
                               />
