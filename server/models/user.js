@@ -23,6 +23,10 @@ const userSchema = new mongoose.Schema(
       trim: true,
     },
 
+    image: { type: String },
+    about: { type: String },
+    preferences: { type: Object },
+
     password: {
       type: String,
       required: true,
@@ -50,6 +54,20 @@ const userSchema = new mongoose.Schema(
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "GlobalGroup",
+      },
+    ],
+
+    // Per-group last read timestamp for unread counts
+    groupReads: [
+      {
+        groupId: { type: mongoose.Schema.Types.ObjectId, ref: "LocalGroup" },
+        lastReadAt: { type: Date, default: null },
+      },
+    ],
+    globalGroupReads: [
+      {
+        groupId: { type: mongoose.Schema.Types.ObjectId, ref: "GlobalGroup" },
+        lastReadAt: { type: Date, default: null },
       },
     ],
   },

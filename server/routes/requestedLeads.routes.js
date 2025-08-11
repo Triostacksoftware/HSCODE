@@ -5,6 +5,7 @@ import {
   getUserRequestedLeads,
   getAllPendingLeads,
   approveRejectLead,
+  resendRequestedLead,
 } from "../controllers/requestedLeads.ctrls.js";
 import leadDocsUpload from "../configurations/multerLeadDocs.js";
 
@@ -19,6 +20,12 @@ router.post(
   postRequestedLead
 );
 router.get("/user", authMiddleware, getUserRequestedLeads);
+router.post(
+  "/user/:leadId/resend",
+  authMiddleware,
+  leadDocsUpload.array("documents", 10),
+  resendRequestedLead
+);
 
 // Admin routes
 router.get("/admin/pending", authMiddleware, getAllPendingLeads);

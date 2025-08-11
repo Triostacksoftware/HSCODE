@@ -16,8 +16,11 @@ import {
   verifyAuth,
   verifyUserAuth,
   superadminLogin,
+  getMe,
+  updateProfile,
 } from "../controllers/auth.ctrls.js";
 import AdminModel from "../models/Admin.js";
+import upload from "../configurations/multer.js";
 
 const router = express.Router();
 
@@ -30,6 +33,14 @@ router.post("/forgot-password", forgotPassword);
 router.post("/otp-verification", otpVerification);
 router.post("/reset-password", resetPassword);
 router.post("/logout", logout);
+router.get("/me", getMe);
+router.patch("/profile", upload.single("image"), (req, res, next) => {
+  // attach file path to body if provided
+  if (req.file?.filename) {
+    req.body.image = req.file.filename;
+  }
+  next();
+}, updateProfile);
 
 // auth verification
 router.get("/verify", verifyAuth);

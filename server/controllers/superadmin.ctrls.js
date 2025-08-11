@@ -1,4 +1,4 @@
-import AdminModel from "../models/Admin.js";
+// import AdminModel from "../models/Admin.js"; // Deprecated: roles consolidated into User
 import GlobalRequestedLeads from "../models/GlobalRequestedLeads.js";
 import GlobalApprovedLeads from "../models/GlobalApprovedLeads.js";
 import GlobalCategory from "../models/GlobalCategory.js";
@@ -6,6 +6,7 @@ import GlobalGroup from "../models/GlobalGroup.js";
 import UserModel from "../models/user.js";
 import bcrypt from "bcrypt";
 import { io } from "../server.js";
+import RequestedLeads from "../models/RequestedLeads.js";
 
 // Get dashboard statistics
 export const getDashboardStats = async (req, res) => {
@@ -21,7 +22,7 @@ export const getDashboardStats = async (req, res) => {
       UserModel.countDocuments(),
       GlobalCategory.countDocuments(),
       GlobalGroup.countDocuments(),
-      AdminModel.countDocuments(),
+      UserModel.countDocuments({ role: "admin" }),
     ]);
 
     res.json({
@@ -37,15 +38,92 @@ export const getDashboardStats = async (req, res) => {
   }
 };
 
-// Get all admins
+// -------- Local (Domestic) requested leads for Superadmin --------
+
+// List of countries with pending requested local leads counts
+export const getLocalRequestedLeadsCountryCounts = async (req, res) => {
+  try {
+    const results = await RequestedLeads.aggregate([
+      { $match: { status: "pending" } },
+      {
+        $addFields: {
+          extractedCountry: {
+            $ifNull: [
+              "$countryCode",
+              { $arrayElemAt: [ { $split: [ "$leadCode", "-" ] }, 1 ] },
+            ],
+          },
+        },
+      },
+      { $match: { extractedCountry: { $ne: null } } },
+      { $group: { _id: "$extractedCountry", count: { $sum: 1 } } },
+      { $project: { _id: 0, countryCode: "$_id", count: 1 } },
+      { $sort: { countryCode: 1 } },
+    ]);
+    res.json(results.filter((r) => r.countryCode));
+  } catch (error) {
+    console.error("Error fetching local requested leads country counts:", error);
+    res.status(500).json({ message: "Error fetching country counts" });
+  }
+};
+
+// Pending requested local leads by country (with pagination)
+export const getPendingLocalRequestedLeadsByCountry = async (req, res) => {
+  try {
+    const { page = 1, limit = 20, groupId } = req.query;
+    const country = (req.query.country || "").toString().toUpperCase();
+
+    if (!country) {
+      return res.status(400).json({ message: "country query param is required" });
+    }
+
+    const baseQuery = { status: "pending" };
+    if (groupId) {
+      baseQuery.groupId = groupId;
+    }
+
+    // Match either explicit countryCode or parse from leadCode (BLD/SLD-CC-...)
+    const query = {
+      ...baseQuery,
+      $or: [
+        { countryCode: country },
+        { leadCode: { $regex: new RegExp(`^(BLD|SLD)-${country}-`, "i") } },
+      ],
+    };
+
+    const requestedLeads = await RequestedLeads.find(query)
+      .sort({ createdAt: -1 })
+      .limit(Number(limit) * 1)
+      .skip((Number(page) - 1) * Number(limit))
+      .populate("userId", "name image email")
+      .populate("groupId", "name")
+      .exec();
+
+    const total = await RequestedLeads.countDocuments(query);
+
+    res.json({
+      requestedLeads,
+      totalPages: Math.ceil(total / Number(limit)),
+      currentPage: Number(page),
+      total,
+    });
+  } catch (error) {
+    console.error("Error fetching pending local requested leads:", error);
+    res.status(500).json({ message: "Error fetching pending local requested leads" });
+  }
+};
+
+// Get all admins (from UserModel with role: 'admin')
 export const getAdmins = async (req, res) => {
   try {
-    const admins = await AdminModel.find().select("-password");
+    const admins = await UserModel.find({ role: "admin" }).select(
+      "name email countryCode phone role image"
+    );
 
-    // Get local leads count for each admin
+    // Compute pending local requested leads per admin's country
     const adminsWithStats = await Promise.all(
       admins.map(async (admin) => {
-        const localLeadsCount = await GlobalRequestedLeads.countDocuments({
+        const localLeadsCount = await RequestedLeads.countDocuments({
           countryCode: admin.countryCode,
           status: "pending",
         });

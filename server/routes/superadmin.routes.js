@@ -11,7 +11,10 @@ import {
   deleteAdmin,
   getAllPendingGlobalLeads,
   approveRejectGlobalLead,
+  getLocalRequestedLeadsCountryCounts,
+  getPendingLocalRequestedLeadsByCountry,
 } from "../controllers/superadmin.ctrls.js";
+import { approveRejectLead } from "../controllers/requestedLeads.ctrls.js";
 
 const router = express.Router();
 
@@ -34,6 +37,23 @@ router.patch(
   "/global-leads/:leadId",
   superadminMiddleware,
   approveRejectGlobalLead
+);
+
+// Local (domestic) requested leads management for superadmin
+router.get(
+  "/local-leads/countries",
+  superadminMiddleware,
+  getLocalRequestedLeadsCountryCounts
+);
+router.get(
+  "/local-leads/pending",
+  superadminMiddleware,
+  getPendingLocalRequestedLeadsByCountry
+);
+router.patch(
+  "/local-leads/:leadId",
+  superadminMiddleware,
+  approveRejectLead
 );
 
 export default router;

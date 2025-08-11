@@ -202,6 +202,12 @@ const RequestedLeads = () => {
                     {lead.sellerPickupLocation?.address && (
                       <div>Pickup: {lead.sellerPickupLocation.address}</div>
                     )}
+                    {lead.specialRequest && (
+                      <div>Special request: {lead.specialRequest}</div>
+                    )}
+                    {lead.remarks && (
+                      <div>Notes: {lead.remarks}</div>
+                    )}
                   </div>
                   {Array.isArray(lead.documents) && lead.documents.length > 0 && (
                     <div className="mt-1 flex flex-wrap gap-2">
