@@ -103,35 +103,6 @@ const Stats = ({
             </div>
           ))}
         </div>
-
-        {/* Bottom Section */}
-        <div className="text-center mt-20 md:mt-24">
-          <div className="max-w-4xl mx-auto">
-            <div className="border border-gray-700 rounded-lg p-8 md:p-12 bg-gray-800/50 backdrop-blur-sm">
-              <h3 className="text-2xl md:text-3xl font-light text-white mb-6 tracking-wide">
-                Join the Elite Network
-              </h3>
-              <p className="text-gray-300 text-lg leading-relaxed mb-8 font-light">
-                Experience premium B2B trading with our exclusive platform
-                designed for serious business professionals.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <a
-                  href="/auth"
-                  className="inline-flex items-center justify-center px-8 py-4 bg-white text-gray-900 font-medium rounded-sm transition-all duration-300 hover:bg-gray-100 hover:scale-105 tracking-wide uppercase text-sm"
-                >
-                  Get Started
-                </a>
-                <a
-                  href="/about"
-                  className="inline-flex items-center justify-center px-8 py-4 border border-gray-600 text-white font-medium rounded-sm hover:border-gray-400 hover:bg-gray-800/50 transition-all duration-300 tracking-wide uppercase text-sm"
-                >
-                  Learn More
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );

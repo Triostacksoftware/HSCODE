@@ -18,6 +18,7 @@ import globalCategoryRoutes from "./routes/globalCategory.routes.js";
 import globalGroupRoutes from "./routes/globalGroup.routes.js";
 import globalLeadsRoutes from "./routes/globalLeads.routes.js";
 import superadminRoutes from "./routes/superadmin.routes.js";
+import homeDataRoutes from "./routes/homeData.routes.js";
 import { getIpLocation } from "./utilities/ip.util.js";
 
 // middlewares
@@ -82,5 +83,6 @@ app.use("/api/v1/global-categories", globalCategoryRoutes);
 app.use("/api/v1/global-groups", globalGroupRoutes);
 app.use("/api/v1/global-leads", globalLeadsRoutes);
 app.use("/api/v1/superadmin", superadminRoutes);
+app.use("/api/v1/home-data", homeDataRoutes);
 
 export default app;

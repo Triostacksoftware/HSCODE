@@ -28,8 +28,10 @@ export const authMiddleware = async (req, res, next) => {
 
 // Admin-specific middleware
 export const adminMiddleware = async (req, res, next) => {
+  console.log(req.cookies);
   try {
     const token = req.cookies.auth_token;
+    console.log("token", token);
 
     if (!token) {
       return res

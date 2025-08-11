@@ -137,158 +137,141 @@ const FeaturedCategories = ({
   ],
 }) => {
   const [currentPage, setCurrentPage] = useState(0);
-  const [isTransitioning, setIsTransitioning] = useState(false);
-  const [direction, setDirection] = useState("next");
-
-  const itemsPerPage = 5; // 5 items per page as shown in the image
-  const totalPages = Math.ceil(categories.length / itemsPerPage);
+  const categoriesPerPage = 6;
+  const totalPages = Math.ceil(categories.length / categoriesPerPage);
 
   const getCurrentCategories = () => {
-    const startIndex = currentPage * itemsPerPage;
-    return categories.slice(startIndex, startIndex + itemsPerPage);
+    const startIndex = currentPage * categoriesPerPage;
+    const endIndex = startIndex + categoriesPerPage;
+    return categories.slice(startIndex, endIndex);
   };
 
   const handleSlideChange = (newPage, slideDirection = "next") => {
-    if (isTransitioning || newPage === currentPage) return;
-
-    setDirection(slideDirection);
-    setIsTransitioning(true);
-
-    setTimeout(() => {
+    if (newPage >= 0 && newPage < totalPages) {
       setCurrentPage(newPage);
-      setTimeout(() => {
-        setIsTransitioning(false);
-      }, 50);
-    }, 300);
+    }
   };
 
   const nextSlide = () => {
-    const nextPage = currentPage === totalPages - 1 ? 0 : currentPage + 1;
-    handleSlideChange(nextPage, "next");
+    handleSlideChange(currentPage + 1, "next");
   };
 
   const prevSlide = () => {
-    const prevPage = currentPage === 0 ? totalPages - 1 : currentPage - 1;
-    handleSlideChange(prevPage, "prev");
+    handleSlideChange(currentPage - 1, "prev");
   };
 
-  const currentCategories = getCurrentCategories();
-
   return (
-    <div className="bg-gray-50 py-12 md:py-16 montserrat">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Title */}
-        <div className="text-center mb-8 md:mb-12">
-          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-4 relative inline-block">
+    <section className="bg-white py-20 md:py-28 relative overflow-hidden montserrat">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 opacity-5">
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-200"></div>
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Ccircle cx='10' cy='10' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+          }}
+        ></div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+        {/* Header */}
+        <div className="text-center mb-16 md:mb-20">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-light text-gray-900 mb-6 tracking-wide">
             {title}
-            <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-16 md:w-24 h-1 bg-gradient-to-r from-pink-500 to-blue-600 rounded-full"></div>
           </h2>
         </div>
 
-        {/* Categories Slider Container */}
+        {/* Categories Grid */}
         <div className="relative">
-          {/* Navigation Buttons */}
-          <button
-            onClick={prevSlide}
-            disabled={isTransitioning}
-            className={`absolute -left-2 md:-left-4 top-1/2 transform -translate-y-1/2 z-20 bg-blue-600 hover:bg-blue-700 text-white rounded-full p-2 md:p-3 shadow-lg transition-all duration-300 ${
-              isTransitioning
-                ? "opacity-50 cursor-not-allowed"
-                : "hover:scale-110 active:scale-95"
-            }`}
-          >
-            <HiChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
-          </button>
-
-          <button
-            onClick={nextSlide}
-            disabled={isTransitioning}
-            className={`absolute -right-2 md:-right-4 top-1/2 transform -translate-y-1/2 z-20 bg-blue-600 hover:bg-blue-700 text-white rounded-full p-2 md:p-3 shadow-lg transition-all duration-300 ${
-              isTransitioning
-                ? "opacity-50 cursor-not-allowed"
-                : "hover:scale-110 active:scale-95"
-            }`}
-          >
-            <HiChevronRight className="w-5 h-5 md:w-6 md:h-6" />
-          </button>
-
-          {/* Categories Grid - Single Row */}
-          <div className="mx-8 md:mx-12 overflow-hidden">
-            <div
-              className={`transition-all duration-500 ease-in-out transform ${
-                isTransitioning
-                  ? direction === "next"
-                    ? "translate-x-full opacity-0"
-                    : "-translate-x-full opacity-0"
-                  : "translate-x-0 opacity-100"
-              }`}
-            >
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
-                {currentCategories.map((category, index) => (
-                  <div
-                    key={`${currentPage}-${category.id}`}
-                    className="bg-white border border-gray-200 rounded-xl p-4 md:p-6 hover:shadow-xl transition-all duration-300 cursor-pointer group transform hover:scale-105 hover:-translate-y-2"
-                    style={{
-                      animationDelay: `${index * 100}ms`,
-                    }}
-                  >
-                    {/* Category Image */}
-                    <div className="w-full h-32 md:h-40 mb-4 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg overflow-hidden relative">
-                      {category.image ? (
-                        <img
-                          src={category.image}
-                          alt={category.name}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                          loading="lazy"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
-                          <span className="text-blue-600 text-xl md:text-2xl font-bold">
-                            {category.name.charAt(0)}
-                          </span>
-                        </div>
-                      )}
-                      {/* <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300"></div> */}
-                    </div>
-
-                    {/* Category Name */}
-                    <h3 className="text-sm md:text-base font-semibold text-gray-900 text-center leading-tight mb-2 group-hover:text-blue-600 transition-colors duration-300">
-                      {category.name}
-                    </h3>
-
-                    {/* Category Description (hidden on mobile) */}
-                    {category.description && (
-                      <p className="text-xs text-gray-600 text-center transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 hidden md:block">
-                        {category.description}
-                      </p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Page Indicators */}
-          <div className="flex justify-center mt-8 space-x-2">
-            {Array.from({ length: totalPages }, (_, index) => (
+          {/* Navigation Arrows */}
+          {totalPages > 1 && (
+            <>
               <button
-                key={index}
-                onClick={() => {
-                  const slideDirection = index > currentPage ? "next" : "prev";
-                  handleSlideChange(index, slideDirection);
-                }}
-                disabled={isTransitioning}
-                className={`w-2 h-2 md:w-3 md:h-3 rounded-full transition-all duration-300 transform ${
-                  currentPage === index
-                    ? "bg-blue-600 scale-125 shadow-lg"
-                    : "bg-gray-300 hover:bg-gray-400 hover:scale-110"
-                } ${isTransitioning ? "pointer-events-none opacity-50" : ""}`}
-              />
+                onClick={prevSlide}
+                disabled={currentPage === 0}
+                className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <HiChevronLeft className="w-6 h-6 text-gray-600" />
+              </button>
+
+              <button
+                onClick={nextSlide}
+                disabled={currentPage === totalPages - 1}
+                className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <HiChevronRight className="w-6 h-6 text-gray-600" />
+              </button>
+            </>
+          )}
+
+          {/* Categories */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mx-16">
+            {getCurrentCategories().map((category) => (
+              <div
+                key={category.id}
+                className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 group cursor-pointer"
+              >
+                {/* Image */}
+                <div className="relative overflow-hidden rounded-t-xl">
+                  <img
+                    src={category.image}
+                    alt={category.name}
+                    className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-110"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                </div>
+
+                {/* Content */}
+                <div className="p-6">
+                  <h3 className="text-xl font-semibold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors duration-200">
+                    {category.name}
+                  </h3>
+                  <p className="text-gray-600 text-sm leading-relaxed">
+                    {category.description}
+                  </p>
+
+                  {/* Explore Button */}
+                  <div className="mt-4">
+                    <button className="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium text-sm transition-colors duration-200 group">
+                      Explore Category
+                      <HiChevronRight className="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform duration-200" />
+                    </button>
+                  </div>
+                </div>
+              </div>
             ))}
           </div>
         </div>
+
+        {/* Pagination Dots */}
+        {totalPages > 1 && (
+          <div className="flex justify-center space-x-2 mt-12">
+            {Array.from({ length: totalPages }, (_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentPage(index)}
+                className={`w-3 h-3 rounded-full transition-all duration-200 ${
+                  index === currentPage
+                    ? "bg-blue-600 w-8"
+                    : "bg-gray-300 hover:bg-gray-400"
+                }`}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* View All Categories Button */}
+        <div className="text-center mt-16">
+          <a
+            href="/categories"
+            className="inline-flex items-center px-8 py-4 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+          >
+            View All Categories
+            <HiChevronRight className="ml-2 w-5 h-5" />
+          </a>
+        </div>
       </div>
-    </div>
+    </section>
   );
 };
 

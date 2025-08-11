@@ -98,7 +98,7 @@ const FAQSection = ({
     },
     {
       id: 16,
-      question: "What payment methods are accepted?",
+      question: "What payment methods are supported?",
       answer:
         "We support multiple payment methods including bank transfers, letters of credit, trade finance, and digital payments. All transactions go through our secure payment gateway with fraud protection and compliance monitoring.",
     },
@@ -129,7 +129,6 @@ const FAQSection = ({
   ],
 }) => {
   const [openItems, setOpenItems] = useState(new Set());
-  const [searchTerm, setSearchTerm] = useState("");
 
   const toggleItem = (id) => {
     const newOpenItems = new Set(openItems);
@@ -141,136 +140,90 @@ const FAQSection = ({
     setOpenItems(newOpenItems);
   };
 
-  const filteredFaqs = faqs.filter(
-    (faq) =>
-      faq.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      faq.answer.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
   return (
-    <div className="bg-gray-50 py-12 md:py-16 montserrat">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="bg-white py-20 md:py-28 relative overflow-hidden montserrat">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 opacity-5">
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-200"></div>
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Ccircle cx='10' cy='10' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+          }}
+        ></div>
+      </div>
+
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative">
         {/* Header */}
-        <div className="text-center mb-10">
-          <h2 className="text-2xl md:text-3xl lg:text-4xl font-light text-gray-900 mb-4 tracking-wide">
+        <div className="text-center mb-16 md:mb-20">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-light text-gray-900 mb-6 tracking-wide">
             {title}
           </h2>
           {subtitle && (
-            <p className="text-gray-600 text-base md:text-lg max-w-2xl mx-auto leading-relaxed font-light">
+            <p className="text-gray-600 text-lg md:text-xl max-w-3xl mx-auto leading-relaxed font-light">
               {subtitle}
             </p>
           )}
         </div>
 
-        {/* Search Bar */}
-        <div className="mb-8">
-          <div className="relative max-w-xl mx-auto">
-            <input
-              type="text"
-              placeholder="Search frequently asked questions..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent bg-white text-gray-900 placeholder-gray-500 font-light tracking-wide"
-            />
-            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-              <svg
-                className="w-4 h-4 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-            </div>
-          </div>
-        </div>
-
         {/* FAQ Items */}
-        <div className="space-y-1">
-          {filteredFaqs.map((faq, index) => (
+        <div className="space-y-4">
+          {faqs.map((faq) => (
             <div
               key={faq.id}
-              className="border border-gray-200 bg-white transition-all duration-300 hover:shadow-md"
-              style={{
-                animationDelay: `${index * 50}ms`,
-              }}
+              className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300"
             >
               <button
                 onClick={() => toggleItem(faq.id)}
-                className="w-full px-6 py-4 text-left flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-inset focus:ring-gray-400 group"
+                className="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 transition-colors duration-200 rounded-lg"
               >
-                <h3 className="text-base md:text-lg font-medium text-gray-900 leading-relaxed tracking-wide group-hover:text-gray-700 transition-colors duration-200">
+                <h3 className="text-lg font-medium text-gray-900 pr-4">
                   {faq.question}
                 </h3>
-                <div className="ml-4 flex-shrink-0">
+                <div className="flex-shrink-0">
                   {openItems.has(faq.id) ? (
-                    <HiMinus className="w-4 h-4 text-gray-500 group-hover:text-gray-700 transition-colors duration-200" />
+                    <HiMinus className="w-5 h-5 text-blue-600" />
                   ) : (
-                    <HiPlus className="w-4 h-4 text-gray-500 group-hover:text-gray-700 transition-colors duration-200" />
+                    <HiPlus className="w-5 h-5 text-gray-400" />
                   )}
                 </div>
               </button>
 
-              <div
-                className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                  openItems.has(faq.id)
-                    ? "max-h-64 opacity-100"
-                    : "max-h-0 opacity-0"
-                }`}
-              >
+              {openItems.has(faq.id) && (
                 <div className="px-6 pb-4">
-                  <p className="text-gray-600 leading-relaxed font-light text-sm md:text-base">
-                    {faq.answer}
-                  </p>
+                  <div className="border-t border-gray-100 pt-4">
+                    <p className="text-gray-600 leading-relaxed font-light">
+                      {faq.answer}
+                    </p>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           ))}
         </div>
 
-        {/* No Results */}
-        {filteredFaqs.length === 0 && (
-          <div className="text-center py-8">
-            <p className="text-gray-500 text-base font-light">
-              No questions found matching "{searchTerm}". Try a different search
-              term.
-            </p>
-          </div>
-        )}
-
-        {/* Contact Section */}
-        <div className="mt-12 text-center">
-          <div className="border border-gray-300 bg-white p-6 md:p-8">
-            <h3 className="text-xl md:text-2xl font-light text-gray-900 mb-4 tracking-wide">
-              Still Have Questions?
-            </h3>
-            <p className="text-gray-600 text-base leading-relaxed mb-6 font-light max-w-2xl mx-auto">
-              Our expert team is available 24/7 to help you with any questions
-              about our B2B marketplace platform.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <a
-                href="/contact"
-                className="inline-flex items-center justify-center px-6 py-3 bg-gray-900 text-white font-medium rounded-sm transition-all duration-300 hover:bg-gray-800 hover:scale-105 tracking-wide uppercase text-sm"
-              >
-                Contact Support
-              </a>
-              <a
-                href="/userchat"
-                className="inline-flex items-center justify-center px-6 py-3 border border-gray-400 text-gray-900 font-medium rounded-sm hover:border-gray-600 hover:bg-gray-50 transition-all duration-300 tracking-wide uppercase text-sm"
-              >
-                Live Chat
-              </a>
-            </div>
+        {/* Bottom CTA */}
+        <div className="text-center mt-16 md:mt-20">
+          <div className="inline-flex items-center space-x-2 text-blue-600 hover:text-blue-700 transition-colors duration-300 cursor-pointer group">
+            <span className="text-lg font-medium">Still have questions?</span>
+            <svg
+              className="w-5 h-5 transform group-hover:translate-x-1 transition-transform duration-300"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M17 8l4 4m0 0l-4 4m4-4H3"
+              />
+            </svg>
           </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 };
 

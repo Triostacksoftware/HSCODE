@@ -1,3 +1,6 @@
+"use client";
+
+import { Suspense } from "react";
 import Navbar from "@/component/HomeComponent/Navbar";
 import Herosection from "@/component/HomeComponent/Herosection";
 import AboutSection from "@/component/HomeComponent/AboutSection";
@@ -8,20 +11,66 @@ import TestimonialSection from "@/component/HomeComponent/TestimonialSection";
 import Stats from "@/component/HomeComponent/Stats";
 import FAQSection from "@/component/HomeComponent/FAQSection";
 import Footer from "@/component/HomeComponent/Footer";
+import useCountryCode from "@/utilities/useCountryCode";
+import useHomeData from "@/utilities/useHomeData";
 
-export default function Home() {
+function HomeContent() {
+  const { countryCode, loading: countryLoading } = useCountryCode();
+  const { homeData, loading: dataLoading } = useHomeData(countryCode);
+  console.log("homeData", homeData);
+
+  if (countryLoading || dataLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">
+            Loading your personalized experience...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!homeData) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600">Failed to load home page content</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen">
       <Navbar />
-      <Herosection />
-      <AboutSection />
+      <Herosection {...homeData.heroSection} />
+      <AboutSection {...homeData.aboutSection} />
       <CountriesSection />
-      <FeaturedCategories />
-      <NewsSection />
-      <TestimonialSection />
-      <Stats />
-      <FAQSection />
-      <Footer />
+      <FeaturedCategories {...homeData.featuredCategories} />
+      <NewsSection {...homeData.newsSection} />
+      <TestimonialSection {...homeData.testimonialSection} />
+      <Stats {...homeData.stats} />
+      <FAQSection {...homeData.faqSection} />
+      <Footer {...homeData.footer} />
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading...</p>
+          </div>
+        </div>
+      }
+    >
+      <HomeContent />
+    </Suspense>
   );
 }

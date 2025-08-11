@@ -14,6 +14,28 @@ const AboutSection = ({
   title = "Building Tomorrow's Trade Network",
   subtitle = "Where global commerce meets innovation",
   description = "We've engineered the most sophisticated B2B marketplace ecosystem, connecting verified enterprises across continents. Our platform transcends traditional trading boundaries, facilitating seamless international commerce through advanced technology, rigorous verification processes, and unparalleled market intelligence.",
+  features = [
+    {
+      icon: "👥",
+      title: "Enterprise Network",
+      description: "Access to premium business connections worldwide",
+    },
+    {
+      icon: "🛡️",
+      title: "Verified Ecosystem",
+      description: "Bank-grade verification for all trading partners",
+    },
+    {
+      icon: "📈",
+      title: "Market Intelligence",
+      description: "Real-time analytics and trading insights",
+    },
+    {
+      icon: "🌍",
+      title: "Global Reach",
+      description: "Seamless cross-border trade facilitation",
+    },
+  ],
   stats = [
     {
       number: "50K+",
@@ -32,31 +54,20 @@ const AboutSection = ({
       description: "Always available",
     },
   ],
-  capabilities = [
-    {
-      icon: HiOutlineUsers,
-      title: "Enterprise Network",
-      description: "Access to premium business connections worldwide",
-    },
-    {
-      icon: HiOutlineShieldCheck,
-      title: "Verified Ecosystem",
-      description: "Bank-grade verification for all trading partners",
-    },
-    {
-      icon: HiOutlineTrendingUp,
-      title: "Market Intelligence",
-      description: "Real-time analytics and trading insights",
-    },
-    {
-      icon: HiOutlineGlobe,
-      title: "Global Reach",
-      description: "Seamless cross-border trade facilitation",
-    },
-  ],
   ctaText = "Explore Platform",
   ctaLink = "/auth",
 }) => {
+  // Icon mapping for dynamic icons
+  const iconMap = {
+    "👥": HiOutlineUsers,
+    "🛡️": HiOutlineShieldCheck,
+    "📈": HiOutlineTrendingUp,
+    "🌍": HiOutlineGlobe,
+    "✅": HiOutlineCheckCircle,
+    "🔄": HiOutlineSupport,
+    "🏆": HiOutlineBadgeCheck,
+  };
+
   return (
     <section className="bg-white py-20 md:py-15 md:pt-20  relative overflow-hidden montserrat">
       {/* Subtle Background Pattern */}
@@ -99,28 +110,50 @@ const AboutSection = ({
           ))}
         </div>
 
-        {/* Capabilities Grid */}
-        <div className="grid  grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12 mb-16">
-          {capabilities.map((capability, index) => {
-            const IconComponent = capability.icon;
+        {/* Capabilities Section */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
+          {features.map((feature, index) => {
+            const IconComponent = iconMap[feature.icon] || HiOutlineUsers;
             return (
-              <div key={index} className="flex space-x-6">
-                <div className="flex-shrink-0">
-                  <div className="w-12 h-12 bg-white border border-gray-200 rounded-sm flex items-center justify-center">
-                    <IconComponent className="w-6 h-6 text-gray-600" />
+              <div key={index} className="text-center group">
+                <div className="mb-4 flex justify-center">
+                  <div className="w-16 h-16 bg-gradient-to-br from-blue-50 to-blue-100 rounded-full flex items-center justify-center group-hover:from-blue-100 group-hover:to-blue-200 transition-all duration-300">
+                    <IconComponent className="w-8 h-8 text-blue-600" />
                   </div>
                 </div>
-                <div>
-                  <h3 className="text-xl font-medium text-gray-900 mb-3 tracking-wide">
-                    {capability.title}
-                  </h3>
-                  <p className="text-gray-600 leading-relaxed font-light">
-                    {capability.description}
-                  </p>
-                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-3 tracking-wide">
+                  {feature.title}
+                </h3>
+                <p className="text-gray-600 font-light leading-relaxed">
+                  {feature.description}
+                </p>
               </div>
             );
           })}
+        </div>
+
+        {/* CTA Section */}
+        <div className="text-center">
+          <a
+            href={ctaLink}
+            className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+          >
+            {ctaText}
+            <svg
+              className="ml-2 w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M17 8l4 4m0 0l-4 4m4-4H3"
+              />
+            </svg>
+          </a>
         </div>
       </div>
     </section>
