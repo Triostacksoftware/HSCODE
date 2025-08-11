@@ -27,14 +27,12 @@ const GlobalRequestedLeads = () => {
       if (selectedGroup) {
         params.append("groupId", selectedGroup);
       }
-      console.log("Global params", params.toString());
       const response = await axios.get(
         `${
           process.env.NEXT_PUBLIC_BASE_URL
         }/global-leads/admin/pending?${params.toString()}`,
         { withCredentials: true }
       );
-      console.log("global leads", response.data.requestedLeads);
       setRequestedLeads(response.data.requestedLeads || []);
     } catch (error) {
       console.error("Error fetching pending global leads:", error);
@@ -50,7 +48,6 @@ const GlobalRequestedLeads = () => {
         `${process.env.NEXT_PUBLIC_BASE_URL}/global-categories`,
         { withCredentials: true }
       );
-      console.log("global gorups", response.data);
       setGroups(response.data);
     } catch (error) {
       console.error("Error fetching global groups:", error);

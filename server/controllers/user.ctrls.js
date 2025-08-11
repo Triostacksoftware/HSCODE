@@ -43,7 +43,6 @@ export const getGroups = async (req, res) => {
 
 // GET GLOBAL GROUPS by IDs (for user's joined global groups)
 export const getGlobalGroups = async (req, res) => {
-  console.log("hit backend ");
   try {
     const { groupIds } = req.body;
     const userId = req.user.id;

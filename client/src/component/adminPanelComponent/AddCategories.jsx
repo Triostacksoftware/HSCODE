@@ -74,7 +74,6 @@ const AddCategories = ({ onClose, onCategoryCreated }) => {
         }
       );
 
-      console.log("Category created successfully:", response.data);
       setSuccess("Category created successfully!");
 
       // Call the callback to refresh categories list
@@ -108,7 +107,6 @@ const AddCategories = ({ onClose, onCategoryCreated }) => {
     try {
       const formDataToSend = new FormData();
       formDataToSend.append("file", selectedFile);
-      console.log(formDataToSend);
 
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_BASE_URL}/categories/many`,
@@ -121,7 +119,6 @@ const AddCategories = ({ onClose, onCategoryCreated }) => {
         }
       );
 
-      console.log("Bulk categories created successfully:", response.data);
       setSuccess("Bulk categories created successfully!");
 
       // Call the callback to refresh categories list

@@ -78,7 +78,6 @@ export const getadminAllGlobalGroups = async (req, res) => {
     const groups = await GlobalGroupModel.find({
       categoryId: { $in: categories },
     });
-    console.log("groups", groups);
     res.json(groups);
   } catch (err) {
     res.status(500).json({ message: "Error fetching groups" });

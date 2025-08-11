@@ -27,7 +27,6 @@ const HomeContent = () => {
       );
 
       setHomeData(response.data.data);
-      console.log("homeData", homeData);
     } catch (error) {
       console.error("Error fetching home data:", error);
     } finally {
@@ -36,7 +35,6 @@ const HomeContent = () => {
   };
 
   const handleSave = async () => {
-    console.log("homeData", homeData);
     try {
       setSaving(true);
 

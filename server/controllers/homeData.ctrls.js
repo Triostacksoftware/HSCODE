@@ -28,7 +28,6 @@ export const getHomeDataByCountry = async (req, res) => {
 
 // Get home data for admin's country
 export const getAdminHomeData = async (req, res) => {
-  console.log("hittt!");
   try {
     const Countrycode = req.user.countryCode;
 
@@ -62,7 +61,6 @@ export const getAdminHomeData = async (req, res) => {
 
 // Create or update home data
 export const upsertHomeData = async (req, res) => {
-  console.log("hitt update");
   try {
     const Countrycode = req.user.countryCode;
     const updateData = req.body;
@@ -126,7 +124,6 @@ export const deleteHomeData = async (req, res) => {
 
 // Reset home data to defaults
 export const saveDummyData = async (req, res) => {
-  console.log("hitt save dummy");
   try {
     const Countrycode = req.user.countryCode;
 

@@ -83,7 +83,6 @@ const SuperAddGroup = ({ categoryId, categoryName, onClose }) => {
         }
       );
 
-      console.log("Global group created successfully:", response.data);
       setSuccess("Global group created successfully!");
 
       // Close modal after a short delay to show success message
@@ -127,7 +126,6 @@ const SuperAddGroup = ({ categoryId, categoryName, onClose }) => {
         }
       );
 
-      console.log("Bulk global groups created successfully:", response.data);
       setSuccess("Global groups imported successfully!");
 
       // Close modal after a short delay to show success message

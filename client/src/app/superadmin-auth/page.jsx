@@ -27,7 +27,6 @@ const SuperAdminAuth = () => {
           withCredentials: true,
         }
       );
-      console.log("superadmindata", response);
       if (response.data.success) {
         router.push("/superadmin-panel");
       }

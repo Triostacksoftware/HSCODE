@@ -28,7 +28,6 @@ const MyGroups = ({ onGroupSelect, selectedGroupId }) => {
         { withCredentials: true }
       );
 
-      console.log("My groups fetched:", response.data);
       setGroups(response.data || []);
     } catch (error) {
       console.error("Error fetching my groups:", error);
@@ -53,7 +52,6 @@ const MyGroups = ({ onGroupSelect, selectedGroupId }) => {
       // update local badge
       setGroups((prev) => prev.map((g) => g._id === group._id ? { ...g, unreadCount: 0 } : g));
     } catch (_) {}
-    console.log("Opening group:", group);
   };
 
   const filteredGroups = groups.filter(

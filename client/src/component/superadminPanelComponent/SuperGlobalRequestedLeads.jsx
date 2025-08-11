@@ -27,7 +27,6 @@ const SuperGlobalRequestedLeads = () => {
       if (selectedGroup) {
         params.append("groupId", selectedGroup);
       }
-      console.log("SuperAdmin Global params", params.toString());
       const response = await axios.get(
         `${
           process.env.NEXT_PUBLIC_BASE_URL

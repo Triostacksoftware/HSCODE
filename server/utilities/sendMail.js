@@ -65,7 +65,6 @@ const emailVerificatonMail = async (recipient, OTP, state) => {
       html: emailTemplates[state].html(OTP),
     });
 
-    console.log(`${state} email sent to ${recipient}`);
   } catch (error) {
     console.error(`Failed to send ${state} email:`, error);
     throw error;

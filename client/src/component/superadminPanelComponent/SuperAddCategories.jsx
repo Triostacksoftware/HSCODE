@@ -74,7 +74,6 @@ const SuperAddCategories = ({ onClose, onCategoryCreated }) => {
         }
       );
 
-      console.log("Global category created successfully:", response.data);
       setSuccess("Global category created successfully!");
 
       // Call the callback to refresh categories list
@@ -122,10 +121,6 @@ const SuperAddCategories = ({ onClose, onCategoryCreated }) => {
         }
       );
 
-      console.log(
-        "Bulk global categories created successfully:",
-        response.data
-      );
       setSuccess("Global categories imported successfully!");
 
       // Call the callback to refresh categories list

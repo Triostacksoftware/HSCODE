@@ -17,7 +17,6 @@ import useHomeData from "@/utilities/useHomeData";
 function HomeContent() {
   const { countryCode, loading: countryLoading } = useCountryCode();
   const { homeData, loading: dataLoading } = useHomeData(countryCode);
-  console.log("homeData", homeData);
 
   if (countryLoading || dataLoading) {
     return (

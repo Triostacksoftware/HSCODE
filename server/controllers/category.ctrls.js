@@ -8,7 +8,6 @@ import { parseFile } from "../utilities/xlsx.util.js";
 export const getCategories = async (req, res) => {
   try {
     const countryCode = req.user.countryCode;
-    console.log(countryCode);
 
     const categories = await LocalCategoryModel.find({ countryCode });
     res.json(categories);
@@ -38,7 +37,6 @@ export const createCategory = async (req, res) => {
 };
 
 export const createManyCategory = async (req, res) => {
-  console.log(req.file);
 
   try {
     const { id, countryCode } = req.user; // Admin ID & country
@@ -109,7 +107,6 @@ export const updateCategory = async (req, res) => {
 // GET groups in a category
 export const getGroups = async (req, res) => {
   const { id: categoryId } = req.params;
-  console.log("categoryId", categoryId);
   try {
     const groups = await LocalGroupModel.find({ categoryId }).populate("categoryId", "chapter");
     res.json(groups);
@@ -238,7 +235,6 @@ export const getAllGroups = async (req, res) => {
     const groups = await LocalGroupModel.find({
       categoryId: { $in: categories },
     });
-    console.log("groups", groups);
     res.json(groups);
   } catch (err) {
     res.status(500).json({ message: "Error fetching groups" });
