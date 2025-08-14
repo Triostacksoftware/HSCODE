@@ -3,19 +3,20 @@ import axios from "axios";
 
 const useHomeData = (countryCode) => {
   const [homeData, setHomeData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [isFallback, setIsFallback] = useState(false);
 
   useEffect(() => {
     const fetchHomeData = async () => {
       if (!countryCode) {
-        setLoading(false);
         return;
       }
 
       try {
         setLoading(true);
         setError(null);
+        setIsFallback(false);
 
         const response = await axios.get(
           `${process.env.NEXT_PUBLIC_BASE_URL}/home-data/country/${countryCode}`,
@@ -23,6 +24,17 @@ const useHomeData = (countryCode) => {
             withCredentials: true,
           }
         );
+
+        // Check if this is fallback data
+        if (response.data.fallback) {
+          setIsFallback(true);
+          console.log(
+            `Using fallback home data from ${response.data.fallbackCountry} for ${response.data.originalCountry}`
+          );
+
+          // You can add a toast notification here if you want
+          // toast.info(`Showing content for India (IN) as ${response.data.originalCountry} content is not available`);
+        }
 
         setHomeData(response.data.data);
       } catch (err) {
@@ -36,7 +48,7 @@ const useHomeData = (countryCode) => {
     fetchHomeData();
   }, [countryCode]);
 
-  return { homeData, loading, error };
+  return { homeData, loading, error, isFallback };
 };
 
 export default useHomeData;

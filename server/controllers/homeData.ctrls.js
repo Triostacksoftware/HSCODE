@@ -9,14 +9,40 @@ export const getHomeDataByCountry = async (req, res) => {
       return res.status(400).json({ message: "Country code is required" });
     }
 
-    const homeData = await HomeData.findOne({
+    // First try to get home data for the requested country
+    let homeData = await HomeData.findOne({
       countryCode: countryCode.toUpperCase(),
     });
 
+    // If no data found for the requested country, fallback to India (IN)
     if (!homeData) {
-      return res
-        .status(404)
-        .json({ message: "Home data not found for this country" });
+      console.log(
+        `No home data found for country: ${countryCode}, falling back to India (IN)`
+      );
+
+      // Try to get India's home data as fallback
+      const indiaHomeData = await HomeData.findOne({ countryCode: "IN" });
+
+      if (indiaHomeData) {
+        console.log(
+          `Using India home data as fallback for country: ${countryCode}`
+        );
+        return res.status(200).json({
+          success: true,
+          data: indiaHomeData,
+          fallback: true,
+          originalCountry: countryCode,
+          fallbackCountry: "IN",
+        });
+      } else {
+        // If even India doesn't have data, return 404
+        return res.status(404).json({
+          message:
+            "Home data not found for this country and no fallback available",
+          requestedCountry: countryCode,
+          fallbackAttempted: "IN",
+        });
+      }
     }
 
     res.status(200).json({ success: true, data: homeData });

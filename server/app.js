@@ -19,7 +19,7 @@ import globalGroupRoutes from "./routes/globalGroup.routes.js";
 import globalLeadsRoutes from "./routes/globalLeads.routes.js";
 import superadminRoutes from "./routes/superadmin.routes.js";
 import homeDataRoutes from "./routes/homeData.routes.js";
-import { getIpLocation } from "./utilities/ip.util.js";
+import { getLocationInfo } from "./utilities/location.util.js";
 
 // middlewares
 app.use(express.json());
@@ -53,21 +53,23 @@ app.get("/api/v1", (req, res) => {
   res.send("You have to login first");
 });
 
-app.get("/api/v1/get-country", async (req, res) => {
+// Unified country detection endpoint
+app.get("/api/v1/location", async (req, res) => {
   try {
-    const location = await getIpLocation(req);
-    res.status(200).json({ location });
-  } catch (error) {
-    res.status(500).json({ message: "Server Error" });
-  }
-});
+    const result = await getLocationInfo(req);
 
-app.get("/api/v1/get-countrycode", async (req, res) => {
-  try {
-    const location = await getIpLocation(req);
-    res.status(200).json({ countryCode: location.countryCode });
+    if (result.success) {
+      res.status(200).json(result);
+    } else {
+      res.status(500).json(result);
+    }
   } catch (error) {
-    res.status(500).json({ message: "Server Error" });
+    console.error("Location endpoint error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
   }
 });
 

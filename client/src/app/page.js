@@ -16,7 +16,12 @@ import useHomeData from "@/utilities/useHomeData";
 
 function HomeContent() {
   const { countryCode, loading: countryLoading } = useCountryCode();
-  const { homeData, loading: dataLoading } = useHomeData(countryCode);
+  console.log("home page", countryCode);
+  const {
+    homeData,
+    loading: dataLoading,
+    isFallback,
+  } = useHomeData(countryCode);
 
   if (countryLoading || dataLoading) {
     return (
@@ -43,6 +48,16 @@ function HomeContent() {
 
   return (
     <div className="min-h-screen">
+      {/* Fallback Indicator */}
+      {isFallback && (
+        <div className="bg-blue-50 border-b border-blue-200 py-2 px-4 text-center">
+          <p className="text-sm text-blue-700">
+            🌍 Showing content for India (IN) as content for your location is
+            not yet available
+          </p>
+        </div>
+      )}
+
       <Navbar />
       <Herosection {...homeData.heroSection} />
       <AboutSection {...homeData.aboutSection} />
