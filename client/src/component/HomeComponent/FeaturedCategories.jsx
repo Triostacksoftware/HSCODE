@@ -161,7 +161,10 @@ const FeaturedCategories = ({
   };
 
   return (
-    <section className="bg-white py-20 md:py-28 relative overflow-hidden montserrat">
+    <section
+      id="featured-categories"
+      className="bg-white py-20 md:py-28 relative overflow-hidden montserrat"
+    >
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-200"></div>

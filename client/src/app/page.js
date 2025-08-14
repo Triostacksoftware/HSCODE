@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 import Navbar from "@/component/HomeComponent/Navbar";
 import Herosection from "@/component/HomeComponent/Herosection";
 import AboutSection from "@/component/HomeComponent/AboutSection";
@@ -22,6 +22,25 @@ function HomeContent() {
     loading: dataLoading,
     isFallback,
   } = useHomeData(countryCode);
+
+  // Handle hash-based navigation when coming from other pages
+  useEffect(() => {
+    const handleHashScroll = () => {
+      const hash = window.location.hash.replace("#", "");
+      if (hash && !countryLoading && !dataLoading && homeData) {
+        setTimeout(() => {
+          const element = document.getElementById(hash);
+          if (element) {
+            element.scrollIntoView({ behavior: "smooth" });
+          }
+        }, 100);
+      }
+    };
+
+    handleHashScroll();
+    window.addEventListener("hashchange", handleHashScroll);
+    return () => window.removeEventListener("hashchange", handleHashScroll);
+  }, [countryLoading, dataLoading, homeData]);
 
   if (countryLoading || dataLoading) {
     return (

@@ -1,14 +1,55 @@
 "use client";
 import Link from "next/link";
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { HiMenu, HiX, HiChevronDown, HiSearch } from "react-icons/hi";
+import { useRouter, usePathname } from "next/navigation";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isTrendingOpen, setIsTrendingOpen] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
+  const dropdownRef = useRef(null);
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
+
+  const handleNavigation = (href, sectionId = null) => {
+    if (sectionId && pathname === "/") {
+      // If on homepage, scroll to section
+      const element = document.getElementById(sectionId);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth" });
+      }
+    } else if (sectionId) {
+      // If not on homepage, navigate to homepage with hash
+      router.push(`/#${sectionId}`);
+    } else {
+      // Regular navigation
+      router.push(href);
+    }
+    setIsMenuOpen(false);
+    setIsTrendingOpen(false);
+  };
+
+  const handleTrendingToggle = () => {
+    setIsTrendingOpen(!isTrendingOpen);
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsTrendingOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   return (
     <nav className="bg-white border-b border-gray-200 fixed w-full top-0 z-50">
@@ -26,41 +67,57 @@ const Navbar = () => {
           {/* Desktop Navigation */}
           <div className="hidden md:block">
             <div className="ml-10 flex items-baseline space-x-6">
-              <a
-                href="#"
+              <button
+                onClick={() => handleNavigation("/")}
                 className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium flex items-center"
               >
                 Home
-                <HiChevronDown className="ml-1 h-4 w-4" />
-              </a>
-              <a
-                href="#"
+              </button>
+              <button
+                onClick={() => handleNavigation("/", "about")}
                 className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium flex items-center"
               >
                 About
-                <HiChevronDown className="ml-1 h-4 w-4" />
-              </a>
-              <a
-                href="#"
-                className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium flex items-center"
-              >
-                Trending
-                <HiChevronDown className="ml-1 h-4 w-4" />
-              </a>
-              <a
-                href="#"
+              </button>
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  onClick={handleTrendingToggle}
+                  className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium flex items-center"
+                >
+                  Trending
+                  <HiChevronDown className="ml-1 h-4 w-4" />
+                </button>
+                {isTrendingOpen && (
+                  <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                    <button
+                      onClick={() =>
+                        handleNavigation("/", "featured-categories")
+                      }
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Featured Categories
+                    </button>
+                    <button
+                      onClick={() => handleNavigation("/", "news")}
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Latest News
+                    </button>
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={() => handleNavigation("/", "footer")}
                 className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium flex items-center"
               >
                 Contact Us
-                <HiChevronDown className="ml-1 h-4 w-4" />
-              </a>
-              <a
-                href="#"
+              </button>
+              <Link
+                href="/subscription"
                 className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium flex items-center"
               >
                 Subscription
-                <HiChevronDown className="ml-1 h-4 w-4" />
-              </a>
+              </Link>
             </div>
           </div>
 
@@ -120,41 +177,55 @@ const Navbar = () => {
             isMenuOpen ? "translate-y-0" : "-translate-y-4"
           }`}
         >
-          <a
-            href="#"
-            className="text-gray-700 hover:bg-gray-200 hover:text-gray-900  px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 flex items-center justify-between"
+          <button
+            onClick={() => handleNavigation("/")}
+            className="w-full text-left text-gray-700 hover:bg-gray-200 hover:text-gray-900 px-3 py-2 rounded-md text-base font-medium transition-colors duration-200"
           >
             Home
-            <HiChevronDown className="h-4 w-4" />
-          </a>
-          <a
-            href="#"
-            className="text-gray-700 hover:bg-gray-200 hover:text-gray-900  px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 flex items-center justify-between"
+          </button>
+          <button
+            onClick={() => handleNavigation("/", "about")}
+            className="w-full text-left text-gray-700 hover:bg-gray-200 hover:text-gray-900 px-3 py-2 rounded-md text-base font-medium transition-colors duration-200"
           >
             About
-            <HiChevronDown className="h-4 w-4" />
-          </a>
-          <a
-            href="#"
-            className="text-gray-700 hover:bg-gray-200 hover:text-gray-900  px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 flex items-center justify-between"
-          >
-            Trending
-            <HiChevronDown className="h-4 w-4" />
-          </a>
-          <a
-            href="#"
-            className="text-gray-700 hover:bg-gray-200 hover:text-gray-900  px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 flex items-center justify-between"
+          </button>
+          <div>
+            <button
+              onClick={handleTrendingToggle}
+              className="w-full text-left text-gray-700 hover:bg-gray-200 hover:text-gray-900 px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 flex items-center justify-between"
+            >
+              Trending
+              <HiChevronDown className="h-4 w-4" />
+            </button>
+            {isTrendingOpen && (
+              <div className="ml-4 mt-1 space-y-1">
+                <button
+                  onClick={() => handleNavigation("/", "featured-categories")}
+                  className="w-full text-left text-gray-600 hover:bg-gray-200 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200"
+                >
+                  Featured Categories
+                </button>
+                <button
+                  onClick={() => handleNavigation("/", "news")}
+                  className="w-full text-left text-gray-600 hover:bg-gray-200 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200"
+                >
+                  Latest News
+                </button>
+              </div>
+            )}
+          </div>
+          <button
+            onClick={() => handleNavigation("/", "footer")}
+            className="w-full text-left text-gray-700 hover:bg-gray-200 hover:text-gray-900 px-3 py-2 rounded-md text-base font-medium transition-colors duration-200"
           >
             Contact Us
-            <HiChevronDown className="h-4 w-4" />
-          </a>
-          <a
-            href="#"
-            className="text-gray-700 hover:bg-gray-200 hover:text-gray-900  px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 flex items-center justify-between"
+          </button>
+          <Link
+            href="/subscription"
+            className="block text-gray-700 hover:bg-gray-200 hover:text-gray-900 px-3 py-2 rounded-md text-base font-medium transition-colors duration-200"
           >
             Subscription
-            <HiChevronDown className="h-4 w-4" />
-          </a>
+          </Link>
           <div className="pt-4 pb-3 border-t border-gray-200">
             <div className="flex items-center justify-between px-3">
               <div className="flex items-center text-gray-700">

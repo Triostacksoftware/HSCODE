@@ -69,7 +69,10 @@ const AboutSection = ({
   };
 
   return (
-    <section className="bg-white py-20 md:py-15 md:pt-20  relative overflow-hidden montserrat">
+    <section
+      id="about"
+      className="bg-white py-20 md:py-15 md:pt-20  relative overflow-hidden montserrat"
+    >
       {/* Subtle Background Pattern */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300"></div>

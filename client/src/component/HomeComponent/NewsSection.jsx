@@ -59,7 +59,10 @@ const NewsSection = ({
   const [hoveredCard, setHoveredCard] = useState(null);
 
   return (
-    <section className="bg-gray-50 py-20 md:py-28 relative overflow-hidden montserrat">
+    <section
+      id="news"
+      className="bg-gray-50 py-20 md:py-28 relative overflow-hidden montserrat"
+    >
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300"></div>
