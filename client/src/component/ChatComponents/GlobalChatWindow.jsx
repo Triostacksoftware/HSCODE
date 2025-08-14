@@ -9,7 +9,7 @@ import { FaRegPaperPlane } from "react-icons/fa";
 import UserInfoSidebar from "./UserInfoSidebar";
 import MapPicker from "./MapPicker";
 import socket from "../../utilities/socket";
-import { OnlineUsersContext } from "../../app/userchat/page";
+import { OnlineUsersContext } from "../../contexts/OnlineUsersContext";
 import toast from "react-hot-toast";
 
 const GlobalChatWindow = ({
@@ -105,7 +105,13 @@ const GlobalChatWindow = ({
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!hscode.trim() || !description.trim() || !quantity.trim() || !packing.trim() || !targetPrice.trim()) {
+    if (
+      !hscode.trim() ||
+      !description.trim() ||
+      !quantity.trim() ||
+      !packing.trim() ||
+      !targetPrice.trim()
+    ) {
       toast.error("Please fill required fields");
       return;
     }
@@ -185,8 +191,12 @@ const GlobalChatWindow = ({
   const appendDocuments = (fileList) => {
     const incoming = Array.from(fileList || []);
     setDocuments((prev) => {
-      const dedupeMap = new Map((prev || []).map((f) => [`${f.name}-${f.size}-${f.lastModified}`, f]));
-      incoming.forEach((f) => dedupeMap.set(`${f.name}-${f.size}-${f.lastModified}`, f));
+      const dedupeMap = new Map(
+        (prev || []).map((f) => [`${f.name}-${f.size}-${f.lastModified}`, f])
+      );
+      incoming.forEach((f) =>
+        dedupeMap.set(`${f.name}-${f.size}-${f.lastModified}`, f)
+      );
       return Array.from(dedupeMap.values());
     });
   };
@@ -217,9 +227,7 @@ const GlobalChatWindow = ({
   // Filtered messages for search
   const filteredMessages = searchTerm.trim()
     ? messages.filter((msg) => {
-        const text = (
-          msg.description || msg.content || ""
-        ).toLowerCase();
+        const text = (msg.description || msg.content || "").toLowerCase();
         const hs = (msg.hscode || "").toLowerCase();
         return (
           text.includes(searchTerm.toLowerCase()) ||
@@ -427,54 +435,76 @@ const GlobalChatWindow = ({
                           {msg.hscode || msg.description ? (
                             <div className="text-sm space-y-2">
                               <div className="flex items-center gap-2">
-                                <span className={`px-2 py-0.5 rounded-full text-[11px] ${
-                                  msg.type === "buy" ? "bg-blue-100 text-blue-700" : "bg-green-100 text-green-700"
-                                }`}>{(msg.type || "Lead").toUpperCase()}</span>
+                                <span
+                                  className={`px-2 py-0.5 rounded-full text-[11px] ${
+                                    msg.type === "buy"
+                                      ? "bg-blue-100 text-blue-700"
+                                      : "bg-green-100 text-green-700"
+                                  }`}
+                                >
+                                  {(msg.type || "Lead").toUpperCase()}
+                                </span>
                                 {msg.hscode && (
-                                  <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-[11px]">HS: {msg.hscode}</span>
+                                  <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-[11px]">
+                                    HS: {msg.hscode}
+                                  </span>
                                 )}
                                 {msg.leadCode && (
-                                  <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-[11px]">ID: {msg.leadCode}</span>
+                                  <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-[11px]">
+                                    ID: {msg.leadCode}
+                                  </span>
                                 )}
                               </div>
                               {msg.description && (
-                                <div className="text-gray-800 font-medium leading-6">{msg.description}</div>
+                                <div className="text-gray-800 font-medium leading-6">
+                                  {msg.description}
+                                </div>
                               )}
                               <div className="flex flex-wrap gap-2 text-[11px] text-gray-700">
                                 {msg.quantity && <div>Qty: {msg.quantity}</div>}
-                                {msg.packing && <div>Packing: {msg.packing}</div>}
-                                {(msg.targetPrice || msg.negotiable !== undefined) && (
+                                {msg.packing && (
+                                  <div>Packing: {msg.packing}</div>
+                                )}
+                                {(msg.targetPrice ||
+                                  msg.negotiable !== undefined) && (
                                   <div>
-                                    Target: {msg.targetPrice || "-"} {msg.negotiable ? "(Negotiable)" : ""}
+                                    Target: {msg.targetPrice || "-"}{" "}
+                                    {msg.negotiable ? "(Negotiable)" : ""}
                                   </div>
                                 )}
                               </div>
                               <div className="text-xs text-gray-700 space-y-1">
                                 {msg.buyerDeliveryLocation?.address && (
-                                  <div>Delivery: {msg.buyerDeliveryLocation.address}</div>
+                                  <div>
+                                    Delivery:{" "}
+                                    {msg.buyerDeliveryLocation.address}
+                                  </div>
                                 )}
                                 {msg.sellerPickupLocation?.address && (
-                                  <div>Pickup: {msg.sellerPickupLocation.address}</div>
+                                  <div>
+                                    Pickup: {msg.sellerPickupLocation.address}
+                                  </div>
                                 )}
                               </div>
-                              {Array.isArray(msg.documents) && msg.documents.length > 0 && (
-                                <div className="mt-2 flex flex-col gap-1">
-                                  {msg.documents.map((doc, i) => (
-                                    <a
-                                      key={i}
-                                      href={`${process.env.NEXT_PUBLIC_BASE_URL}/leadDocuments/${doc}`}
-                                      target="_blank"
-                                      rel="noreferrer"
-                                      className="text-xs text-blue-700 underline break-all"
-                                    >
-                                      {doc}
-                                    </a>
-                                  ))}
-                                </div>
-                              )}
+                              {Array.isArray(msg.documents) &&
+                                msg.documents.length > 0 && (
+                                  <div className="mt-2 flex flex-col gap-1">
+                                    {msg.documents.map((doc, i) => (
+                                      <a
+                                        key={i}
+                                        href={`${process.env.NEXT_PUBLIC_BASE_URL}/leadDocuments/${doc}`}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="text-xs text-blue-700 underline break-all"
+                                      >
+                                        {doc}
+                                      </a>
+                                    ))}
+                                  </div>
+                                )}
                             </div>
                           ) : (
-                          <p className="text-sm break-words">{msg.content}</p>
+                            <p className="text-sm break-words">{msg.content}</p>
                           )}
                         </div>
                         <div
@@ -499,7 +529,9 @@ const GlobalChatWindow = ({
         <button
           type="button"
           onClick={() => setLeadModalOpen(true)}
-          className={`items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-black/90 ${leadModalOpen? "hidden":"inline-flex"}`}
+          className={`items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-black/90 ${
+            leadModalOpen ? "hidden" : "inline-flex"
+          }`}
         >
           <FaRegPaperPlane className="w-4 h-4" /> Post Lead
         </button>
@@ -508,69 +540,181 @@ const GlobalChatWindow = ({
       {/* Lead Form Modal */}
       {leadModalOpen && (
         <div className="absolute inset-0 z-50 flex items-end md:items-center justify-center">
-          <div className="absolute inset-0 bg-black/50 animate-fade-in-overlay" onClick={()=>setLeadModalOpen(false)} />
+          <div
+            className="absolute inset-0 bg-black/50 animate-fade-in-overlay"
+            onClick={() => setLeadModalOpen(false)}
+          />
           <div className="relative bg-white w-full md:w-[900px] h-1/2 md:h-auto rounded-t-2xl md:rounded-xl shadow-xl animate-slide-up-modal">
             <div className="flex items-center justify-between px-8 py-4 border-b border-gray-200">
               <div className="font-semibold text-xl">Create Lead</div>
-              <button className="text-sm text-gray-600" onClick={()=>setLeadModalOpen(false)}>Close</button>
+              <button
+                className="text-sm text-gray-600"
+                onClick={() => setLeadModalOpen(false)}
+              >
+                Close
+              </button>
             </div>
-            <form onSubmit={handleSendMessage} className="p-4 px-8 space-y-3 text-gray-600 text-sm">
+            <form
+              onSubmit={handleSendMessage}
+              className="p-4 px-8 space-y-3 text-gray-600 text-sm"
+            >
               <div>
-                <div className="text-xs text-gray-500 mb-1">Select lead type</div>
+                <div className="text-xs text-gray-500 mb-1">
+                  Select lead type
+                </div>
                 <div className="inline-flex rounded border border-gray-300 overflow-hidden">
-                  <button type="button" onClick={()=>setLeadType("buy")} className={`px-4 py-1.5 text-sm ${leadType==='buy' ? 'bg-sky-500 text-white' : 'bg-white text-gray-700'}`}>Buy</button>
-                  <button type="button" onClick={()=>setLeadType("sell")} className={`px-4 py-1.5 text-sm border-l border-gray-300 ${leadType==='sell' ? 'bg-green-500 text-white' : 'bg-white text-gray-700'}`}>Sell</button>
+                  <button
+                    type="button"
+                    onClick={() => setLeadType("buy")}
+                    className={`px-4 py-1.5 text-sm ${
+                      leadType === "buy"
+                        ? "bg-sky-500 text-white"
+                        : "bg-white text-gray-700"
+                    }`}
+                  >
+                    Buy
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLeadType("sell")}
+                    className={`px-4 py-1.5 text-sm border-l border-gray-300 ${
+                      leadType === "sell"
+                        ? "bg-green-500 text-white"
+                        : "bg-white text-gray-700"
+                    }`}
+                  >
+                    Sell
+                  </button>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div className="md:col-span-1">
-                  <label className="text-[.8em] font-medium">HS Code<span className="text-red-500">*</span></label>
-                  <input className="mt-1 w-full border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 rounded text-sm" placeholder="e.g. 7099900" value={hscode} onChange={(e)=>setHscode(e.target.value)} required />
+                  <label className="text-[.8em] font-medium">
+                    HS Code<span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    className="mt-1 w-full border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 rounded text-sm"
+                    placeholder="e.g. 7099900"
+                    value={hscode}
+                    onChange={(e) => setHscode(e.target.value)}
+                    required
+                  />
                 </div>
                 <div className="md:col-span-2">
-                  <label className="text-[.8em] font-medium">Product / Item Description<span className="text-red-500">*</span></label>
-                  <textarea className="mt-1 w-full border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 rounded text-sm" rows={2} placeholder="Brief details to help others understand your need/offer" value={description} onChange={(e)=>setDescription(e.target.value)} required />
+                  <label className="text-[.8em] font-medium">
+                    Product / Item Description
+                    <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    className="mt-1 w-full border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 rounded text-sm"
+                    rows={2}
+                    placeholder="Brief details to help others understand your need/offer"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    required
+                  />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                 <div>
-                  <label className="text-[.8em] font-medium">Quantity<span className="text-red-500">*</span></label>
-                  <input className="mt-1 w-full border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 rounded text-sm" placeholder="e.g. 5 kg or 12 pcs" value={quantity} onChange={(e)=>setQuantity(e.target.value)} required />
+                  <label className="text-[.8em] font-medium">
+                    Quantity<span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    className="mt-1 w-full border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 rounded text-sm"
+                    placeholder="e.g. 5 kg or 12 pcs"
+                    value={quantity}
+                    onChange={(e) => setQuantity(e.target.value)}
+                    required
+                  />
                 </div>
                 <div>
-                  <label className="text-[.8em] font-medium">Packing<span className="text-red-500">*</span></label>
-                  <input className="mt-1 w-full border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 rounded text-sm" placeholder="e.g. 25 kg bags" value={packing} onChange={(e)=>setPacking(e.target.value)} required />
+                  <label className="text-[.8em] font-medium">
+                    Packing<span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    className="mt-1 w-full border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 rounded text-sm"
+                    placeholder="e.g. 25 kg bags"
+                    value={packing}
+                    onChange={(e) => setPacking(e.target.value)}
+                    required
+                  />
                 </div>
                 <div>
-                  <label className="text-[.8em] font-medium">Target / Expected Price<span className="text-red-500">*</span></label>
-                  <input className="mt-1 w-full border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 rounded text-sm" placeholder="e.g. 100 USD/MT" value={targetPrice} onChange={(e)=>setTargetPrice(e.target.value)} required />
+                  <label className="text-[.8em] font-medium">
+                    Target / Expected Price
+                    <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    className="mt-1 w-full border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 rounded text-sm"
+                    placeholder="e.g. 100 USD/MT"
+                    value={targetPrice}
+                    onChange={(e) => setTargetPrice(e.target.value)}
+                    required
+                  />
                 </div>
                 <div>
-                  <label className="text-[.8em] font-medium">Price Negotiable</label>
+                  <label className="text-[.8em] font-medium">
+                    Price Negotiable
+                  </label>
                   <label className="mt-1 inline-flex border-gray-200 items-center gap-2 text-sm w-full border rounded p-2 justify-center cursor-pointer select-none focus-within:ring-1 focus-within:ring-gray-700">
-                    <input type="checkbox" checked={negotiable} onChange={(e)=>setNegotiable(e.target.checked)} />
+                    <input
+                      type="checkbox"
+                      checked={negotiable}
+                      onChange={(e) => setNegotiable(e.target.checked)}
+                    />
                     Negotiable
                   </label>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {leadType === 'buy' ? (
+                {leadType === "buy" ? (
                   <div className="md:col-span-2">
-                    <label className="text-[.8em] font-medium">Delivery address</label>
-                    <input className="mt-1 w-full border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 rounded text-sm" placeholder="Type full address or pick from map" value={buyerDeliveryAddress} onChange={(e)=>setBuyerDeliveryAddress(e.target.value)} />
+                    <label className="text-[.8em] font-medium">
+                      Delivery address
+                    </label>
+                    <input
+                      className="mt-1 w-full border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 rounded text-sm"
+                      placeholder="Type full address or pick from map"
+                      value={buyerDeliveryAddress}
+                      onChange={(e) => setBuyerDeliveryAddress(e.target.value)}
+                    />
                     <div className="flex items-center gap-3 mt-2">
-                      <button type="button" onClick={()=> setMapPicker({ open: true, role: 'buyer' })} className="text-xs underline text-blue-700">Pick on map</button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setMapPicker({ open: true, role: "buyer" })
+                        }
+                        className="text-xs underline text-blue-700"
+                      >
+                        Pick on map
+                      </button>
                     </div>
                   </div>
                 ) : (
                   <div className="md:col-span-2">
-                    <label className="text-[.8em] font-medium">Pickup address</label>
-                    <input className="mt-1 w-full border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 rounded text-sm" placeholder="Type full address or pick from map" value={sellerPickupAddress} onChange={(e)=>setSellerPickupAddress(e.target.value)} />
+                    <label className="text-[.8em] font-medium">
+                      Pickup address
+                    </label>
+                    <input
+                      className="mt-1 w-full border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 rounded text-sm"
+                      placeholder="Type full address or pick from map"
+                      value={sellerPickupAddress}
+                      onChange={(e) => setSellerPickupAddress(e.target.value)}
+                    />
                     <div className="flex items-center gap-3 mt-2">
-                      <button type="button" onClick={()=> setMapPicker({ open: true, role: 'seller' })} className="text-xs underline text-blue-700">Pick on map</button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setMapPicker({ open: true, role: "seller" })
+                        }
+                        className="text-xs underline text-blue-700"
+                      >
+                        Pick on map
+                      </button>
                     </div>
                   </div>
                 )}
@@ -578,61 +722,110 @@ const GlobalChatWindow = ({
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[.8em] font-medium">Any special request</label>
-                  <textarea className="mt-1 w-full border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 rounded text-sm" rows={2} value={specialRequest} onChange={(e)=>setSpecialRequest(e.target.value)} placeholder="Optional notes like delivery schedule, quality, specs, etc." />
+                  <label className="text-[.8em] font-medium">
+                    Any special request
+                  </label>
+                  <textarea
+                    className="mt-1 w-full border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 rounded text-sm"
+                    rows={2}
+                    value={specialRequest}
+                    onChange={(e) => setSpecialRequest(e.target.value)}
+                    placeholder="Optional notes like delivery schedule, quality, specs, etc."
+                  />
                 </div>
                 <div>
-                  <label className="text-[.8em] font-medium">Remarks / Notes</label>
-                  <textarea className="mt-1 w-full border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 rounded text-sm" rows={2} value={remarks} onChange={(e)=>setRemarks(e.target.value)} placeholder="Anything else to add." />
+                  <label className="text-[.8em] font-medium">
+                    Remarks / Notes
+                  </label>
+                  <textarea
+                    className="mt-1 w-full border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 rounded text-sm"
+                    rows={2}
+                    value={remarks}
+                    onChange={(e) => setRemarks(e.target.value)}
+                    placeholder="Anything else to add."
+                  />
                 </div>
               </div>
 
               <div>
-                <label className="text-[.8em] font-medium">Upload supported documents</label>
+                <label className="text-[.8em] font-medium">
+                  Upload supported documents
+                </label>
                 <div className="mt-1 grid grid-cols-1 md:grid-cols-3 gap-3">
                   <div className="md:col-span-1">
                     <div className="flex items-center gap-2">
-          <input
+                      <input
                         key={documents.length}
                         type="file"
                         accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt"
-                        onChange={(e)=> appendDocuments(e.target.files)}
+                        onChange={(e) => appendDocuments(e.target.files)}
                         className="w-fit border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 file:bg-gray-600 file:text-white file:px-2 file:rounded-md file:py-1 rounded text-sm"
                       />
                     </div>
-                    <p className="text-[11px] text-gray-500 mt-1">Attach specs, brochures, lab reports, etc. Images will show previews.</p>
+                    <p className="text-[11px] text-gray-500 mt-1">
+                      Attach specs, brochures, lab reports, etc. Images will
+                      show previews.
+                    </p>
                   </div>
                   <div className="border border-gray-200 rounded p-2 max-h-28 overflow-auto text-xs grid grid-cols-4 gap-2 md:col-span-2">
                     {docPreviews?.length ? (
                       docPreviews.map((p, idx) => (
-                        <div key={idx} className="border border-gray-300 rounded p-1 flex flex-col items-center justify-center relative">
-                          <button type="button" className="absolute -top-2 -right-2 bg-black/70 text-white rounded-full w-5 h-5 text-[10px]" onClick={()=>removeDocumentAt(idx)}>×</button>
+                        <div
+                          key={idx}
+                          className="border border-gray-300 rounded p-1 flex flex-col items-center justify-center relative"
+                        >
+                          <button
+                            type="button"
+                            className="absolute -top-2 -right-2 bg-black/70 text-white rounded-full w-5 h-5 text-[10px]"
+                            onClick={() => removeDocumentAt(idx)}
+                          >
+                            ×
+                          </button>
                           {p.url ? (
-                            <img src={p.url} alt={p.name} className="h-14 w-full object-cover rounded" />
+                            <img
+                              src={p.url}
+                              alt={p.name}
+                              className="h-14 w-full object-cover rounded"
+                            />
                           ) : (
                             <div className="h-14 w-full bg-gray-100 text-[10px] text-gray-600 flex items-center justify-center rounded break-words p-1">
                               {p.name}
                             </div>
                           )}
-                          <div className="mt-1 truncate w-full" title={p.name}>{p.name}</div>
+                          <div className="mt-1 truncate w-full" title={p.name}>
+                            {p.name}
+                          </div>
                         </div>
                       ))
                     ) : (
-                      <div className="text-gray-500 col-span-4">No files selected</div>
+                      <div className="text-gray-500 col-span-4">
+                        No files selected
+                      </div>
                     )}
                   </div>
                 </div>
               </div>
 
               <div className="flex justify-between items-end">
-                <p className="text-xs text-gray-500">Leads are reviewed by admins before appearing in the chat.</p>
-                <button suppressHydrationWarning={true} type="submit" disabled={sending} className="px-4 py-2 bg-gray-900 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed">
-                  {sending ? (<div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>) : (<span>Submit for approval</span>)}
-          </button>
+                <p className="text-xs text-gray-500">
+                  Leads are reviewed by admins before appearing in the chat.
+                </p>
+                <button
+                  suppressHydrationWarning={true}
+                  type="submit"
+                  disabled={sending}
+                  className="px-4 py-2 bg-gray-900 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {sending ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  ) : (
+                    <span>Submit for approval</span>
+                  )}
+                </button>
               </div>
-        </form>
+            </form>
           </div>
-      </div>
+        </div>
       )}
 
       {/* Map Picker Modal */}

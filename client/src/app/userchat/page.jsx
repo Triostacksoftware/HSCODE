@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, createContext } from "react";
+import React, { useState, useEffect } from "react";
 import Sidebar from "../../component/ChatComponents/Sidebar";
 import DomesticChat from "../../component/ChatComponents/DomesticChat";
 import GlobalChat from "../../component/ChatComponents/GlobalChat";
@@ -7,13 +7,7 @@ import RequestedLeads from "../../component/ChatComponents/RequestedLeads";
 import UserChatSettings from "../../component/ChatComponents/UserChatSettings";
 import { useUserAuth } from "../../utilities/userAuthMiddleware.js";
 import { connectUserSocket } from "../../utilities/socket";
-
-// Context to share online user data across components
-export const OnlineUsersContext = createContext({
-  onlineCounts: {}, // groupId -> count
-  onlineUsers: {}, // groupId -> [ { userId, socketId } ]
-  socket: null,
-});
+import { OnlineUsersContext } from "../../contexts/OnlineUsersContext";
 
 const ChatPage = () => {
   const [activeTab, setActiveTab] = useState("local");

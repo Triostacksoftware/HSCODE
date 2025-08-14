@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef, useContext } from "react";
 import axios from "axios";
 import { useUserAuth } from "../../utilities/userAuthMiddleware";
-import { OnlineUsersContext } from "../../app/userchat/page";
+import { OnlineUsersContext } from "../../contexts/OnlineUsersContext";
 import toast from "react-hot-toast";
 import socket from "../../utilities/socket";
 import { LiaSearchSolid } from "react-icons/lia";
@@ -14,7 +14,13 @@ import UserInfoSidebar from "./UserInfoSidebar";
 import MapPicker from "./MapPicker";
 import LeadFormModal from "./LeadFormModal";
 
-const ChatWindow = ({chapterNo, selectedGroupId, groupName, groupImage, onBack }) => {
+const ChatWindow = ({
+  chapterNo,
+  selectedGroupId,
+  groupName,
+  groupImage,
+  onBack,
+}) => {
   const { user } = useUserAuth();
   const { onlineCounts, onlineUsers, socket } = useContext(OnlineUsersContext);
   const [leads, setLeads] = useState([]);
@@ -315,7 +321,8 @@ const ChatWindow = ({chapterNo, selectedGroupId, groupName, groupImage, onBack }
               {groupName || "Group Chat"}
             </span>
             <div className="text-xs text-gray-600 truncate">
-              {Array.isArray(onlineUsers[selectedGroupId]) && onlineUsers[selectedGroupId].length > 0
+              {Array.isArray(onlineUsers[selectedGroupId]) &&
+              onlineUsers[selectedGroupId].length > 0
                 ? onlineUsers[selectedGroupId]
                     .slice(0, 4)
                     .map((u) => u.name)
@@ -371,12 +378,19 @@ const ChatWindow = ({chapterNo, selectedGroupId, groupName, groupImage, onBack }
           {/* Members dropdown: show online first, then others if provided */}
           {showMembers && (
             <div className="absolute right-4 top-14 bg-white border border-gray-200 rounded shadow-lg z-20 min-w-[220px] max-h-80 overflow-y-auto">
-              <div className="p-2 text-gray-700 border-b border-gray-100 text-sm">Members</div>
+              <div className="p-2 text-gray-700 border-b border-gray-100 text-sm">
+                Members
+              </div>
               <div className="py-1">
                 {(onlineUsers[selectedGroupId] || []).map((m) => (
-                  <div key={`on-${m.id}`} className="flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50">
+                  <div
+                    key={`on-${m.id}`}
+                    className="flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50"
+                  >
                     <span className="w-2 h-2 rounded-full bg-green-500"></span>
-                    <span className="text-xs text-gray-900 truncate">{m.name}</span>
+                    <span className="text-xs text-gray-900 truncate">
+                      {m.name}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -469,58 +483,86 @@ const ChatWindow = ({chapterNo, selectedGroupId, groupName, groupImage, onBack }
                           {lead.hscode || lead.description ? (
                             <div className="text-sm space-y-2">
                               <div className="flex items-center gap-2">
-                                <span className={`px-2 py-0.5 rounded-full text-[11px] ${
-                                  lead.type === "buy"
-                                    ? "bg-blue-100 text-blue-700"
-                                    : "bg-green-100 text-green-700"
-                                }`}>{(lead.type || "Lead").toUpperCase()}</span>
+                                <span
+                                  className={`px-2 py-0.5 rounded-full text-[11px] ${
+                                    lead.type === "buy"
+                                      ? "bg-blue-100 text-blue-700"
+                                      : "bg-green-100 text-green-700"
+                                  }`}
+                                >
+                                  {(lead.type || "Lead").toUpperCase()}
+                                </span>
                                 {lead.hscode && (
-                                  <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-[11px]">HS: {lead.hscode}</span>
+                                  <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-[11px]">
+                                    HS: {lead.hscode}
+                                  </span>
                                 )}
                               </div>
                               {lead.description && (
-                                <div className="text-gray-800 font-medium leading-6">{lead.description}</div>
+                                <div className="text-gray-800 font-medium leading-6">
+                                  {lead.description}
+                                </div>
                               )}
                               <div className="flex flex-wrap gap-2 text-[11px] text-gray-700">
-                                {lead.quantity && <div>Qty: {lead.quantity}</div>}
-                                {lead.packing && <div>Packing: {lead.packing}</div>}
-                                {(lead.targetPrice || lead.negotiable !== undefined) && (
-                                  <div>Target: {lead.targetPrice || "-"} {lead.negotiable ? "(Negotiable)" : ""}</div>
+                                {lead.quantity && (
+                                  <div>Qty: {lead.quantity}</div>
+                                )}
+                                {lead.packing && (
+                                  <div>Packing: {lead.packing}</div>
+                                )}
+                                {(lead.targetPrice ||
+                                  lead.negotiable !== undefined) && (
+                                  <div>
+                                    Target: {lead.targetPrice || "-"}{" "}
+                                    {lead.negotiable ? "(Negotiable)" : ""}
+                                  </div>
                                 )}
                               </div>
                               <div className="text-xs text-gray-700 space-y-1">
                                 {lead.buyerDeliveryLocation?.address && (
-                                  <div>Delivery: {lead.buyerDeliveryLocation.address}</div>
+                                  <div>
+                                    Delivery:{" "}
+                                    {lead.buyerDeliveryLocation.address}
+                                  </div>
                                 )}
                                 {lead.sellerPickupLocation?.address && (
-                                  <div>Pickup: {lead.sellerPickupLocation.address}</div>
+                                  <div>
+                                    Pickup: {lead.sellerPickupLocation.address}
+                                  </div>
                                 )}
                                 {lead.specialRequest && (
-                                  <div>Special request: {lead.specialRequest}</div>
+                                  <div>
+                                    Special request: {lead.specialRequest}
+                                  </div>
                                 )}
                                 {lead.remarks && (
                                   <div>Notes: {lead.remarks}</div>
                                 )}
                               </div>
-                              {Array.isArray(lead.documents) && lead.documents.length > 0 && (
-                                <div className="mt-2 flex flex-wrap gap-2">
-                                  {lead.documents.map((doc, i) => (
-                                    <a
-                                      key={i}
-                                      href={`${process.env.NEXT_PUBLIC_BASE_URL}/leadDocuments/${doc}`}
-                                      target="_blank"
-                                      rel="noreferrer"
-                                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-blue-700 hover:bg-gray-200 text-[11px]"
-                                    >
-                                      <span>📄</span>
-                                      <span className="truncate max-w-[140px]">{doc}</span>
-                                    </a>
-                                  ))}
-                                </div>
-                              )}
+                              {Array.isArray(lead.documents) &&
+                                lead.documents.length > 0 && (
+                                  <div className="mt-2 flex flex-wrap gap-2">
+                                    {lead.documents.map((doc, i) => (
+                                      <a
+                                        key={i}
+                                        href={`${process.env.NEXT_PUBLIC_BASE_URL}/leadDocuments/${doc}`}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-blue-700 hover:bg-gray-200 text-[11px]"
+                                      >
+                                        <span>📄</span>
+                                        <span className="truncate max-w-[140px]">
+                                          {doc}
+                                        </span>
+                                      </a>
+                                    ))}
+                                  </div>
+                                )}
                             </div>
                           ) : (
-                          <p className="text-sm break-words">{lead.content}</p>
+                            <p className="text-sm break-words">
+                              {lead.content}
+                            </p>
                           )}
                         </div>
                         <div
@@ -545,7 +587,9 @@ const ChatWindow = ({chapterNo, selectedGroupId, groupName, groupImage, onBack }
         <button
           type="button"
           onClick={() => setLeadModalOpen(true)}
-          className={`items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-black/90 ${leadModalOpen? "hidden":"inline-flex"}`}
+          className={`items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-black/90 ${
+            leadModalOpen ? "hidden" : "inline-flex"
+          }`}
         >
           <FaRegPaperPlane className="w-4 h-4" /> Post Lead
         </button>
@@ -569,14 +613,29 @@ const ChatWindow = ({chapterNo, selectedGroupId, groupName, groupImage, onBack }
             form.append("targetPrice", vals.targetPrice);
             form.append("negotiable", vals.negotiable);
             form.append("buyerDeliveryAddress", vals.buyerDeliveryAddress);
-            if (vals.buyerLat && vals.buyerLng) { form.append("buyerLat", vals.buyerLat); form.append("buyerLng", vals.buyerLng); }
+            if (vals.buyerLat && vals.buyerLng) {
+              form.append("buyerLat", vals.buyerLat);
+              form.append("buyerLng", vals.buyerLng);
+            }
             form.append("sellerPickupAddress", vals.sellerPickupAddress);
-            if (vals.sellerLat && vals.sellerLng) { form.append("sellerLat", vals.sellerLat); form.append("sellerLng", vals.sellerLng); }
+            if (vals.sellerLat && vals.sellerLng) {
+              form.append("sellerLat", vals.sellerLat);
+              form.append("sellerLng", vals.sellerLng);
+            }
             form.append("specialRequest", vals.specialRequest);
             form.append("remarks", vals.remarks);
             form.append("chapterNo", chapterNo);
-            (vals.documents || []).forEach((file) => form.append("documents", file));
-            await axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/requested-leads`, form, { withCredentials: true, headers: { "Content-Type": "multipart/form-data" } });
+            (vals.documents || []).forEach((file) =>
+              form.append("documents", file)
+            );
+            await axios.post(
+              `${process.env.NEXT_PUBLIC_BASE_URL}/requested-leads`,
+              form,
+              {
+                withCredentials: true,
+                headers: { "Content-Type": "multipart/form-data" },
+              }
+            );
             setLeadModalOpen(false);
             toast.success("Your lead has been submitted for approval!");
           } catch (err) {
@@ -609,7 +668,11 @@ const ChatWindow = ({chapterNo, selectedGroupId, groupName, groupImage, onBack }
             setSellerLng(String(lng));
           }
         }}
-        initial={mapPicker.role === "buyer" ? { lat: Number(buyerLat) || 20, lng: Number(buyerLng) || 78 } : { lat: Number(sellerLat) || 20, lng: Number(sellerLng) || 78 }}
+        initial={
+          mapPicker.role === "buyer"
+            ? { lat: Number(buyerLat) || 20, lng: Number(buyerLng) || 78 }
+            : { lat: Number(sellerLat) || 20, lng: Number(sellerLng) || 78 }
+        }
       />
     </div>
   );
