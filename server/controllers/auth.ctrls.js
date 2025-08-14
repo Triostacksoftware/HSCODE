@@ -94,9 +94,7 @@ export const signup = async (req, res) => {
 };
 
 export const emailVerification = async (req, res) => {
-  console.log(req.body);
   const { name, email, phone, password, OTP, countryCode } = req.body;
-  console.log(req.cookies.verify_token);
   const token = req.cookies.verify_token;
 
   // 1. Basic check
@@ -346,7 +344,6 @@ export const resetPassword = async (req, res) => {
 
 // Admin Controllers
 export const adminLogin = async (req, res) => {
-  console.log(req.body);
   const { email, password } = req.body;
 
   if (!email || !password) {

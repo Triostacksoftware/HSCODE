@@ -172,7 +172,6 @@ export const createAdmin = async (req, res) => {
       countryCode,
       phone,
     });
-    console.log("new admin", newAdmin);
     await newAdmin.save();
 
     res.status(201).json({

@@ -104,7 +104,6 @@ const AddGroup = ({ categoryId, categoryName, onClose }) => {
       );
 
       if (response.status === 201 || response.status === 200) {
-        console.log("Group created successfully:", response.data);
         setSuccess("Group created successfully!");
         // Close modal after a short delay to show success message
         setTimeout(() => {
@@ -147,7 +146,6 @@ const AddGroup = ({ categoryId, categoryName, onClose }) => {
       );
 
       if (response.status === 201 || response.status === 200) {
-        console.log("Bulk groups created successfully:", response.data);
         setSuccess("Bulk groups created successfully!");
 
         // Reset file selection

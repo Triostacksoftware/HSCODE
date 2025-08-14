@@ -19,7 +19,6 @@ const GlobalChaptersList = ({ onCategorySelect, selectedCategory }) => {
             withCredentials: true,
           }
         );
-        console.log("Global categories fetched:", response.data);
         setCategories(response.data);
       } catch (error) {
         console.error("Error fetching global categories:", error);
@@ -31,7 +30,6 @@ const GlobalChaptersList = ({ onCategorySelect, selectedCategory }) => {
   }, []);
 
   const handleCategorySelect = (category) => {
-    console.log("Global category selected:", category);
     if (onCategorySelect) {
       onCategorySelect(category);
     }

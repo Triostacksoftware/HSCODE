@@ -33,7 +33,6 @@ export default function Signup() {
           `${process.env.NEXT_PUBLIC_BASE_URL}/get-country`
         );
         if (response.status === 200) {
-          console.log(response);
           setCountryCode(response.data.location.countryCode);
         }
       } catch (error) {

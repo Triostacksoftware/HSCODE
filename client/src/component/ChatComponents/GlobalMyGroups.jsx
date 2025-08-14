@@ -50,14 +50,12 @@ const GlobalMyGroups = ({ onGroupSelect, selectedGroupId }) => {
     try {
       setLoading(true);
       setError("");
-      console.log("user global groups", user.globalGroupsID);
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_BASE_URL}/user/global-groups`,
         { groupIds: user.globalGroupsID },
         { withCredentials: true }
       );
 
-      console.log("My global groups fetched:", response.data);
       setGroups(response.data || []);
     } catch (error) {
       console.error("Error fetching my global groups:", error);
@@ -72,7 +70,6 @@ const GlobalMyGroups = ({ onGroupSelect, selectedGroupId }) => {
     if (onGroupSelect) {
       onGroupSelect(group);
     }
-    console.log("Opening global group:", group);
   };
 
   const filteredGroups = groups.filter(

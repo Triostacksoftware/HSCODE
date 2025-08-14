@@ -19,11 +19,10 @@ export const useUserAuth = () => {
         }
       );
 
-      if (response.data.authenticated) {
-        setIsAuthenticated(true);
-        setUser(response.data.user);
-        console.log("User refreshed:", response.data.user);
-      }
+        if (response.data.authenticated) {
+          setIsAuthenticated(true);
+          setUser(response.data.user);
+        }
     } catch (error) {
       console.error("User refresh failed:", error);
     }
@@ -42,7 +41,6 @@ export const useUserAuth = () => {
         if (response.data.authenticated) {
           setIsAuthenticated(true);
           setUser(response.data.user);
-          console.log("userdata", response.data.user);
         } else {
           // Not authenticated
           toast.error("Please log in to access the chat", {

@@ -24,7 +24,6 @@ const ChaptersList = ({ onCategorySelect, selectedCategory }) => {
             withCredentials: true,
           }
         );
-        console.log("Categories fetched:", response.data);
         setCategories(response.data);
       } catch (error) {
         console.error("Error fetching categories:", error);
@@ -36,7 +35,6 @@ const ChaptersList = ({ onCategorySelect, selectedCategory }) => {
   }, [user]);
 
   const handleCategorySelect = (category) => {
-    console.log("Category selected:", category);
     if (onCategorySelect) {
       onCategorySelect(category);
     }

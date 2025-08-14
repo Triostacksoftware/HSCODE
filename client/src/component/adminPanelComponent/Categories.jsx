@@ -53,8 +53,6 @@ const Categories = () => {
           withCredentials: true,
         }
       );
-      console.log(response.data)
-
       setCategories(response.data || []);
     } catch (error) {
       console.error("Error fetching categories:", error);
@@ -83,7 +81,6 @@ const Categories = () => {
 
   const handleEdit = (category) => {
     // TODO: Implement edit functionality
-    console.log("Edit category:", category);
     setOpenMenu(null);
   };
 

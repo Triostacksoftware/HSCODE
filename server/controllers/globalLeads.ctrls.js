@@ -143,7 +143,6 @@ export const getUserGlobalRequestedLeads = async (req, res) => {
 
 // Get all pending global requested leads (for admin - filtered by admin's country)
 export const getAllPendingGlobalLeads = async (req, res) => {
-  console.log("getallpending hit");
   try {
     const { page = 1, limit = 20, groupId } = req.query;
     const adminCountryCode = req.user.countryCode;
@@ -160,7 +159,6 @@ export const getAllPendingGlobalLeads = async (req, res) => {
       .populate("userId", "name image email")
       .populate("groupId", "name")
       .exec();
-    console.log("requested global leads", requestedLeads);
 
     const total = await GlobalRequestedLeads.countDocuments(query);
 

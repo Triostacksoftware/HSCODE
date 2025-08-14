@@ -81,7 +81,6 @@ const SuperCategories = () => {
 
   const handleEdit = (category) => {
     // TODO: Implement edit functionality
-    console.log("Edit global category:", category);
     setOpenMenu(null);
   };
 

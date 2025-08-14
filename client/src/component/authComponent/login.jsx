@@ -41,7 +41,6 @@ export default function Login() {
       );
 
       if (response.status === 200 && response.data?.message === "LoggedIn") {
-        console.log("Login successful:", response.data.message);
         return router.push("/userchat");
       }
 

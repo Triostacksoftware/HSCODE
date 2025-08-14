@@ -35,7 +35,6 @@ const GroupsList = ({
         }
       );
 
-      console.log("Groups fetched:", response.data);
       setGroups(response.data || []);
     } catch (error) {
       console.error("Error fetching groups:", error);
@@ -47,7 +46,6 @@ const GroupsList = ({
 
   const handleJoinGroup = async (group) => {
     try {
-      console.log("Joining group:", group);
 
       const response = await axios.patch(
         `${process.env.NEXT_PUBLIC_BASE_URL}/user/join-group`,
@@ -55,7 +53,6 @@ const GroupsList = ({
         { withCredentials: true }
       );
 
-      console.log("Join response:", response.data);
 
       // Refresh user data to update groupsID
       await refreshUser();
@@ -77,7 +74,6 @@ const GroupsList = ({
     if (onGroupSelect) {
       onGroupSelect(group);
     }
-    console.log("Opening group:", group);
     try {
       if (isUserJoined(group._id)) {
         await axios.patch(

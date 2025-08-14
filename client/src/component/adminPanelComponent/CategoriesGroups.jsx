@@ -5,7 +5,6 @@ import { MdAdd, MdEdit, MdDelete, MdSearch, MdMoreVert } from "react-icons/md";
 import AddGroup from "./AddGroup";
 
 const CategorisGroups = ({ categoryId, categoryName }) => {
-  console.log(categoryId, categoryName);
   const [groups, setGroups] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -46,8 +45,6 @@ const CategorisGroups = ({ categoryId, categoryName }) => {
           withCredentials: true,
         }
       );
-      console.log(response.data);
-
       setGroups(response.data || []);
     } catch (error) {
       console.error("Error fetching groups:", error);
@@ -63,7 +60,6 @@ const CategorisGroups = ({ categoryId, categoryName }) => {
 
   const handleEdit = (group) => {
     // TODO: Implement edit functionality
-    console.log("Edit group:", group);
     setOpenMenu(null);
   };
 

@@ -112,7 +112,6 @@ const ChatWindow = ({
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
-  console.log("onlineUsers", onlineUsers, onlineCounts);
 
   useEffect(() => {
     if (selectedGroupId && user) {

@@ -58,7 +58,6 @@ const GlobalGroupsList = ({
         }
       );
 
-      console.log("Global groups fetched:", response.data);
       setGroups(response.data || []);
     } catch (error) {
       console.error("Error fetching global groups:", error);
@@ -70,7 +69,6 @@ const GlobalGroupsList = ({
 
   const handleJoinGroup = async (group) => {
     try {
-      console.log("Joining global group:", group);
 
       const response = await axios.patch(
         `${process.env.NEXT_PUBLIC_BASE_URL}/user/join-global-group`,
@@ -78,7 +76,6 @@ const GlobalGroupsList = ({
         { withCredentials: true }
       );
 
-      console.log("Join global group response:", response.data);
 
       // Refresh user data to update groupsID
       await refreshUser();
@@ -99,7 +96,6 @@ const GlobalGroupsList = ({
     if (onGroupSelect) {
       onGroupSelect(group);
     }
-    console.log("Opening global group:", group);
   };
 
   const isUserJoined = (groupId) => {

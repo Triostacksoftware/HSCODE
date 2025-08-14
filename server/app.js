@@ -55,7 +55,6 @@ app.get("/api/v1", (req, res) => {
 
 app.get("/api/v1/get-country", async (req, res) => {
   try {
-    console.log("hit");
     const location = await getIpLocation(req);
     res.status(200).json({ location });
   } catch (error) {

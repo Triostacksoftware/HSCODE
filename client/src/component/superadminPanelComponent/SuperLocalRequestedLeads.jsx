@@ -31,7 +31,6 @@ const SuperLocalRequestedLeads = () => {
         { withCredentials: true }
       );
       const list = Array.isArray(res.data) ? res.data : [];
-      console.log(res.data)
       setCountries(list);
       if (list.length > 0) {
         setSelectedCountry(list[0].countryCode);
