@@ -9,10 +9,10 @@ import {
   MdPerson,
 } from "react-icons/md";
 import getPhoneNumberLength from "@/utilities/getNumberLength";
+import useCountryCode from "@/utilities/useCountryCode";
 
 export default function Signup() {
   const [step, setStep] = useState(1); // 1: form, 2: OTP verification
-  const [countryCode, setCountryCode] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -25,24 +25,8 @@ export default function Signup() {
   const [message, setMessage] = useState("");
   const [phoneError, setPhoneError] = useState("");
 
-  // Step 1: Get country code on component mount
-  useEffect(() => {
-    const fetchCountryCode = async () => {
-      try {
-        const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/get-country`
-        );
-        if (response.status === 200) {
-          setCountryCode(response.data.location.countryCode);
-        }
-      } catch (error) {
-        console.error("Failed to fetch country code:", error);
-        setMessage("Failed to detect your country. Please try again.");
-      }
-    };
+  const { countryCode, loading: countryLoading } = useCountryCode();
 
-    fetchCountryCode();
-  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
