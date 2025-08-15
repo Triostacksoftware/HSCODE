@@ -42,9 +42,8 @@ const Herosection = ({
   return (
     <div className="relative min-h-screen">
       {/* Desktop Video (md and larger) */}
-      <div className="absolute inset-0 mt-10 overflow-hidden hidden md:block">
+      <div className="absolute hidden md:block">
         <iframe
-          className="absolute inset-0 w-full h-full"
           src={`https://www.youtube.com/embed/${youtubeVideoId}?autoplay=1&mute=1&loop=1&playlist=${youtubeVideoId}&t=36s&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1&enablejsapi=1`}
           title="Desktop Background Video"
           frameBorder="0"
@@ -52,10 +51,10 @@ const Herosection = ({
           allowFullScreen
           style={{
             position: "fixed",
-            top: 0,
+            top: "-5vh",
             left: 0,
             width: "100vw",
-            height: "100vh",
+            height: "120vh",
             border: "none",
             margin: 0,
             padding: 0,
@@ -78,8 +77,8 @@ const Herosection = ({
             position: "fixed",
             top: 0,
             left: 0,
-            width: "100%",
-            height: "100%",
+            width: "120%",
+            height: "110%",
             border: "none",
             margin: 0,
             padding: 0,
@@ -87,21 +86,6 @@ const Herosection = ({
             pointerEvents: "none",
           }}
         ></iframe>
-      </div>
-
-      {/* Top Banner */}
-      <div className="relative z-10 bg-amber-700 text-white py-3">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center">
-            <p className="text-sm font-medium">{bannerText}</p>
-            <a
-              href="#"
-              className="text-sm font-medium hover:text-amber-200 transition-colors duration-200"
-            >
-              {bannerCTA}
-            </a>
-          </div>
-        </div>
       </div>
 
       {/* Main Content */}
