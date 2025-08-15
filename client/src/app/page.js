@@ -22,6 +22,7 @@ function HomeContent() {
     loading: dataLoading,
     isFallback,
   } = useHomeData(countryCode);
+  console.log("home data", homeData);
 
   // Handle hash-based navigation when coming from other pages
   useEffect(() => {

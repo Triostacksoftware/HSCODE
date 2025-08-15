@@ -2,6 +2,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import "leaflet/dist/leaflet.css";
 import { Toaster } from "react-hot-toast";
+import GoogleTranslate from "../component/GoogleTranslate";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -9,11 +10,11 @@ const inter = Inter({
 });
 
 export const metadata = {
-  title: 'Login',
+  title: "Login",
 };
 
 export const viewport = {
-  width: 'device-width',
+  width: "device-width",
   initialScale: 1,
 };
 
@@ -26,11 +27,10 @@ export default function RootLayout({ children }) {
           content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
         />
       </head>
-      <body
-        className={`${inter.variable} antialiased`}
-      >
+      <body className={`${inter.variable} antialiased`}>
         {children}
         <Toaster position="top-right" />
+        <GoogleTranslate />
       </body>
     </html>
   );

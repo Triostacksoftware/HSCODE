@@ -88,6 +88,319 @@
   }
 }
 
+/* Google Translate Styles - Enhanced UI */
+.google-translate-container {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    sans-serif;
+  backdrop-filter: blur(10px);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(255, 255, 255, 0.9) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), 0 4px 16px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: slideInTranslate 0.5s ease-out;
+}
+
+.google-translate-container:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15), 0 6px 20px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.google-translate-container select {
+  padding: 12px 16px;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  outline: none;
+  min-width: 140px;
+  color: #334155;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+  padding-right: 40px;
+}
+
+.google-translate-container select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1),
+    0 4px 12px rgba(59, 130, 246, 0.15);
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+}
+
+.google-translate-container select:hover {
+  border-color: #60a5fa;
+  background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.google-translate-container select option {
+  background: #ffffff;
+  color: #334155;
+  padding: 12px 16px;
+  font-weight: 500;
+}
+
+.google-translate-container select option:hover {
+  background: #f1f5f9;
+}
+
+/* Navbar Google Translate - Enhanced */
+.navbar-google-translate {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    sans-serif;
+  position: relative;
+}
+
+.navbar-google-translate::before {
+  content: "";
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6, #06b6d4);
+  border-radius: 14px;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.navbar-google-translate:hover::before {
+  opacity: 1;
+}
+
+.navbar-google-translate select {
+  padding: 10px 14px;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  min-width: 130px;
+  color: #334155;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 14px;
+  padding-right: 36px;
+  position: relative;
+  z-index: 1;
+}
+
+.navbar-google-translate select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1),
+    0 4px 12px rgba(59, 130, 246, 0.15);
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+}
+
+.navbar-google-translate select:hover {
+  border-color: #60a5fa;
+  background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+
+.navbar-google-translate select option {
+  background: #ffffff;
+  color: #334155;
+  padding: 10px 14px;
+  font-weight: 500;
+}
+
+.navbar-google-translate select option:hover {
+  background: #f1f5f9;
+}
+
+/* Loading States */
+.google-translate-container .loading-placeholder,
+.navbar-google-translate .loading-placeholder {
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 12px;
+  border: 2px solid transparent;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.google-translate-container .loading-placeholder {
+  min-width: 140px;
+}
+
+.navbar-google-translate .loading-placeholder {
+  min-width: 130px;
+  padding: 10px 14px;
+  min-height: 40px;
+}
+
+/* Spinner Animation */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes slideInTranslate {
+  0% {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Responsive Enhancements */
+@media (max-width: 768px) {
+  .google-translate-container {
+    top: 10px;
+    right: 10px;
+    padding: 8px;
+    border-radius: 10px;
+  }
+
+  .google-translate-container select {
+    padding: 10px 14px;
+    font-size: 13px;
+    min-width: 120px;
+  }
+
+  .navbar-google-translate select {
+    width: 100%;
+    min-width: unset;
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .google-translate-container {
+    background: linear-gradient(
+      135deg,
+      rgba(30, 41, 59, 0.95) 0%,
+      rgba(15, 23, 42, 0.9) 100%
+    );
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 4px 16px rgba(0, 0, 0, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  .google-translate-container select,
+  .navbar-google-translate select {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    color: #e2e8f0;
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .google-translate-container select:focus,
+  .navbar-google-translate select:focus {
+    border-color: #60a5fa;
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  }
+
+  .google-translate-container select:hover,
+  .navbar-google-translate select:hover {
+    background: linear-gradient(135deg, #334155 0%, #475569 100%);
+  }
+
+  .google-translate-container select option,
+  .navbar-google-translate select option {
+    background: #1e293b;
+    color: #e2e8f0;
+  }
+
+  .google-translate-container select option:hover,
+  .navbar-google-translate select option:hover {
+    background: #334155;
+  }
+
+  .google-translate-container .loading-placeholder,
+  .navbar-google-translate .loading-placeholder {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    color: #e2e8f0;
+  }
+}
+
+/* Enhanced Focus States for Accessibility */
+.google-translate-container:focus-within,
+.navbar-google-translate:focus-within {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Smooth Transitions for All Interactive Elements */
+.google-translate-container *,
+.navbar-google-translate * {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Hover Effects for Better UX */
+.google-translate-container:hover {
+  transform: translateY(-2px) scale(1.02);
+}
+
+.navbar-google-translate:hover {
+  transform: scale(1.05);
+}
+
+/* Custom Scrollbar for Select Dropdowns */
+.google-translate-container select::-webkit-scrollbar,
+.navbar-google-translate select::-webkit-scrollbar {
+  width: 8px;
+}
+
+.google-translate-container select::-webkit-scrollbar-track,
+.navbar-google-translate select::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.google-translate-container select::-webkit-scrollbar-thumb,
+.navbar-google-translate select::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.google-translate-container select::-webkit-scrollbar-thumb:hover,
+.navbar-google-translate select::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
 /* Ensure proper touch targets on mobile */
 @media (max-width: 768px) {
   button,
@@ -144,8 +457,12 @@
 }
 
 @keyframes fadeInOverlay {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .animate-fade-in-overlay {

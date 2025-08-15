@@ -3,6 +3,7 @@ import Link from "next/link";
 import React, { useState, useEffect, useRef } from "react";
 import { HiMenu, HiX, HiChevronDown, HiSearch } from "react-icons/hi";
 import { useRouter, usePathname } from "next/navigation";
+import NavbarGoogleTranslate from "../NavbarGoogleTranslate";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -123,6 +124,9 @@ const Navbar = () => {
 
           {/* Desktop Right Side */}
           <div className="hidden md:flex items-center space-x-4">
+            {/* Google Translate */}
+            <NavbarGoogleTranslate />
+
             {/* Language Selector */}
             <div className="flex items-center text-gray-700 hover:text-gray-900 cursor-pointer">
               <span className="text-sm font-medium">EN</span>
@@ -227,6 +231,10 @@ const Navbar = () => {
             Subscription
           </Link>
           <div className="pt-4 pb-3 border-t border-gray-200">
+            {/* Google Translate for Mobile */}
+            <div className="px-3 mb-3">
+              <NavbarGoogleTranslate style={{ width: "100%" }} />
+            </div>
             <div className="flex items-center justify-between px-3">
               <div className="flex items-center text-gray-700">
                 <span className="text-sm font-medium">EN</span>
