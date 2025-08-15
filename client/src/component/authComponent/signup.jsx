@@ -2,30 +2,29 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import {
-  MdEmail,
+  MdPhone,
   MdVisibility,
   MdVisibilityOff,
-  MdPhone,
   MdPerson,
+  MdEmail,
 } from "react-icons/md";
-import getPhoneNumberLength from "@/utilities/getNumberLength";
-import useCountryCode from "@/utilities/useCountryCode";
+import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
+import { auth } from "../../utilities/firebase";
 
 export default function Signup() {
   const [step, setStep] = useState(1); // 1: form, 2: OTP verification
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    phone: "",
+    phoneNumber: "",
     password: "",
   });
   const [otp, setOtp] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState("");
-  const [phoneError, setPhoneError] = useState("");
-
-  const { countryCode, loading: countryLoading } = useCountryCode();
+  const [recaptchaVerifier, setRecaptchaVerifier] = useState(null);
+  const [confirmationResult, setConfirmationResult] = useState(null);
 
 
   const handleInputChange = (e) => {
@@ -34,14 +33,53 @@ export default function Signup() {
       ...prev,
       [name]: value,
     }));
+  };
 
-    // Clear phone error when user starts typing
-    if (name === "phone") {
-      setPhoneError("");
+  // Initialize reCAPTCHA
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !recaptchaVerifier) {
+      const verifier = new RecaptchaVerifier(auth, 'recaptcha-container-signup', {
+        'size': 'invisible',
+        'callback': () => {
+          console.log('reCAPTCHA solved');
+        }
+      });
+      setRecaptchaVerifier(verifier);
+    }
+  }, [recaptchaVerifier]);
+
+  const handleSendOTP = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setMessage("");
+
+    try {
+      if (!recaptchaVerifier) {
+        throw new Error("reCAPTCHA not initialized");
+      }
+
+      const phoneNumber = formData.phoneNumber.startsWith('+') 
+        ? formData.phoneNumber 
+        : `+${formData.phoneNumber}`;
+
+      const result = await signInWithPhoneNumber(
+        auth, 
+        phoneNumber, 
+        recaptchaVerifier
+      );
+      
+      setConfirmationResult(result);
+      setStep(2);
+      setMessage("OTP sent successfully! Check your phone.");
+    } catch (error) {
+      console.error("OTP sending failed:", error);
+      setMessage(error.message || "Failed to send OTP. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // Step 1: Submit form with email only
+  // Step 1: Submit form and send OTP
   const handleFormSubmit = async (e) => {
     e.preventDefault();
 
@@ -50,26 +88,8 @@ export default function Signup() {
       return;
     }
 
-    setIsLoading(true);
-    setMessage("");
-
-    try {
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/auth/signup`,
-        {
-          email: formData.email,
-        },
-        {
-          withCredentials: true,
-        }
-      );
-
-      setStep(2);
-    } catch (error) {
-      setMessage(error.response?.data?.message || "Failed to send OTP");
-    } finally {
-      setIsLoading(false);
-    }
+    // Send OTP to phone number
+    await handleSendOTP(e);
   };
 
   // Step 2: Submit complete form with OTP
@@ -79,24 +99,28 @@ export default function Signup() {
     setMessage("");
 
     try {
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/auth/email-verification`,
-        {
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          password: formData.password,
-          OTP: otp,
-          countryCode,
-        },
-        {
-          withCredentials: true,
-        }
-      );
+      // First verify OTP with Firebase
+      const result = await confirmationResult.confirm(otp);
+      
+      if (result.user) {
+        // OTP verified, now create account
+        const response = await axios.post(
+          `${process.env.NEXT_PUBLIC_BASE_URL}/auth/signup`,
+          {
+            name: formData.name,
+            phoneNumber: formData.phoneNumber,
+            password: formData.password,
+          },
+          {
+            withCredentials: true,
+          }
+        );
 
-      window.location.href = "/userchat";
+        window.location.href = "/userchat";
+      }
     } catch (error) {
-      setMessage(error.response?.data?.message || "Failed to create account");
+      console.error("OTP verification failed:", error);
+      setMessage("Invalid OTP. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -144,34 +168,25 @@ export default function Signup() {
         </div>
       </fieldset>
 
-      {/* Phone Field */}
+      {/* Phone Number Field */}
       <fieldset className="relative border border-gray-300 rounded-lg p-0 m-0 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-opacity-50">
         <legend className="absolute -top-2.5 left-3 bg-white px-2 text-gray-800 text-xs sm:text-sm font-medium focus-within:text-blue-500">
           Phone Number
         </legend>
-        <div className="flex items-center">
-          <span className="px-3 text-gray-500">+{countryCode}</span>
-          <input
-            type="tel"
-            name="phone"
-            value={formData.phone}
-            onChange={handleInputChange}
-            placeholder="9876543210"
-            minLength={getPhoneNumberLength(countryCode)}
-            maxLength={getPhoneNumberLength(countryCode)}
-            className="flex-1 outline-none border-none px-3 py-3 sm:py-4 text-sm sm:text-base bg-transparent"
-            required
-          />
-        </div>
+        <input
+          type="tel"
+          id="phoneNumber"
+          name="phoneNumber"
+          value={formData.phoneNumber}
+          onChange={handleInputChange}
+          placeholder="+1234567890"
+          className="w-full border-none outline-none px-3 py-3 sm:py-4 text-sm sm:text-base bg-transparent"
+          required
+        />
         <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
           <MdPhone className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
         </div>
       </fieldset>
-
-      {/* Phone Error Message */}
-      {phoneError && (
-        <div className="text-red-500 text-xs sm:text-sm">{phoneError}</div>
-      )}
 
       {/* Password Field */}
       <fieldset className="relative border border-gray-300 rounded-lg p-0 m-0 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-opacity-50">
@@ -204,10 +219,10 @@ export default function Signup() {
       {/* Sign Up Button */}
       <button
         type="submit"
-        disabled={isLoading || !countryCode}
+        disabled={isLoading}
         className="w-full bg-blue-600 text-white cursor-pointer font-semibold py-3 sm:py-4 px-4 sm:px-6 rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
       >
-        {isLoading ? "Sending OTP..." : "Sign Up"}
+        {isLoading ? "Sending OTP..." : "Send OTP"}
       </button>
     </form>
   );
@@ -216,10 +231,10 @@ export default function Signup() {
     <div className="mt-4 p-3 sm:p-4 bg-gray-50 rounded-lg border border-gray-200">
       <div className="text-center mb-4">
         <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-2">
-          Verify Your Email
+          Verify Your Phone Number
         </h3>
         <p className="text-xs sm:text-sm text-gray-600">
-          Enter the 6-digit OTP sent to {formData.email}
+          Enter the 6-digit OTP sent to {formData.phoneNumber}
         </p>
       </div>
 
@@ -308,9 +323,12 @@ export default function Signup() {
       <div className="text-center mb-4">
         <p className="text-xs sm:text-sm text-gray-600">
           {step === 1 && "Fill in your details to get started"}
-          {step === 2 && "Verify your email to complete registration"}
+          {step === 2 && "Verify your phone number to complete registration"}
         </p>
       </div>
+
+      {/* reCAPTCHA Container */}
+      <div id="recaptcha-container-signup"></div>
 
       {/* Message Display */}
       {message && (

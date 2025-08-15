@@ -2,19 +2,25 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
+import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
+import { auth } from "../../utilities/firebase";
 
 export default function TOTPSetup() {
   const router = useRouter();
-  const [step, setStep] = useState("login"); // login, setup, verify
+  const [step, setStep] = useState("phone"); // phone, otp, setup, verify
   const [formData, setFormData] = useState({
-    email: "",
+    phoneNumber: "",
     password: "",
   });
+  const [otpCode, setOtpCode] = useState("");
+  const [verificationId, setVerificationId] = useState("");
+  const [confirmationResult, setConfirmationResult] = useState(null);
   const [totpToken, setTotpToken] = useState("");
   const [qrCode, setQrCode] = useState("");
   const [secret, setSecret] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [recaptchaVerifier, setRecaptchaVerifier] = useState(null);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -24,8 +30,74 @@ export default function TOTPSetup() {
     }));
   };
 
-  const handleSetupTOTP = async (e) => {
+  // Initialize reCAPTCHA
+  React.useEffect(() => {
+    if (typeof window !== 'undefined' && !recaptchaVerifier) {
+      const verifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+        'size': 'invisible',
+        'callback': () => {
+          console.log('reCAPTCHA solved');
+        }
+      });
+      setRecaptchaVerifier(verifier);
+    }
+  }, [recaptchaVerifier]);
+
+  const handleSendOTP = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
+    setMessage("");
+
+    try {
+      if (!recaptchaVerifier) {
+        throw new Error("reCAPTCHA not initialized");
+      }
+
+      const phoneNumber = formData.phoneNumber.startsWith('+') 
+        ? formData.phoneNumber 
+        : `+${formData.phoneNumber}`;
+
+      const result = await signInWithPhoneNumber(
+        auth, 
+        phoneNumber, 
+        recaptchaVerifier
+      );
+      
+      setConfirmationResult(result);
+      setVerificationId(result.verificationId);
+      setStep("otp");
+      setMessage("OTP sent successfully! Check your phone.");
+    } catch (error) {
+      console.error("OTP sending failed:", error);
+      setMessage(error.message || "Failed to send OTP. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyOTP = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setMessage("");
+
+    try {
+      // Verify OTP with Firebase using the confirmation result
+      const result = await confirmationResult.confirm(otpCode);
+      
+      if (result.user) {
+        // OTP verified, proceed to TOTP setup
+        await handleSetupTOTP();
+      }
+    } catch (error) {
+      console.error("OTP verification failed:", error);
+      setMessage("Invalid OTP. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSetupTOTP = async (e) => {
+    if (e) e.preventDefault();
     setIsLoading(true);
     setMessage("");
 
@@ -110,6 +182,9 @@ export default function TOTPSetup() {
           </button>
         </div>
 
+        {/* reCAPTCHA Container */}
+        <div id="recaptcha-container"></div>
+
         {/* Error/Success Message Display */}
         {message && (
           <div
@@ -123,24 +198,24 @@ export default function TOTPSetup() {
           </div>
         )}
 
-        {step === "login" && (
-          <form onSubmit={handleSetupTOTP} className="space-y-4 sm:space-y-6">
+        {step === "phone" && (
+          <form onSubmit={handleSendOTP} className="space-y-4 sm:space-y-6">
             <div className="text-center mb-6 sm:mb-8">
               <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">
-                Setup Google Authenticator
+                Phone Verification
               </h2>
               <p className="text-gray-600 text-sm sm:text-base">
-                Enter your admin credentials to setup 2FA
+                Enter your phone number to receive OTP for 2FA setup
               </p>
             </div>
 
             <div>
               <input
-                type="text"
-                name="email"
-                value={formData.email}
+                type="tel"
+                name="phoneNumber"
+                value={formData.phoneNumber}
                 onChange={handleInputChange}
-                placeholder="Email"
+                placeholder="Phone Number (e.g., +1234567890)"
                 className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 text-gray-800 placeholder-gray-500 text-sm sm:text-base"
                 required
               />
@@ -163,7 +238,76 @@ export default function TOTPSetup() {
               disabled={isLoading}
               className="w-full bg-blue-600 cursor-pointer text-white font-semibold py-3 px-4 sm:px-6 rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm sm:text-base"
             >
-              {isLoading ? "Setting up..." : "Setup 2FA"}
+              {isLoading ? "Sending OTP..." : "Send OTP"}
+            </button>
+          </form>
+        )}
+
+        {step === "otp" && (
+          <form onSubmit={handleVerifyOTP} className="space-y-4 sm:space-y-6">
+            <div className="text-center mb-6 sm:mb-8">
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">
+                Enter OTP
+              </h2>
+              <p className="text-gray-600 text-sm sm:text-base">
+                Enter the 6-digit code sent to your phone
+              </p>
+            </div>
+
+            <div className="flex justify-center space-x-2">
+              {[0, 1, 2, 3, 4, 5].map((index) => (
+                <input
+                  key={index}
+                  type="text"
+                  maxLength={1}
+                  value={otpCode[index] || ""}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value.length <= 1) {
+                      const newCode = otpCode.split("");
+                      newCode[index] = value;
+                      setOtpCode(newCode.join(""));
+
+                      // Auto-focus next input
+                      if (value && index < 5) {
+                        const nextInput =
+                          e.target.parentNode.children[index + 1];
+                        if (nextInput) nextInput.focus();
+                      }
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    // Handle backspace to go to previous input
+                    if (
+                      e.key === "Backspace" &&
+                      !otpCode[index] &&
+                      index > 0
+                    ) {
+                      const prevInput =
+                        e.target.parentNode.children[index - 1];
+                      if (prevInput) prevInput.focus();
+                    }
+                  }}
+                  className="w-10 h-10 text-center border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none text-base font-semibold"
+                  required
+                />
+              ))}
+            </div>
+
+            <button
+              type="submit"
+              disabled={isLoading || otpCode.length !== 6}
+              className="w-full bg-blue-600 cursor-pointer text-white font-semibold py-3 px-4 sm:px-6 rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
+            >
+              {isLoading ? "Verifying..." : "Verify OTP"}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setStep("phone")}
+              className="w-full bg-gray-500 cursor-pointer text-white font-semibold py-3 px-4 sm:px-6 rounded-lg hover:bg-gray-600 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 text-sm sm:text-base"
+            >
+              Back to Phone Input
             </button>
           </form>
         )}

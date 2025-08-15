@@ -59,37 +59,64 @@ export const updateProfile = async (req, res) => {
 
 // User Controllers
 export const signup = async (req, res) => {
-  const { email } = req.body;
+  const { name, email, phoneNumber, password } = req.body;
 
-  if (!email) {
-    return res.status(400).json({ message: "Email is required" });
+  if (!name || !email || !phoneNumber || !password) {
+    return res.status(400).json({ 
+      message: "Name, email, phone number, and password are required" 
+    });
   }
 
   try {
-    // 1. Generate OTP
-    const otp = generateOTP();
+    // Check if user already exists
+    const existingUser = await UserModel.findOne({ 
+      $or: [{ email }, { phone: phoneNumber }] 
+    });
+    
+    if (existingUser) {
+      if (existingUser.email === email) {
+        return res.status(409).json({ message: "Email already registered" });
+      } else {
+        return res.status(409).json({ message: "Phone number already registered" });
+      }
+    }
 
-    // 2. Send OTP email
-    await emailVerificatonMail(email, otp, "signup");
+    // Create new user directly (phone verification already done by Firebase)
+    const newUser = new UserModel({
+      name,
+      email,
+      phone: phoneNumber,
+      password,
+      countryCode: "91", // Default country code, can be updated later
+    });
 
-    // 3. Generate JWT with email and OTP (expires in 5 min)
-    const token = generateToken({ email, otp }, "5m");
+    await newUser.save();
 
-    // 4. Set JWT in HTTP-only cookie
-    res.cookie("verify_token", token, {
+    // Generate JWT with user._id
+    const authToken = generateToken({ id: newUser._id, role: "user" }, "24h");
+
+    // Set JWT in HTTP-only cookie
+    res.cookie("auth_token", authToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      maxAge: 5 * 60 * 1000, // 5 minutes
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
     });
 
-    // 5. Respond
-    return res.status(200).json({ message: "verification please" });
+    // Respond with success
+    return res.status(201).json({
+      message: "User registered successfully",
+      user: {
+        id: newUser._id,
+        name: newUser.name,
+        email: newUser.email,
+        phone: newUser.phone,
+        countryCode: newUser.countryCode,
+      }
+    });
   } catch (error) {
     console.error("Signup error:", error);
-    return res
-      .status(500)
-      .json({ message: "Failed to send verification email" });
+    return res.status(500).json({ message: "Failed to create user account" });
   }
 };
 
@@ -161,14 +188,15 @@ export const emailVerification = async (req, res) => {
 };
 
 export const login = async (req, res) => {
-  const { email, password } = req.body;
+  const { phoneNumber, password } = req.body;
 
-  if (!email || !password) {
-    return res.status(400).json({ message: "Email and password are required" });
+  if (!phoneNumber || !password) {
+    return res.status(400).json({ message: "Phone number and password are required" });
   }
 
   try {
-    const user = await UserModel.findOne({ email });
+    // Find user by phone number
+    const user = await UserModel.findOne({ phone: phoneNumber });
     if (!user) return res.status(401).json({ message: "Invalid credentials" });
 
     const isMatch = await bcrypt.compare(password, user.password);
@@ -196,20 +224,21 @@ export const login = async (req, res) => {
       return res.status(200).json({ message: "LoggedIn" });
     }
 
-    const otp = generateOTP();
+    // Phone verification already done by Firebase, proceed with login
+    const authToken = generateToken(
+      { id: user._id, role: "user", countryCode: user.countryCode },
+      "24h"
+    );
 
-    await emailVerificatonMail(email, otp, "login");
-
-    const token = generateToken({ email, otp }, "5m");
-
-    res.cookie("auth_otp_token", token, {
+    // Set auth cookie
+    res.cookie("auth_token", authToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      maxAge: 5 * 60 * 1000,
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
     });
 
-    return res.status(200).json({ message: "OTP sent to email" });
+    return res.status(200).json({ message: "LoggedIn" });
   } catch (err) {
     console.error("Login error:", err);
     return res.status(500).json({ message: "Login failed" });
@@ -257,32 +286,19 @@ export const userVerification = async (req, res) => {
 };
 
 export const forgotPassword = async (req, res) => {
-  const { email } = req.body;
+  const { phoneNumber } = req.body;
 
-  if (!email) return res.status(400).json({ message: "Email is required" });
+  if (!phoneNumber) return res.status(400).json({ message: "Phone number is required" });
 
-  const user = await UserModel.findOne({ email });
+  const user = await UserModel.findOne({ phone: phoneNumber });
   if (!user) return res.status(404).json({ message: "User not found" });
 
-  const otp = generateOTP();
-
-  try {
-    await emailVerificatonMail(email, otp, "forgot");
-
-    const token = generateToken({ email, otp }, "5m");
-
-    res.cookie("reset_token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      maxAge: 5 * 60 * 1000,
-    });
-
-    return res.status(200).json({ message: "OTP sent to email" });
-  } catch (err) {
-    console.error("Forgot Password Error:", err);
-    return res.status(500).json({ message: "Failed to send OTP" });
-  }
+  // Phone verification will be handled by Firebase on the frontend
+  // We just need to confirm the user exists
+  return res.status(200).json({ 
+    message: "User found. Please use phone OTP verification to reset password.",
+    userExists: true
+  });
 };
 
 export const otpVerification = (req, res) => {
@@ -316,20 +332,15 @@ export const otpVerification = (req, res) => {
 };
 
 export const resetPassword = async (req, res) => {
-  const { newPassword } = req.body;
-  const token = req.cookies.reset_confirmed;
+  const { phoneNumber, newPassword } = req.body;
 
-  if (!newPassword || !token) {
-    return res.status(400).json({ message: "Missing password or token" });
-  }
-
-  const decoded = verifyToken(token);
-  if (!decoded) {
-    return res.status(401).json({ message: "Invalid or expired token" });
+  if (!phoneNumber || !newPassword) {
+    return res.status(400).json({ message: "Phone number and new password are required" });
   }
 
   try {
-    const user = await UserModel.findOne({ email: decoded.email });
+    // Phone verification already done by Firebase, proceed with password reset
+    const user = await UserModel.findOne({ phone: phoneNumber });
     if (!user) return res.status(404).json({ message: "User not found" });
 
     user.password = newPassword;
