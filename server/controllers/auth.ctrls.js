@@ -33,14 +33,18 @@ export const updateProfile = async (req, res) => {
     if (!user) return res.status(404).json({ message: "User not found" });
 
     let { name, email, phone, password, about, preferences, image } = req.body;
-    if (typeof preferences === 'string') {
-      try { preferences = JSON.parse(preferences); } catch (_) { preferences = undefined; }
+    if (typeof preferences === "string") {
+      try {
+        preferences = JSON.parse(preferences);
+      } catch (_) {
+        preferences = undefined;
+      }
     }
     if (name) user.name = name;
     if (email) user.email = email;
     if (phone) user.phone = phone;
-    if (typeof about !== 'undefined') user.about = about;
-    if (preferences && typeof preferences === 'object') {
+    if (typeof about !== "undefined") user.about = about;
+    if (preferences && typeof preferences === "object") {
       user.preferences = { ...(user.preferences || {}), ...preferences };
     }
     if (image) {
@@ -59,25 +63,27 @@ export const updateProfile = async (req, res) => {
 
 // User Controllers
 export const signup = async (req, res) => {
-  const { name, email, phoneNumber, password } = req.body;
+  const { name, email, phoneNumber, password, countryCode } = req.body;
 
   if (!name || !email || !phoneNumber || !password) {
-    return res.status(400).json({ 
-      message: "Name, email, phone number, and password are required" 
+    return res.status(400).json({
+      message: "Name, email, phone number, and password are required",
     });
   }
 
   try {
     // Check if user already exists
-    const existingUser = await UserModel.findOne({ 
-      $or: [{ email }, { phone: phoneNumber }] 
+    const existingUser = await UserModel.findOne({
+      $or: [{ email }, { phone: phoneNumber }],
     });
-    
+
     if (existingUser) {
       if (existingUser.email === email) {
         return res.status(409).json({ message: "Email already registered" });
       } else {
-        return res.status(409).json({ message: "Phone number already registered" });
+        return res
+          .status(409)
+          .json({ message: "Phone number already registered" });
       }
     }
 
@@ -87,7 +93,7 @@ export const signup = async (req, res) => {
       email,
       phone: phoneNumber,
       password,
-      countryCode: "91", // Default country code, can be updated later
+      countryCode: countryCode || "IN", // Use provided country code or default to IN
     });
 
     await newUser.save();
@@ -112,7 +118,7 @@ export const signup = async (req, res) => {
         email: newUser.email,
         phone: newUser.phone,
         countryCode: newUser.countryCode,
-      }
+      },
     });
   } catch (error) {
     console.error("Signup error:", error);
@@ -191,7 +197,9 @@ export const login = async (req, res) => {
   const { phoneNumber, password } = req.body;
 
   if (!phoneNumber || !password) {
-    return res.status(400).json({ message: "Phone number and password are required" });
+    return res
+      .status(400)
+      .json({ message: "Phone number and password are required" });
   }
 
   try {
@@ -288,16 +296,17 @@ export const userVerification = async (req, res) => {
 export const forgotPassword = async (req, res) => {
   const { phoneNumber } = req.body;
 
-  if (!phoneNumber) return res.status(400).json({ message: "Phone number is required" });
+  if (!phoneNumber)
+    return res.status(400).json({ message: "Phone number is required" });
 
   const user = await UserModel.findOne({ phone: phoneNumber });
   if (!user) return res.status(404).json({ message: "User not found" });
 
   // Phone verification will be handled by Firebase on the frontend
   // We just need to confirm the user exists
-  return res.status(200).json({ 
+  return res.status(200).json({
     message: "User found. Please use phone OTP verification to reset password.",
-    userExists: true
+    userExists: true,
   });
 };
 
@@ -335,7 +344,9 @@ export const resetPassword = async (req, res) => {
   const { phoneNumber, newPassword } = req.body;
 
   if (!phoneNumber || !newPassword) {
-    return res.status(400).json({ message: "Phone number and new password are required" });
+    return res
+      .status(400)
+      .json({ message: "Phone number and new password are required" });
   }
 
   try {
@@ -801,5 +812,52 @@ export const verifyUserAuth = async (req, res) => {
       authenticated: false,
       message: "User authentication verification failed",
     });
+  }
+};
+
+// New function to check user existence before sending OTP
+export const checkUserBeforeOTP = async (req, res) => {
+  const { phoneNumber, password } = req.body;
+
+  if (!phoneNumber || !password) {
+    return res.status(400).json({
+      message: "Phone number and password are required",
+    });
+  }
+
+  try {
+    // Find user by phone number
+    const user = await UserModel.findOne({ phone: phoneNumber });
+    if (!user) {
+      return res.status(401).json({
+        message: "Invalid credentials",
+        userExists: false,
+      });
+    }
+
+    // Verify password
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({
+        message: "Invalid credentials",
+        userExists: false,
+      });
+    }
+
+    // User exists and password is correct, proceed with OTP
+    return res.status(200).json({
+      message: "User verified, proceed with OTP",
+      userExists: true,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        countryCode: user.countryCode,
+      },
+    });
+  } catch (err) {
+    console.error("User verification error:", err);
+    return res.status(500).json({ message: "Verification failed" });
   }
 };

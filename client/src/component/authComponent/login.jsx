@@ -6,9 +6,15 @@ import ForgotPassword from "./forgotPassword";
 import { useRouter } from "next/navigation";
 import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
 import { auth } from "../../utilities/firebase";
+import useCountryCode from "../../utilities/useCountryCode";
+import {
+  validatePhoneCountryCode,
+  getCountryInfo,
+} from "../../utilities/countryCodeToPhonePrefix";
 
 export default function Login() {
   const router = useRouter();
+  const { countryCode, loading: countryLoading } = useCountryCode();
   const [formData, setFormData] = useState({
     phoneNumber: "",
     password: "",
@@ -21,6 +27,7 @@ export default function Login() {
   const [message, setMessage] = useState("");
   const [recaptchaVerifier, setRecaptchaVerifier] = useState(null);
   const [confirmationResult, setConfirmationResult] = useState(null);
+  const [userVerified, setUserVerified] = useState(false);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -32,78 +39,132 @@ export default function Login() {
 
   // Initialize reCAPTCHA
   useEffect(() => {
-    if (typeof window !== 'undefined' && !recaptchaVerifier) {
-      const verifier = new RecaptchaVerifier(auth, 'recaptcha-container-login', {
-        'size': 'invisible',
-        'callback': () => {
-          console.log('reCAPTCHA solved');
+    if (typeof window !== "undefined" && !recaptchaVerifier) {
+      const verifier = new RecaptchaVerifier(
+        auth,
+        "recaptcha-container-login",
+        {
+          size: "invisible",
+          callback: () => {
+            console.log("reCAPTCHA solved");
+          },
         }
-      });
+      );
       setRecaptchaVerifier(verifier);
     }
   }, [recaptchaVerifier]);
 
-  const handleSendOTP = async (e) => {
+  // Step 1: Check user existence with backend
+  const handleCheckUser = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setMessage("");
 
+    // Prepare phone number with country code
+    let fullPhoneNumber = formData.phoneNumber;
+    if (countryCode && !countryLoading) {
+      const countryInfo = getCountryInfo(countryCode);
+      if (countryInfo?.phonePrefix) {
+        // Remove any existing + if user typed it
+        const cleanNumber = formData.phoneNumber.replace(/^\+/, "");
+        fullPhoneNumber = countryInfo.phonePrefix + cleanNumber;
+      }
+    }
+
+    // Validate country code before proceeding
+    if (countryCode && !countryLoading) {
+      const validation = validatePhoneCountryCode(fullPhoneNumber, countryCode);
+      if (!validation.isValid) {
+        setMessage(validation.message);
+        setIsLoading(false);
+        return;
+      }
+    }
+
+    try {
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/auth/check-user-before-otp`,
+        {
+          phoneNumber: fullPhoneNumber,
+          password: formData.password,
+        }
+      );
+
+      if (response.status === 200 && response.data?.userExists) {
+        setUserVerified(true);
+        setMessage("User verified! Sending OTP...");
+        // Now send OTP with Firebase
+        await handleSendOTP(fullPhoneNumber);
+      }
+    } catch (error) {
+      console.error("User verification failed:", error);
+      if (error.response?.status === 401) {
+        setMessage("Invalid phone number or password");
+      } else {
+        setMessage(
+          error.response?.data?.message ||
+            "Verification failed. Please try again."
+        );
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Step 2: Send OTP with Firebase
+  const handleSendOTP = async (phoneWithCountryCode) => {
     try {
       if (!recaptchaVerifier) {
         throw new Error("reCAPTCHA not initialized");
       }
 
-      const phoneNumber = formData.phoneNumber.startsWith('+') 
-        ? formData.phoneNumber 
-        : `+${formData.phoneNumber}`;
+      const phoneNumber = phoneWithCountryCode || formData.phoneNumber;
+      // Ensure phone number has + prefix
+      const normalizedPhone = phoneNumber.startsWith("+")
+        ? phoneNumber
+        : `+${phoneNumber}`;
 
       const result = await signInWithPhoneNumber(
-        auth, 
-        phoneNumber, 
+        auth,
+        normalizedPhone,
         recaptchaVerifier
       );
-      
+
       setConfirmationResult(result);
       setShowOTP(true);
       setMessage("OTP sent successfully! Check your phone.");
     } catch (error) {
       console.error("OTP sending failed:", error);
       setMessage(error.message || "Failed to send OTP. Please try again.");
-    } finally {
-      setIsLoading(false);
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setMessage("");
-
-    try {
-      // First verify phone number with Firebase OTP
-      await handleSendOTP(e);
-    } catch (error) {
-      console.error("Login failed:", error);
-      setMessage(error.message || "Login failed. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
+  // Step 3: Verify OTP and complete login
   const handleOTPSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setMessage("");
+
     try {
       // Verify OTP with Firebase
       const result = await confirmationResult.confirm(otp);
-      
+
       if (result.user) {
-        // OTP verified, now proceed with backend login
+        // Prepare phone number with country code for backend
+        let fullPhoneNumber = formData.phoneNumber;
+        if (countryCode && !countryLoading) {
+          const countryInfo = getCountryInfo(countryCode);
+          if (countryInfo?.phonePrefix) {
+            const cleanNumber = formData.phoneNumber.replace(/^\+/, "");
+            fullPhoneNumber = countryInfo.phonePrefix + cleanNumber;
+          }
+        }
+
+        // OTP verified, now complete login with backend
         const response = await axios.post(
           `${process.env.NEXT_PUBLIC_BASE_URL}/auth/login`,
           {
-            phoneNumber: formData.phoneNumber,
+            phoneNumber: fullPhoneNumber,
             password: formData.password,
           },
           {
@@ -132,7 +193,10 @@ export default function Login() {
       {/* Conditional Rendering */}
       {!showForgotPassword ? (
         /* Login Form */
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:gap-4">
+        <form
+          onSubmit={handleCheckUser}
+          className="flex flex-col gap-3 sm:gap-4"
+        >
           {/* Header */}
           <div className="text-center mb-6 sm:mb-8">
             <p className="text-xs sm:text-sm text-gray-600 mb-2">
@@ -146,7 +210,9 @@ export default function Login() {
           {message && (
             <div
               className={`p-3 rounded-lg text-sm ${
-                message.includes("successfully") || message.includes("sent")
+                message.includes("successfully") ||
+                message.includes("sent") ||
+                message.includes("verified")
                   ? "bg-green-50 text-green-700 border border-green-200"
                   : "bg-red-50 text-red-700 border border-red-200"
               }`}
@@ -160,16 +226,27 @@ export default function Login() {
             <legend className="absolute -top-2.5 left-3 bg-white px-2 text-gray-800 text-xs sm:text-sm font-medium focus-within:text-blue-500">
               Phone Number
             </legend>
-            <input
-              type="tel"
-              id="phoneNumber"
-              name="phoneNumber"
-              value={formData.phoneNumber}
-              onChange={handleInputChange}
-              placeholder="+1234567890"
-              className="w-full border-none outline-none px-3 py-3 sm:py-4 text-sm sm:text-base bg-transparent"
-              required
-            />
+            <div className="flex items-center">
+              {/* Static Country Code Prefix */}
+              {countryCode && !countryLoading && (
+                <span className="px-3 py-3 sm:py-4 text-sm sm:text-base text-gray-700 font-medium bg-gray-50 border-r border-gray-300">
+                  {getCountryInfo(countryCode)?.phonePrefix || "+"}
+                </span>
+              )}
+              {/* Phone Number Input */}
+              <input
+                type="tel"
+                id="phoneNumber"
+                name="phoneNumber"
+                value={formData.phoneNumber}
+                onChange={handleInputChange}
+                placeholder={
+                  countryCode && !countryLoading ? "1234567890" : "+1234567890"
+                }
+                className="flex-1 border-none outline-none px-3 py-3 sm:py-4 text-sm sm:text-base bg-transparent"
+                required
+              />
+            </div>
             <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
               <MdPhone className="w-4 h-4 sm:w-5 text-gray-400" />
             </div>
@@ -214,14 +291,18 @@ export default function Login() {
             </button>
           </div>
 
-          {/* Sign Up Button */}
+          {/* Sign In Button */}
           <button
             suppressHydrationWarning={true}
             type="submit"
-            disabled={isLoading || showOTP}
+            disabled={isLoading || showOTP || countryLoading}
             className="w-full bg-blue-600 text-white cursor-pointer font-semibold py-3 sm:py-4 px-4 sm:px-6 rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
           >
-            {isLoading ? "Signing in..." : "Sign In"}
+            {isLoading
+              ? "Verifying..."
+              : countryLoading
+              ? "Loading..."
+              : "Sign In"}
           </button>
         </form>
       ) : (
@@ -239,7 +320,18 @@ export default function Login() {
             Enter Phone OTP
           </h3>
           <p className="text-xs text-gray-600 mb-3">
-            Enter the 6-digit code sent to {formData.phoneNumber}
+            Enter the 6-digit code sent to{" "}
+            {(() => {
+              let displayPhone = formData.phoneNumber;
+              if (countryCode && !countryLoading) {
+                const countryInfo = getCountryInfo(countryCode);
+                if (countryInfo?.phonePrefix) {
+                  const cleanNumber = formData.phoneNumber.replace(/^\+/, "");
+                  displayPhone = countryInfo.phonePrefix + cleanNumber;
+                }
+              }
+              return displayPhone;
+            })()}
           </p>
           <form onSubmit={handleOTPSubmit} className="space-y-3">
             <div className="flex justify-center space-x-1 sm:space-x-2">
