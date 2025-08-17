@@ -8,8 +8,9 @@ const GoogleTranslate = ({
   right = "20px",
   bottom,
   left,
-  className = "border-2 border-red-500 w-12 h-10 mr-5 pb-10  overflow-hidden ",
+  className = "hidden", // Hide the Google Translate widget
   style = {},
+  onLanguageChange,
 }) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -33,19 +34,41 @@ const GoogleTranslate = ({
 
       // Define the callback function
       window.googleTranslateElementInit = function () {
-        new window.google.translate.TranslateElement(
+        const translateElement = new window.google.translate.TranslateElement(
           {
             pageLanguage: "en",
             includedLanguages:
-              "en,hi,fr,es,de,it,pt,ru,ja,ko,zh-CN,ar,tr,nl,pl,sv,da,no,fi,cs,hu,ro,sk,sl,bg,hr,el,et,lv,lt,mt",
+              "en,hi,fr,es,de,it,pt,ru,ja,ko,zh-CN,zh-TW,ar,tr,nl,pl,sv,da,no,fi,cs,hu,ro,sk,sl,bg,hr,el,et,lv,lt,mt,th,vi,id,ms,tl,bn,ta,te,kn,ml,gu,pa,mr,or,as,ne,si,my,km,lo,ka,hy,az,kk,ky,uz,tg,fa,ur,he,yi,am,sw,zu,af,sq,be,bs,ca,cy,eu,fo,gl,is,ga,mk,mn,sr,uk,iw,jw,co,fy,gd,ht,lb,mi,ny,sm,sn,so,st,su,xh,yo",
             layout: window.google.translate.TranslateElement.InlineLayout,
             autoDisplay: false,
             multilanguagePage: true,
           },
           "google_translate_element"
         );
+        
+        // Store reference for external control
+        window.googleTranslateElement = translateElement;
+        
         setIsLoaded(true);
         setIsLoading(false);
+      };
+
+      // Function to change language programmatically
+      window.changeGoogleTranslateLanguage = function(languageCode) {
+        if (window.google && window.google.translate) {
+          const selectElement = document.querySelector('#google_translate_element select');
+          if (selectElement) {
+            // Find the option with the matching language code
+            const options = selectElement.options;
+            for (let i = 0; i < options.length; i++) {
+              if (options[i].value.includes(languageCode.toLowerCase())) {
+                selectElement.selectedIndex = i;
+                selectElement.dispatchEvent(new Event('change'));
+                break;
+              }
+            }
+          }
+        }
       };
 
       // Append script to head
