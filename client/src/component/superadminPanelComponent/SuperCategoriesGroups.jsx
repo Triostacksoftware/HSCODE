@@ -4,7 +4,12 @@ import axios from "axios";
 import { MdAdd, MdEdit, MdDelete, MdSearch, MdMoreVert } from "react-icons/md";
 import SuperAddGroup from "./SuperAddGroup";
 
-const SuperCategoriesGroups = ({ categoryId, categoryName }) => {
+const SuperCategoriesGroups = ({
+  categoryId,
+  categoryName,
+  onGroupSelect,
+  selectedGroupId,
+}) => {
   const [groups, setGroups] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -113,29 +118,13 @@ const SuperCategoriesGroups = ({ categoryId, categoryName }) => {
   const filteredGroups = groups.filter(
     (group) =>
       group.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (group.heading || group.hscode).toLowerCase().includes(searchTerm.toLowerCase())
+      (group.heading || group.hscode)
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase())
   );
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="p-3 sm:p-4 border-b border-gray-200 flex justify-between items-center">
-        <div>
-          <h2 className="text-base sm:text-lg text-gray-700">
-            {categoryName} - Global Groups
-          </h2>
-          <h2 className="text-[.7em] sm:text-[.8em] text-gray-500">
-            No. of Global Groups - {groups.length}
-          </h2>
-        </div>
-        <button
-          onClick={handleAddGroup}
-          className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-gray-200 cursor-pointer border-gray-200 border transition-colors"
-        >
-          <MdAdd className="w-5 h-5" />
-        </button>
-      </div>
-
       {/* Search Bar */}
       <div className="p-3 sm:p-4 border-b border-gray-200">
         <div className="relative">
@@ -182,7 +171,12 @@ const SuperCategoriesGroups = ({ categoryId, categoryName }) => {
             {filteredGroups.map((group, index) => (
               <div
                 key={group._id || index}
-                className="p-3 hover:bg-gray-100 border border-gray-300 rounded-lg transition-all bg-white hover:border-gray-400"
+                className={`p-3 hover:bg-gray-100 border border-gray-300 rounded-lg transition-all cursor-pointer ${
+                  selectedGroupId === group._id
+                    ? "bg-gray-100 border-gray-400"
+                    : "bg-white hover:border-gray-400"
+                }`}
+                onClick={() => onGroupSelect && onGroupSelect(group)}
               >
                 <div className="flex items-center justify-between">
                   <div className="min-w-0 flex-1">
@@ -204,7 +198,7 @@ const SuperCategoriesGroups = ({ categoryId, categoryName }) => {
                           </span>
                         )}
                       </div>
-                     <div className="min-w-0  ">
+                      <div className="min-w-0  ">
                         <div className="text-[.9em] sm:text-[.96em] text-gray-700 truncate">
                           {group.name}
                         </div>

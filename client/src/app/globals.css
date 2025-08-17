@@ -5,13 +5,13 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
-  
+
   /* HS CODES Brand Colors */
-  --cobalt-blue: #004B87;
-  --leaf-green: #3E9C35;
-  --trade-orange: #F36F21;
+  --cobalt-blue: #004b87;
+  --leaf-green: #3e9c35;
+  --trade-orange: #f36f21;
   --brand-black: #000000;
-  --brand-white: #FFFFFF;
+  --brand-white: #ffffff;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -27,6 +27,11 @@
   font-weight: 400;
   font-style: normal;
   font-variation-settings: "wdth" 100;
+}
+
+.font-handwriting {
+  font-family: "Montserrat", sans-serif;
+  font-weight: 600;
 }
 
 /* Responsive utilities */

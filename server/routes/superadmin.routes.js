@@ -11,6 +11,7 @@ import {
   deleteAdmin,
   getAllPendingGlobalLeads,
   approveRejectGlobalLead,
+  postSuperadminMessage,
   getLocalRequestedLeadsCountryCounts,
   getPendingLocalRequestedLeadsByCountry,
   getSuperadmins,
@@ -19,6 +20,7 @@ import {
   deleteSuperadmin,
 } from "../controllers/superadmin.ctrls.js";
 import { approveRejectLead } from "../controllers/requestedLeads.ctrls.js";
+import { getGlobalLeadsByGroup } from "../controllers/globalLeads.ctrls.js";
 
 const router = express.Router();
 
@@ -34,8 +36,16 @@ router.delete("/admins/:adminId", superadminMiddleware, deleteAdmin);
 // Superadmin management routes
 router.get("/superadmins", superadminMiddleware, getSuperadmins);
 router.post("/superadmins", createSuperadmin);
-router.patch("/superadmins/:superadminId", superadminMiddleware, updateSuperadmin);
-router.delete("/superadmins/:superadminId", superadminMiddleware, deleteSuperadmin);
+router.patch(
+  "/superadmins/:superadminId",
+  superadminMiddleware,
+  updateSuperadmin
+);
+router.delete(
+  "/superadmins/:superadminId",
+  superadminMiddleware,
+  deleteSuperadmin
+);
 
 // Global leads management routes
 router.get(
@@ -43,10 +53,22 @@ router.get(
   superadminMiddleware,
   getAllPendingGlobalLeads
 );
+router.get(
+  "/global-leads/group/:groupId",
+  superadminMiddleware,
+  getGlobalLeadsByGroup
+);
 router.patch(
   "/global-leads/:leadId",
   superadminMiddleware,
   approveRejectGlobalLead
+);
+
+// Superadmin post message to global group
+router.post(
+  "/global-leads/post/:groupId",
+  superadminMiddleware,
+  postSuperadminMessage
 );
 
 // Local (domestic) requested leads management for superadmin
@@ -60,10 +82,6 @@ router.get(
   superadminMiddleware,
   getPendingLocalRequestedLeadsByCountry
 );
-router.patch(
-  "/local-leads/:leadId",
-  superadminMiddleware,
-  approveRejectLead
-);
+router.patch("/local-leads/:leadId", superadminMiddleware, approveRejectLead);
 
 export default router;

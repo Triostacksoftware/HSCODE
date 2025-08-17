@@ -47,9 +47,17 @@ const SuperAdminPanel = () => {
 
   const navigationItems = [
     { name: "Dashboard", icon: MdOutlineDashboard, component: SuperDashboard },
-    { name: "Categories", icon: MdOutlineCategory, component: SuperCategories },
+    {
+      name: "Global Categories",
+      icon: MdOutlineCategory,
+      component: SuperCategories,
+    },
     { name: "Settings", icon: MdOutlineSettings, component: SuperSettings },
-    { name: "Local Requested Leads", icon: MdOutlineRequestPage, component: SuperLocalRequestedLeads },
+    {
+      name: "Local Requested Leads",
+      icon: MdOutlineRequestPage,
+      component: SuperLocalRequestedLeads,
+    },
     {
       name: "Global Requested Leads",
       icon: MdOutlineRequestPage,
@@ -120,7 +128,7 @@ const SuperAdminPanel = () => {
         className={`
         fixed md:relative z-50 h-full bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out
         ${sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
-        w-64 md:w-64 lg:w-72
+        w-64 md:w-64 lg:w-52
       `}
       >
         {/* Mobile Header */}
@@ -136,22 +144,15 @@ const SuperAdminPanel = () => {
 
         {/* Logo and App Name */}
         <div className="mb-2 px-5 py-5 md:block h-20 overflow-hidden">
-          <img
-            src="/hscode.png"
-            alt="HS CODES"
-            className="h-12"
-          />
+          <img src="/hscode.png" alt="HS CODES" className="h-12" />
         </div>
 
         {/* User Profile Section */}
         <div className="p-4 text-gray-900 text-sm">
           <div className="flex items-center p-3 rounded-lg gap-2">
-            <div className="px-3 py-2 rounded-md text-sm border flex-shrink-0 bg-blue-100 text-blue-800">
-              SuperAdmin
-            </div>
             <div className="min-w-0 flex-1">
               <div className="font-semibold montserrat truncate">
-                {user?.name || "Super Admin"}
+                {"Super Admin"}
               </div>
               <div className="text-gray-500 text-xs truncate">
                 {user?.email || "superadmin@example.com"}

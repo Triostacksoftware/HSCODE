@@ -50,7 +50,7 @@ export const getLocalRequestedLeadsCountryCounts = async (req, res) => {
           extractedCountry: {
             $ifNull: [
               "$countryCode",
-              { $arrayElemAt: [ { $split: [ "$leadCode", "-" ] }, 1 ] },
+              { $arrayElemAt: [{ $split: ["$leadCode", "-"] }, 1] },
             ],
           },
         },
@@ -62,7 +62,10 @@ export const getLocalRequestedLeadsCountryCounts = async (req, res) => {
     ]);
     res.json(results.filter((r) => r.countryCode));
   } catch (error) {
-    console.error("Error fetching local requested leads country counts:", error);
+    console.error(
+      "Error fetching local requested leads country counts:",
+      error
+    );
     res.status(500).json({ message: "Error fetching country counts" });
   }
 };
@@ -74,7 +77,9 @@ export const getPendingLocalRequestedLeadsByCountry = async (req, res) => {
     const country = (req.query.country || "").toString().toUpperCase();
 
     if (!country) {
-      return res.status(400).json({ message: "country query param is required" });
+      return res
+        .status(400)
+        .json({ message: "country query param is required" });
     }
 
     const baseQuery = { status: "pending" };
@@ -109,7 +114,9 @@ export const getPendingLocalRequestedLeadsByCountry = async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching pending local requested leads:", error);
-    res.status(500).json({ message: "Error fetching pending local requested leads" });
+    res
+      .status(500)
+      .json({ message: "Error fetching pending local requested leads" });
   }
 };
 
@@ -155,7 +162,10 @@ export const createAdmin = async (req, res) => {
     }
 
     // Check if admin already exists for this country
-    const existingCountryAdmin = await UserModel.findOne({ countryCode, role: "admin" });
+    const existingCountryAdmin = await UserModel.findOne({
+      countryCode,
+      role: "admin",
+    });
     if (existingCountryAdmin) {
       return res
         .status(400)
@@ -214,7 +224,10 @@ export const updateAdmin = async (req, res) => {
 
     // Check if country code is being changed and if it conflicts
     if (countryCode !== admin.countryCode) {
-      const existingCountryAdmin = await UserModel.findOne({ countryCode, role: "admin" });
+      const existingCountryAdmin = await UserModel.findOne({
+        countryCode,
+        role: "admin",
+      });
       if (existingCountryAdmin) {
         return res
           .status(400)
@@ -389,6 +402,90 @@ export const approveRejectGlobalLead = async (req, res) => {
   } catch (error) {
     console.error("Error approving/rejecting global lead:", error);
     res.status(500).json({ message: "Error processing global lead" });
+  }
+};
+
+// Superadmin posts a message directly to a global group
+export const postSuperadminMessage = async (req, res) => {
+  try {
+    const { groupId } = req.params;
+    const {
+      content,
+      type,
+      hscode,
+      description,
+      quantity,
+      packing,
+      targetPrice,
+      negotiable,
+      buyerDeliveryAddress,
+      sellerPickupAddress,
+      specialRequest,
+      remarks,
+    } = req.body;
+    const superadminId = req.user.id;
+
+    if (!content && !description) {
+      return res
+        .status(400)
+        .json({ message: "Content or description is required" });
+    }
+
+    // Create a new approved lead directly (superadmin bypasses approval)
+    const newLead = new GlobalApprovedLeads({
+      groupId,
+      userId: superadminId,
+      content: content || description,
+      type: type || "lead",
+      hscode,
+      description,
+      quantity,
+      packing,
+      targetPrice,
+      negotiable,
+      buyerDeliveryAddress,
+      sellerPickupAddress,
+      specialRequest,
+      remarks,
+      countryCode: "SUPERADMIN", // Special identifier for superadmin posts
+      adminId: superadminId,
+      isAdminPost: true,
+      leadCode: `SUPER-${Date.now()}`,
+    });
+
+    const savedLead = await newLead.save();
+    await savedLead.populate("userId", "name image email");
+
+    // Emit socket event to group
+    io.to(`global-group-${groupId}`).emit("new-approved-global-lead", {
+      _id: savedLead._id,
+      groupId,
+      userId: savedLead.userId,
+      content: savedLead.content,
+      type: savedLead.type,
+      hscode: savedLead.hscode,
+      description: savedLead.description,
+      quantity: savedLead.quantity,
+      packing: savedLead.packing,
+      targetPrice: savedLead.targetPrice,
+      negotiable: savedLead.negotiable,
+      buyerDeliveryAddress: savedLead.buyerDeliveryAddress,
+      sellerPickupAddress: savedLead.sellerPickupAddress,
+      specialRequest: savedLead.specialRequest,
+      remarks: savedLead.remarks,
+      leadCode: savedLead.leadCode,
+      createdAt: savedLead.createdAt,
+      updatedAt: savedLead.updatedAt,
+      isAdminPost: true,
+    });
+
+    res.json({
+      message: "Message posted successfully",
+      lead: savedLead,
+    });
+  } catch (error) {
+    console.error("Error posting superadmin message:", error);
+    res.status(500).json({ message: "Error posting message" });
   }
 };
 
