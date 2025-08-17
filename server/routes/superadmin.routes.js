@@ -12,6 +12,8 @@ import {
   getAllPendingGlobalLeads,
   approveRejectGlobalLead,
   postSuperadminMessage,
+  postSuperadminLocalMessage,
+  getCategoriesByCountry,
   getLocalRequestedLeadsCountryCounts,
   getPendingLocalRequestedLeadsByCountry,
   getSuperadmins,
@@ -83,5 +85,19 @@ router.get(
   getPendingLocalRequestedLeadsByCountry
 );
 router.patch("/local-leads/:leadId", superadminMiddleware, approveRejectLead);
+
+// Superadmin post message to local group
+router.post(
+  "/local-leads/post/:groupId",
+  superadminMiddleware,
+  postSuperadminLocalMessage
+);
+
+// Superadmin get categories by country
+router.get(
+  "/categories/:countryCode",
+  superadminMiddleware,
+  getCategoriesByCountry
+);
 
 export default router;

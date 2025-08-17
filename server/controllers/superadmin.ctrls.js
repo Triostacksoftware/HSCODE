@@ -7,6 +7,8 @@ import SuperAdminModel from "../models/SuperAdmin.js";
 import bcrypt from "bcrypt";
 import { io } from "../server.js";
 import RequestedLeads from "../models/RequestedLeads.js";
+import ApprovedLeads from "../models/ApprovedLeads.js";
+import LocalCategoryModel from "../models/LocalCategory.js";
 
 // Get dashboard statistics
 export const getDashboardStats = async (req, res) => {
@@ -486,6 +488,103 @@ export const postSuperadminMessage = async (req, res) => {
   } catch (error) {
     console.error("Error posting superadmin message:", error);
     res.status(500).json({ message: "Error posting message" });
+  }
+};
+
+// Superadmin posts a message directly to a local group
+export const postSuperadminLocalMessage = async (req, res) => {
+  try {
+    const { groupId } = req.params;
+    const {
+      content,
+      type,
+      hscode,
+      description,
+      quantity,
+      packing,
+      targetPrice,
+      negotiable,
+      buyerDeliveryAddress,
+      sellerPickupAddress,
+      specialRequest,
+      remarks,
+    } = req.body;
+    const superadminId = req.user.id;
+
+    if (!content && !description) {
+      return res
+        .status(400)
+        .json({ message: "Content or description is required" });
+    }
+
+    // Create a new approved lead directly (superadmin bypasses approval)
+    const newLead = new ApprovedLeads({
+      groupId,
+      userId: superadminId,
+      content: content || description,
+      type: type || "lead",
+      hscode,
+      description,
+      quantity,
+      packing,
+      targetPrice,
+      negotiable,
+      buyerDeliveryAddress,
+      sellerPickupAddress,
+      specialRequest,
+      remarks,
+      countryCode: "SUPERADMIN", // Special identifier for superadmin posts
+      adminId: superadminId,
+      isAdminPost: true,
+      leadCode: `SUPER-LOCAL-${Date.now()}`,
+    });
+
+    const savedLead = await newLead.save();
+    await savedLead.populate("userId", "name image email");
+
+    // Emit socket event to group
+    io.to(`group-${groupId}`).emit("new-approved-lead", {
+      _id: savedLead._id,
+      groupId,
+      userId: savedLead.userId,
+      content: savedLead.content,
+      type: savedLead.type,
+      hscode: savedLead.hscode,
+      description: savedLead.description,
+      quantity: savedLead.quantity,
+      packing: savedLead.packing,
+      targetPrice: savedLead.targetPrice,
+      negotiable: savedLead.negotiable,
+      buyerDeliveryAddress: savedLead.buyerDeliveryAddress,
+      sellerPickupAddress: savedLead.sellerPickupAddress,
+      specialRequest: savedLead.specialRequest,
+      remarks: savedLead.remarks,
+      leadCode: savedLead.leadCode,
+      createdAt: savedLead.createdAt,
+      updatedAt: savedLead.updatedAt,
+      isAdminPost: true,
+    });
+
+    res.json({
+      message: "Message posted successfully",
+      lead: savedLead,
+    });
+  } catch (error) {
+    console.error("Error posting superadmin local message:", error);
+    res.status(500).json({ message: "Error posting message" });
+  }
+};
+
+// Superadmin get categories by country
+export const getCategoriesByCountry = async (req, res) => {
+  try {
+    const { countryCode } = req.params;
+
+    const categories = await LocalCategoryModel.find({ countryCode });
+    res.json(categories);
+  } catch (error) {
+    console.error("Error fetching categories by country:", error);
+    res.status(500).json({ message: "Error fetching categories" });
   }
 };
 

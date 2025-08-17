@@ -8,6 +8,7 @@ import SuperCategories from "@/component/superadminPanelComponent/SuperCategorie
 import SuperSettings from "@/component/superadminPanelComponent/SuperSettings";
 import SuperGlobalRequestedLeads from "@/component/superadminPanelComponent/SuperGlobalRequestedLeads";
 import SuperLocalRequestedLeads from "@/component/superadminPanelComponent/SuperLocalRequestedLeads";
+import SuperLocalCategories from "@/component/superadminPanelComponent/SuperLocalCategories";
 import ManageAdmins from "@/component/superadminPanelComponent/ManageAdmins";
 import {
   MdOutlineDashboard,
@@ -53,6 +54,11 @@ const SuperAdminPanel = () => {
       component: SuperCategories,
     },
     { name: "Settings", icon: MdOutlineSettings, component: SuperSettings },
+    {
+      name: "Local Categories",
+      icon: MdOutlineRequestPage,
+      component: SuperLocalCategories,
+    },
     {
       name: "Local Requested Leads",
       icon: MdOutlineRequestPage,
