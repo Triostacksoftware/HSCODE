@@ -20,7 +20,6 @@ import {
   updateProfile,
   checkUserBeforeOTP,
 } from "../controllers/auth.ctrls.js";
-import AdminModel from "../models/Admin.js";
 import upload from "../configurations/multer.js";
 
 const router = express.Router();
@@ -66,13 +65,17 @@ router.post("/admin-verify-totp", verifyAndEnableTOTP);
 router.post("/admin-login-totp", adminLoginWithTOTP);
 
 router.post("/admin-signup", async (req, res) => {
-  const { name, email, phone, password, role, countryCode } = req.body;
-  const admin = await AdminModel.create({
+  const { name, email, phone, password, countryCode } = req.body;
+  
+  // Import UserModel here since it's not imported at the top
+  const UserModel = (await import("../models/user.js")).default;
+  
+  const admin = await UserModel.create({
     name,
     email,
     phone,
     password,
-    role,
+    role: "admin", // Always set role to admin for admin signup
     countryCode,
   });
   res.status(201).json({ message: "Admin created successfully", admin });

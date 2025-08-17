@@ -13,6 +13,10 @@ import {
   approveRejectGlobalLead,
   getLocalRequestedLeadsCountryCounts,
   getPendingLocalRequestedLeadsByCountry,
+  getSuperadmins,
+  createSuperadmin,
+  updateSuperadmin,
+  deleteSuperadmin,
 } from "../controllers/superadmin.ctrls.js";
 import { approveRejectLead } from "../controllers/requestedLeads.ctrls.js";
 
@@ -26,6 +30,12 @@ router.get("/admins", superadminMiddleware, getAdmins);
 router.post("/admins", superadminMiddleware, createAdmin);
 router.patch("/admins/:adminId", superadminMiddleware, updateAdmin);
 router.delete("/admins/:adminId", superadminMiddleware, deleteAdmin);
+
+// Superadmin management routes
+router.get("/superadmins", superadminMiddleware, getSuperadmins);
+router.post("/superadmins", createSuperadmin);
+router.patch("/superadmins/:superadminId", superadminMiddleware, updateSuperadmin);
+router.delete("/superadmins/:superadminId", superadminMiddleware, deleteSuperadmin);
 
 // Global leads management routes
 router.get(

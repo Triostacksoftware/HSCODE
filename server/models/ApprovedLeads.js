@@ -45,6 +45,19 @@ const approvedLeadsSchema = new mongoose.Schema(
     remarks: { type: String },
     documents: [{ type: String }], // stored filenames served via /api/v1/leadDocuments
     leadCode: { type: String, index: true },
+    adminId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+    adminComment: {
+      type: String,
+      default: null,
+    },
+    approvedAt: {
+      type: Date,
+      default: Date.now,
+    },
   },
   {
     timestamps: true,

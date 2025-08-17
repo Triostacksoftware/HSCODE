@@ -77,12 +77,13 @@ async function broadcastGroupOnlineUsers(groupId) {
   try {
     const users = await UserModel.find(
       { _id: { $in: uniqueUserIds } },
-      { _id: 1, name: 1 }
+      { _id: 1, name: 1, role: 1 }
     ).lean();
 
     const formattedUsers = users.map((user) => ({
       id: user._id.toString(),
       name: user.name,
+      role: user.role,
     }));
 
     io.to(`group-${groupId}`).emit("group-online-users", {

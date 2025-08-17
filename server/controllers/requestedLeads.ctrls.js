@@ -1,5 +1,6 @@
 import RequestedLeads from "../models/RequestedLeads.js";
 import ApprovedLeads from "../models/ApprovedLeads.js";
+import UserModel from "../models/user.js";
 import { io } from "../server.js";
 
 // Post new requested lead (user submits for approval)
@@ -89,9 +90,94 @@ export const postRequestedLead = async (req, res) => {
       leadCode,
     });
 
-    const savedLead = await newRequestedLead.save();
-    await savedLead.populate("userId", "name");
-    res.status(201).json("savedLead");
+    // Check if user is an admin of the same country
+    const user = await UserModel.findById(userId);
+    const isAdmin = user && user.role === "admin" && user.countryCode === countryCode;
+    
+    if (isAdmin) {
+      // Admin posting lead - automatically approve and move to approved leads
+      const newApprovedLead = new ApprovedLeads({
+        groupId,
+        userId,
+        type,
+        hscode,
+        description,
+        quantity,
+        packing,
+        targetPrice,
+        negotiable: negotiable === "true" || negotiable === true,
+        countryCode,
+        buyerDeliveryLocation: buyerDeliveryAddress
+          ? {
+              address: buyerDeliveryAddress,
+              geo:
+                buyerLng && buyerLat
+                  ? { type: "Point", coordinates: [Number(buyerLng), Number(buyerLat)] }
+                  : undefined,
+            }
+          : undefined,
+        sellerPickupLocation: sellerPickupAddress
+          ? {
+              address: sellerPickupAddress,
+              geo:
+                sellerLng && sellerLat
+                  ? { type: "Point", coordinates: [Number(sellerLng), Number(sellerLat)] }
+                  : undefined,
+            }
+          : undefined,
+        specialRequest,
+        remarks,
+        content,
+        documents,
+        leadCode,
+        adminId: userId, // Mark that this was auto-approved by admin
+        adminComment: "Auto-approved by admin",
+        approvedAt: new Date(),
+      });
+
+      const savedApprovedLead = await newApprovedLead.save();
+      await savedApprovedLead.populate("userId", "name image");
+
+      // Emit socket event to group with admin info
+      io.to(`group-${groupId}`).emit("new-approved-lead", {
+        _id: savedApprovedLead._id,
+        groupId,
+        userId: savedApprovedLead.userId,
+        content: savedApprovedLead.content,
+        type: savedApprovedLead.type,
+        hscode: savedApprovedLead.hscode,
+        description: savedApprovedLead.description,
+        quantity: savedApprovedLead.quantity,
+        packing: savedApprovedLead.packing,
+        targetPrice: savedApprovedLead.targetPrice,
+        negotiable: savedApprovedLead.negotiable,
+        buyerDeliveryLocation: savedApprovedLead.buyerDeliveryLocation,
+        sellerPickupLocation: savedApprovedLead.sellerPickupLocation,
+        specialRequest: savedApprovedLead.specialRequest,
+        remarks: savedApprovedLead.remarks,
+        documents: savedApprovedLead.documents,
+        leadCode: savedApprovedLead.leadCode,
+        createdAt: savedApprovedLead.createdAt,
+        updatedAt: savedApprovedLead.updatedAt,
+        isAdminPost: true, // Mark this as admin post
+        adminId: userId, // Include admin ID
+      });
+
+      res.status(201).json({
+        message: "Lead auto-approved and posted directly to approved leads",
+        lead: savedApprovedLead,
+        autoApproved: true
+      });
+    } else {
+      // Regular user posting lead - save as requested lead for approval
+      const savedLead = await newRequestedLead.save();
+      await savedLead.populate("userId", "name");
+      res.status(201).json({
+        message: "Lead posted for approval",
+        lead: savedLead,
+        autoApproved: false
+      });
+    }
   } catch (error) {
     console.error("Error posting requested lead:", error);
     res.status(500).json({ message: "Error posting requested lead" });

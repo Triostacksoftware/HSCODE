@@ -70,6 +70,23 @@ const userSchema = new mongoose.Schema(
         lastReadAt: { type: Date, default: null },
       },
     ],
+    
+    // Admin-specific fields
+    role: {
+      type: String,
+      enum: ["user", "admin"],
+      default: "user",
+    },
+    
+    totpSecret: {
+      type: String,
+      default: null,
+    },
+    
+    totpEnabled: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

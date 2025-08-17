@@ -19,7 +19,9 @@ import {
   MdLogout,
   MdOutlineRequestPage,
   MdOutlinePublic,
+  MdChat
 } from "react-icons/md";
+import Link from "next/link";
 
 const AdminPanel = () => {
   const router = useRouter();
@@ -191,6 +193,13 @@ const AdminPanel = () => {
 
         {/* Support and Community */}
         <div className="p-4 mt-auto text-sm space-y-2 absolute bottom-0 left-0 right-0 text-gray-600">
+          <button
+              onClick={() => window.location.href = '/userchat'}
+              className="w-full px-3 py-2 rounded-lg transition-colors border hover:bg-gray-300 text-xs sm:text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <MdChat className="w-4 h-4" />
+              User Chat
+          </button>
           <button
             onClick={handleLogout}
             disabled={isLoggingOut}

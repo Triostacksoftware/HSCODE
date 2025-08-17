@@ -425,7 +425,9 @@ const GlobalChatWindow = ({
                       >
                         <div
                           className={`rounded-xl px-3 md:px-4 py-2 shadow-sm border ${
-                            msg.type === "buy"
+                            msg.isAdminPost
+                              ? "bg-violet-100 border-violet-200 text-gray-900"
+                              : msg.type === "buy"
                               ? "bg-blue-50 border-blue-100 text-gray-900"
                               : msg.type === "sell"
                               ? "bg-green-50 border-green-100 text-gray-900"
@@ -435,6 +437,11 @@ const GlobalChatWindow = ({
                           {msg.hscode || msg.description ? (
                             <div className="text-sm space-y-2">
                               <div className="flex items-center gap-2">
+                                {msg.isAdminPost && (
+                                  <span className="px-2 py-0.5 rounded-full text-[11px] bg-violet-100 text-violet-700">
+                                    ADMIN
+                                  </span>
+                                )}
                                 <span
                                   className={`px-2 py-0.5 rounded-full text-[11px] ${
                                     msg.type === "buy"
@@ -859,11 +866,17 @@ const GlobalChatWindow = ({
                 key={user.id}
                 className="flex items-center gap-2 px-3 py-2 hover:bg-gray-50"
               >
-                <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs font-medium text-gray-700 overflow-hidden">
+                <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs font-medium text-gray-700 overflow-hidden relative">
                   <span>{user.name?.charAt(0)?.toUpperCase()}</span>
+                  <span className={`absolute -top-1 -right-1 w-3 h-3 rounded-full ${
+                    user.role === "admin" ? "bg-violet-500" : "bg-green-500"
+                  }`}></span>
                 </div>
                 <span className="text-xs text-gray-800 truncate">
                   {user.name}
+                  {user.role === "admin" && (
+                    <span className="ml-1 text-violet-600 font-medium">(Admin)</span>
+                  )}
                 </span>
               </div>
             ))

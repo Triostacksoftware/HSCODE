@@ -1,5 +1,5 @@
-import AdminModel from "../models/Admin.js";
 import UserModel from "../models/user.js";
+import SuperAdminModel from "../models/SuperAdmin.js";
 import { generateToken, verifyToken } from "../utilities/jwt.util.js";
 import { generateOTP } from "../utilities/otp.util.js";
 import emailVerificatonMail from "../utilities/sendMail.js";
@@ -373,7 +373,7 @@ export const adminLogin = async (req, res) => {
   }
 
   try {
-    const admin = await AdminModel.findOne({ email });
+    const admin = await UserModel.findOne({ email, role: "admin" });
     if (!admin) return res.status(401).json({ message: "Invalid credentials" });
 
     const isMatch = await bcrypt.compare(password, admin.password);
@@ -417,7 +417,7 @@ export const adminVerification = async (req, res) => {
       return res.status(401).json({ message: "Invalid or expired OTP" });
     }
 
-    const admin = await AdminModel.findOne({ email: decoded.email });
+    const admin = await UserModel.findOne({ email: decoded.email, role: "admin" });
     if (!admin) return res.status(404).json("Admin not found");
 
     // Auth success: issue final token
@@ -451,28 +451,21 @@ export const superadminLogin = async (req, res) => {
   }
 
   try {
-    // Find admin by email
-    const admin = await AdminModel.findOne({ email });
-    if (!admin) {
+    // Find superadmin by email
+    const superadmin = await SuperAdminModel.findOne({ email });
+    if (!superadmin) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    // Check if admin is superadmin
-    if (admin.role !== "superadmin") {
-      return res
-        .status(403)
-        .json({ message: "Access denied. Superadmin role required." });
-    }
-
     // Verify password
-    const isPasswordValid = bcrypt.compareSync(password, admin.password);
+    const isPasswordValid = bcrypt.compareSync(password, superadmin.password);
     if (!isPasswordValid) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    // Generate JWT with admin._id and role
+    // Generate JWT with superadmin._id and role
     const authToken = generateToken(
-      { id: admin._id, role: "superadmin" },
+      { id: superadmin._id, role: "superadmin" },
       "24h"
     );
 
@@ -488,12 +481,12 @@ export const superadminLogin = async (req, res) => {
     res.json({
       success: true,
       message: "Superadmin login successful",
-      admin: {
-        _id: admin._id,
-        name: admin.name,
-        email: admin.email,
-        countryCode: admin.countryCode,
-        role: admin.role,
+      superadmin: {
+        _id: superadmin._id,
+        name: superadmin.name,
+        email: superadmin.email,
+        countryCode: superadmin.countryCode,
+        role: "superadmin",
       },
     });
   } catch (error) {
@@ -513,7 +506,7 @@ export const setupAdminTOTP = async (req, res) => {
         .json({ message: "Email and password are required" });
     }
 
-    const admin = await AdminModel.findOne({ email });
+    const admin = await UserModel.findOne({ email, role: "admin" });
     if (!admin) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
@@ -592,7 +585,7 @@ export const verifyAndEnableTOTP = async (req, res) => {
     }
 
     // Update admin with TOTP secret and enable it
-    const admin = await AdminModel.findOne({ email: decoded.email });
+    const admin = await UserModel.findOne({ email: decoded.email, role: "admin" });
     if (!admin) {
       return res.status(404).json({ message: "Admin not found" });
     }
@@ -622,7 +615,7 @@ export const adminLoginWithTOTP = async (req, res) => {
   }
 
   try {
-    const admin = await AdminModel.findOne({ email });
+    const admin = await UserModel.findOne({ email, role: "admin" });
     if (!admin) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
@@ -712,7 +705,7 @@ export const verifyAuth = async (req, res) => {
 
     // Check if user exists and is admin
     if (decoded.role === "admin") {
-      const admin = await AdminModel.findById(decoded.id);
+      const admin = await UserModel.findById(decoded.id);
       if (!admin) {
         return res.status(401).json({
           authenticated: false,
@@ -731,8 +724,8 @@ export const verifyAuth = async (req, res) => {
         },
       });
     } else if (decoded.role === "superadmin") {
-      const admin = await AdminModel.findById(decoded.id);
-      if (!admin) {
+      const superadmin = await SuperAdminModel.findById(decoded.id);
+      if (!superadmin) {
         return res.status(401).json({
           authenticated: false,
           message: "Superadmin not found",
@@ -742,11 +735,11 @@ export const verifyAuth = async (req, res) => {
       return res.status(200).json({
         authenticated: true,
         user: {
-          id: admin._id,
-          name: admin.name,
-          email: admin.email,
-          role: admin.role,
-          countryCode: admin.countryCode,
+          id: superadmin._id,
+          name: superadmin.name,
+          email: superadmin.email,
+          role: "superadmin",
+          countryCode: superadmin.countryCode,
         },
       });
     } else {

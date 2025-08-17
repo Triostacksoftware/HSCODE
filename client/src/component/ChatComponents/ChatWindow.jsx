@@ -386,9 +386,14 @@ const ChatWindow = ({
                     key={`on-${m.id}`}
                     className="flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50"
                   >
-                    <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                    <span className={`w-2 h-2 rounded-full ${
+                      m.role === "admin" ? "bg-violet-500" : "bg-green-500"
+                    }`}></span>
                     <span className="text-xs text-gray-900 truncate">
                       {m.name}
+                      {m.role === "admin" && (
+                        <span className="ml-1 text-violet-600 font-medium">(Admin)</span>
+                      )}
                     </span>
                   </div>
                 ))}
@@ -472,7 +477,7 @@ const ChatWindow = ({
                       >
                         <div
                           className={`rounded-xl px-3 md:px-4 py-2 shadow-sm border ${
-                            lead.type === "buy"
+                              lead.type === "buy"
                               ? "bg-blue-50 border-blue-100 text-gray-900"
                               : lead.type === "sell"
                               ? "bg-green-50 border-green-100 text-gray-900"
@@ -482,6 +487,11 @@ const ChatWindow = ({
                           {lead.hscode || lead.description ? (
                             <div className="text-sm space-y-2">
                               <div className="flex items-center gap-2">
+                                {lead.isAdminPost && (
+                                  <span className="px-2 py-0.5 rounded-full text-[11px] bg-violet-100 text-violet-700">
+                                    ADMIN
+                                  </span>
+                                )}
                                 <span
                                   className={`px-2 py-0.5 rounded-full text-[11px] ${
                                     lead.type === "buy"

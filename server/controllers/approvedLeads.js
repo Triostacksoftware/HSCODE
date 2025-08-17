@@ -13,10 +13,16 @@ export const getLeadsByGroup = async (req, res) => {
       .populate("userId", "name image email")
       .exec();
 
+    // Add isAdminPost field to leads that were posted by admins
+    const leadsWithAdminInfo = leads.map(lead => ({
+      ...lead.toObject(),
+      isAdminPost: !!lead.adminId
+    }));
+
     const total = await ApprovedLeads.countDocuments({ groupId });
 
     res.json({
-      leads,
+      leads: leadsWithAdminInfo,
       totalPages: Math.ceil(total / limit),
       currentPage: page,
       total,

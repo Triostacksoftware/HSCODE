@@ -1,9 +1,9 @@
-// import AdminModel from "../models/Admin.js"; // Deprecated: roles consolidated into User
 import GlobalRequestedLeads from "../models/GlobalRequestedLeads.js";
 import GlobalApprovedLeads from "../models/GlobalApprovedLeads.js";
 import GlobalCategory from "../models/GlobalCategory.js";
 import GlobalGroup from "../models/GlobalGroup.js";
 import UserModel from "../models/user.js";
+import SuperAdminModel from "../models/SuperAdmin.js";
 import bcrypt from "bcrypt";
 import { io } from "../server.js";
 import RequestedLeads from "../models/RequestedLeads.js";
@@ -147,7 +147,7 @@ export const createAdmin = async (req, res) => {
     const { name, email, password, countryCode, phone } = req.body;
 
     // Check if admin already exists with this email
-    const existingAdmin = await AdminModel.findOne({ email });
+    const existingAdmin = await UserModel.findOne({ email, role: "admin" });
     if (existingAdmin) {
       return res
         .status(400)
@@ -155,7 +155,7 @@ export const createAdmin = async (req, res) => {
     }
 
     // Check if admin already exists for this country
-    const existingCountryAdmin = await AdminModel.findOne({ countryCode });
+    const existingCountryAdmin = await UserModel.findOne({ countryCode, role: "admin" });
     if (existingCountryAdmin) {
       return res
         .status(400)
@@ -165,12 +165,13 @@ export const createAdmin = async (req, res) => {
     // Hash password
     // const hashedPassword = bcrypt.hashSync(password, 10);
 
-    const newAdmin = new AdminModel({
+    const newAdmin = new UserModel({
       name,
       email,
       password: password,
       countryCode,
       phone,
+      role: "admin",
     });
     await newAdmin.save();
 
@@ -196,14 +197,14 @@ export const updateAdmin = async (req, res) => {
     const { adminId } = req.params;
     const { name, email, password, countryCode, phone } = req.body;
 
-    const admin = await AdminModel.findById(adminId);
+    const admin = await UserModel.findById(adminId);
     if (!admin) {
       return res.status(404).json({ message: "Admin not found" });
     }
 
     // Check if email is being changed and if it conflicts
     if (email !== admin.email) {
-      const existingAdmin = await AdminModel.findOne({ email });
+      const existingAdmin = await UserModel.findOne({ email, role: "admin" });
       if (existingAdmin) {
         return res
           .status(400)
@@ -213,7 +214,7 @@ export const updateAdmin = async (req, res) => {
 
     // Check if country code is being changed and if it conflicts
     if (countryCode !== admin.countryCode) {
-      const existingCountryAdmin = await AdminModel.findOne({ countryCode });
+      const existingCountryAdmin = await UserModel.findOne({ countryCode, role: "admin" });
       if (existingCountryAdmin) {
         return res
           .status(400)
@@ -255,12 +256,12 @@ export const deleteAdmin = async (req, res) => {
   try {
     const { adminId } = req.params;
 
-    const admin = await AdminModel.findById(adminId);
+    const admin = await UserModel.findById(adminId);
     if (!admin) {
       return res.status(404).json({ message: "Admin not found" });
     }
 
-    await AdminModel.findByIdAndDelete(adminId);
+    await UserModel.findByIdAndDelete(adminId);
 
     res.json({ message: "Admin deleted successfully" });
   } catch (error) {
@@ -388,5 +389,127 @@ export const approveRejectGlobalLead = async (req, res) => {
   } catch (error) {
     console.error("Error approving/rejecting global lead:", error);
     res.status(500).json({ message: "Error processing global lead" });
+  }
+};
+
+// ===== SUPERADMIN MANAGEMENT FUNCTIONS =====
+
+// Get all superadmins
+export const getSuperadmins = async (req, res) => {
+  try {
+    const superadmins = await SuperAdminModel.find().select(
+      "name email countryCode phone totpEnabled createdAt"
+    );
+    res.json(superadmins);
+  } catch (error) {
+    console.error("Error fetching superadmins:", error);
+    res.status(500).json({ message: "Error fetching superadmins" });
+  }
+};
+
+// Create new superadmin
+export const createSuperadmin = async (req, res) => {
+  try {
+    const { name, email, password, countryCode, phone } = req.body;
+
+    // Check if superadmin already exists with this email
+    const existingSuperadmin = await SuperAdminModel.findOne({ email });
+    if (existingSuperadmin) {
+      return res
+        .status(400)
+        .json({ message: "Superadmin with this email already exists" });
+    }
+
+    const newSuperadmin = new SuperAdminModel({
+      name,
+      email,
+      password,
+      countryCode,
+      phone,
+    });
+    await newSuperadmin.save();
+
+    res.status(201).json({
+      message: "Superadmin created successfully",
+      superadmin: {
+        _id: newSuperadmin._id,
+        name: newSuperadmin.name,
+        email: newSuperadmin.email,
+        countryCode: newSuperadmin.countryCode,
+        phone: newSuperadmin.phone,
+      },
+    });
+  } catch (error) {
+    console.error("Error creating superadmin:", error);
+    res.status(500).json({ message: "Error creating superadmin" });
+  }
+};
+
+// Update superadmin
+export const updateSuperadmin = async (req, res) => {
+  try {
+    const { superadminId } = req.params;
+    const { name, email, password, countryCode, phone } = req.body;
+
+    const superadmin = await SuperAdminModel.findById(superadminId);
+    if (!superadmin) {
+      return res.status(404).json({ message: "Superadmin not found" });
+    }
+
+    // Check if email is being changed and if it conflicts
+    if (email !== superadmin.email) {
+      const existingSuperadmin = await SuperAdminModel.findOne({ email });
+      if (existingSuperadmin) {
+        return res
+          .status(400)
+          .json({ message: "Superadmin with this email already exists" });
+      }
+    }
+
+    // Update fields
+    superadmin.name = name;
+    superadmin.email = email;
+    superadmin.countryCode = countryCode;
+    superadmin.phone = phone;
+
+    // Update password only if provided
+    if (password && password.trim() !== "") {
+      superadmin.password = password;
+    }
+
+    await superadmin.save();
+
+    res.json({
+      message: "Superadmin updated successfully",
+      superadmin: {
+        _id: superadmin._id,
+        name: superadmin.name,
+        email: superadmin.email,
+        countryCode: superadmin.countryCode,
+        phone: superadmin.phone,
+      },
+    });
+  } catch (error) {
+    console.error("Error updating superadmin:", error);
+    res.status(500).json({ message: "Error updating superadmin" });
+  }
+};
+
+// Delete superadmin
+export const deleteSuperadmin = async (req, res) => {
+  try {
+    const { superadminId } = req.params;
+
+    const superadmin = await SuperAdminModel.findById(superadminId);
+    if (!superadmin) {
+      return res.status(404).json({ message: "Superadmin not found" });
+    }
+
+    await SuperAdminModel.findByIdAndDelete(superadminId);
+
+    res.json({ message: "Superadmin deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting superadmin:", error);
+    res.status(500).json({ message: "Error deleting superadmin" });
   }
 };

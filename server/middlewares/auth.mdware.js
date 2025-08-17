@@ -1,5 +1,6 @@
 import { verifyToken } from "../utilities/jwt.util.js";
-import AdminModel from "../models/Admin.js";
+import UserModel from "../models/user.js";
+import SuperAdminModel from "../models/SuperAdmin.js";
 
 export const authMiddleware = async (req, res, next) => {
   try {
@@ -51,7 +52,7 @@ export const adminMiddleware = async (req, res, next) => {
     }
 
     // Verify admin exists in database
-    const admin = await AdminModel.findById(decoded.id);
+    const admin = await UserModel.findById(decoded.id);
     if (!admin) {
       return res.status(401).json({ message: "Admin not found" });
     }
@@ -70,9 +71,7 @@ export const superadminMiddleware = async (req, res, next) => {
     const token = req.cookies.auth_token;
 
     if (!token) {
-      return res
-        .status(401)
-        .json({ message: "No token provided. Please log in." });
+      return res.status(401).json({ message: "No token provided. Please log in." });
     }
 
     // Verify token
@@ -86,6 +85,12 @@ export const superadminMiddleware = async (req, res, next) => {
       return res
         .status(403)
         .json({ message: "Access denied. Superadmin role required." });
+    }
+
+    // Verify superadmin exists in database
+    const superadmin = await SuperAdminModel.findById(decoded.id);
+    if (!superadmin) {
+      return res.status(401).json({ message: "Superadmin not found" });
     }
 
     req.user = decoded;

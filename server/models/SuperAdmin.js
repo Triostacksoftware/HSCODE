@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 
-const countryAdminSchema = new mongoose.Schema(
+const superAdminSchema = new mongoose.Schema(
   {
     name: {
       type: String,
@@ -24,11 +24,6 @@ const countryAdminSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    role: {
-      type: String,
-      enum: ["admin", "superadmin"],
-      default: "admin",
-    },
     countryCode: {
       type: String,
       required: true,
@@ -42,30 +37,17 @@ const countryAdminSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    groupsID: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Group",
-      },
-    ],
-
-    globalGroupsID: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "GlobalGroup",
-      },
-    ],
   },
   { timestamps: true }
 );
 
 // Hash password before saving
-countryAdminSchema.pre("save", async function (next) {
+superAdminSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
   this.password = await bcrypt.hash(this.password, 10);
   next();
 });
 
-const AdminModel = mongoose.model("Admin", countryAdminSchema);
+const SuperAdminModel = mongoose.model("SuperAdmin", superAdminSchema);
 
-export default AdminModel;
+export default SuperAdminModel;
