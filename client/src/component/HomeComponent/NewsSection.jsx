@@ -82,11 +82,11 @@ const NewsSection = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
         {/* Header */}
         <div className="text-center mb-16 md:mb-20">
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-light text-gray-900 mb-6 tracking-wide">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-light mb-6 tracking-wide" style={{ color: 'var(--cobalt-blue)' }}>
             {title}
           </h2>
           {subtitle && (
-            <p className="text-gray-600 text-lg md:text-xl max-w-3xl mx-auto leading-relaxed font-light">
+            <p className="text-lg md:text-xl max-w-3xl mx-auto leading-relaxed font-light" style={{ color: 'var(--brand-black)' }}>
               {subtitle}
             </p>
           )}
@@ -109,7 +109,8 @@ const NewsSection = ({
                     className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
                   />
                 <div className="absolute top-4 left-4">
-                  <span className="inline-block px-3 py-1 bg-blue-600 text-white text-xs font-medium rounded-full">
+                  <span className="inline-block px-3 py-1 text-white text-xs font-medium rounded-full"
+                        style={{ backgroundColor: 'var(--leaf-green)' }}>
                     {item.category}
                   </span>
                 </div>
@@ -122,10 +123,13 @@ const NewsSection = ({
 
               {/* Content */}
               <div className="p-6">
-                <h3 className="text-xl font-semibold text-gray-900 mb-3 line-clamp-2 hover:text-blue-600 transition-colors duration-200">
+                <h3 className="text-xl font-semibold mb-3 line-clamp-2 transition-colors duration-200"
+                    style={{ color: 'var(--cobalt-blue)' }}
+                    onMouseEnter={(e) => e.target.style.color = 'var(--leaf-green)'}
+                    onMouseLeave={(e) => e.target.style.color = 'var(--cobalt-blue)'}>
                   {item.title}
                 </h3>
-                <p className="text-gray-600 text-sm leading-relaxed mb-4 line-clamp-3">
+                <p className="text-sm leading-relaxed mb-4 line-clamp-3" style={{ color: 'var(--brand-black)' }}>
                   {item.excerpt}
                 </p>
 
@@ -136,7 +140,10 @@ const NewsSection = ({
                       href={item.newsUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium text-sm transition-colors duration-200 group"
+                      className="inline-flex items-center font-medium text-sm transition-colors duration-200 group"
+                      style={{ color: 'var(--trade-orange)' }}
+                      onMouseEnter={(e) => e.target.style.color = '#d45a1a'}
+                      onMouseLeave={(e) => e.target.style.color = 'var(--trade-orange)'}
                     >
                       Read More
                       <HiChevronRight className="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform duration-200" />
@@ -157,7 +164,10 @@ const NewsSection = ({
         <div className="text-center mt-12">
           <a
             href={viewAllLink}
-            className="inline-flex items-center px-8 py-4 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+            className="inline-flex items-center px-8 py-4 text-white font-medium rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+            style={{ backgroundColor: 'var(--trade-orange)' }}
+            onMouseEnter={(e) => e.target.style.backgroundColor = '#d45a1a'}
+            onMouseLeave={(e) => e.target.style.backgroundColor = 'var(--trade-orange)'}
           >
             View All News
             <HiChevronRight className="ml-2 w-5 h-5" />

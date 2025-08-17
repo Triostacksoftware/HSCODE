@@ -82,12 +82,14 @@ const Footer = ({
           {/* Company Info Section */}
           <div className="lg:col-span-2">
             <div className="mb-6">
-              <h2 className="text-2xl md:text-3xl font-light tracking-wider text-white">
-                {companyName}
-              </h2>
+              <img
+                src="/logohome.png"
+                alt="HS CODES - Linking EXIM World"
+                className="h-40 w-auto mb-4"
+              />
             </div>
 
-            <p className="text-gray-300 text-sm leading-relaxed mb-8 font-light">
+            <p className="text-sm leading-relaxed mb-8 font-light" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>
               {companyDescription}
             </p>
 
@@ -96,8 +98,16 @@ const Footer = ({
               {contactInfoArray.map((contact, index) => {
                 const IconComponent = contact.icon;
                 const content = (
-                  <div className="flex items-center space-x-3 text-gray-300 hover:text-white transition-colors duration-200">
-                    <IconComponent className="w-5 h-5 text-gray-400" />
+                  <div className="flex items-center space-x-3 transition-colors duration-200"
+                       style={{ color: 'rgba(255, 255, 255, 0.8)' }}
+                       onMouseEnter={(e) => e.target.style.color = 'var(--brand-white)'}
+                       onMouseLeave={(e) => e.target.style.color = 'rgba(255, 255, 255, 0.8)'}>
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200"
+                         style={{ backgroundColor: 'var(--leaf-green)' }}
+                         onMouseEnter={(e) => e.target.style.backgroundColor = 'var(--trade-orange)'}
+                         onMouseLeave={(e) => e.target.style.backgroundColor = 'var(--leaf-green)'}>
+                      <IconComponent className="w-4 h-4" style={{ color: 'var(--brand-white)' }} />
+                    </div>
                     <span className="text-sm font-light">{contact.text}</span>
                   </div>
                 );
@@ -117,7 +127,10 @@ const Footer = ({
               <div className="flex space-x-4">
                 <a
                   href={socialLinks.facebook}
-                  className="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors duration-200"
+                  className="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200"
+                  style={{ backgroundColor: 'var(--leaf-green)' }}
+                  onMouseEnter={(e) => e.target.style.backgroundColor = 'var(--trade-orange)'}
+                  onMouseLeave={(e) => e.target.style.backgroundColor = 'var(--leaf-green)'}
                 >
                   <svg
                     className="w-5 h-5"
@@ -129,7 +142,10 @@ const Footer = ({
                 </a>
                 <a
                   href={socialLinks.twitter}
-                  className="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center hover:bg-blue-400 transition-colors duration-200"
+                  className="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200"
+                  style={{ backgroundColor: 'var(--leaf-green)' }}
+                  onMouseEnter={(e) => e.target.style.backgroundColor = 'var(--trade-orange)'}
+                  onMouseLeave={(e) => e.target.style.backgroundColor = 'var(--leaf-green)'}
                 >
                   <svg
                     className="w-5 h-5"
@@ -141,7 +157,10 @@ const Footer = ({
                 </a>
                 <a
                   href={socialLinks.linkedin}
-                  className="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center hover:bg-blue-700 transition-colors duration-200"
+                  className="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200"
+                  style={{ backgroundColor: 'var(--leaf-green)' }}
+                  onMouseEnter={(e) => e.target.style.backgroundColor = 'var(--trade-orange)'}
+                  onMouseLeave={(e) => e.target.style.backgroundColor = 'var(--leaf-green)'}
                 >
                   <svg
                     className="w-5 h-5"
@@ -196,25 +215,34 @@ const Footer = ({
         {/* Bottom Section */}
         <div className="border-t border-gray-700 mt-12 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="text-gray-400 text-sm font-light mb-4 md:mb-0">
-              © 2024 {companyName}. All rights reserved.
+            <div className="text-sm font-light mb-4 md:mb-0" style={{ color: 'rgba(255, 255, 255, 0.6)' }}>
+              © 2024 HS CODES. All rights reserved.
             </div>
             <div className="flex space-x-6 text-sm">
               <a
                 href="/privacy"
-                className="text-gray-400 hover:text-white transition-colors duration-200 font-light"
+                className="transition-colors duration-200 font-light"
+                style={{ color: 'rgba(255, 255, 255, 0.7)' }}
+                onMouseEnter={(e) => e.target.style.color = 'var(--trade-orange)'}
+                onMouseLeave={(e) => e.target.style.color = 'rgba(255, 255, 255, 0.7)'}
               >
                 Privacy Policy
               </a>
               <a
                 href="/terms"
-                className="text-gray-400 hover:text-white transition-colors duration-200 font-light"
+                className="transition-colors duration-200 font-light"
+                style={{ color: 'rgba(255, 255, 255, 0.7)' }}
+                onMouseEnter={(e) => e.target.style.color = 'var(--trade-orange)'}
+                onMouseLeave={(e) => e.target.style.color = 'rgba(255, 255, 255, 0.7)'}
               >
                 Terms of Service
               </a>
               <a
                 href="/cookies"
-                className="text-gray-400 hover:text-white transition-colors duration-200 font-light"
+                className="transition-colors duration-200 font-light"
+                style={{ color: 'rgba(255, 255, 255, 0.7)' }}
+                onMouseEnter={(e) => e.target.style.color = 'var(--trade-orange)'}
+                onMouseLeave={(e) => e.target.style.color = 'rgba(255, 255, 255, 0.7)'}
               >
                 Cookie Policy
               </a>

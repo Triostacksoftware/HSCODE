@@ -179,7 +179,7 @@ const FeaturedCategories = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
         {/* Header */}
         <div className="text-center mb-16 md:mb-20">
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-light text-gray-900 mb-6 tracking-wide">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-light mb-6 tracking-wide" style={{ color: 'var(--cobalt-blue)' }}>
             {title}
           </h2>
         </div>
@@ -194,7 +194,7 @@ const FeaturedCategories = ({
                 disabled={currentPage === 0}
                 className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <HiChevronLeft className="w-6 h-6 text-gray-600" />
+                <HiChevronLeft className="w-6 h-6" style={{ color: 'var(--cobalt-blue)' }} />
               </button>
 
               <button
@@ -202,7 +202,7 @@ const FeaturedCategories = ({
                 disabled={currentPage === totalPages - 1}
                 className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <HiChevronRight className="w-6 h-6 text-gray-600" />
+                <HiChevronRight className="w-6 h-6" style={{ color: 'var(--cobalt-blue)' }} />
               </button>
             </>
           )}
@@ -226,16 +226,22 @@ const FeaturedCategories = ({
 
                 {/* Content */}
                 <div className="p-6">
-                  <h3 className="text-xl font-semibold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors duration-200">
+                  <h3 className="text-xl font-semibold mb-3 transition-colors duration-200" 
+                      style={{ color: 'var(--cobalt-blue)' }}
+                      onMouseEnter={(e) => e.target.style.color = 'var(--leaf-green)'}
+                      onMouseLeave={(e) => e.target.style.color = 'var(--cobalt-blue)'}>
                     {category.name}
                   </h3>
-                  <p className="text-gray-600 text-sm leading-relaxed">
+                  <p className="text-sm leading-relaxed" style={{ color: 'var(--brand-black)' }}>
                     {category.description}
                   </p>
 
                   {/* Explore Button */}
                   <div className="mt-4">
-                    <button className="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium text-sm transition-colors duration-200 group">
+                    <button className="inline-flex items-center font-medium text-sm transition-colors duration-200 group"
+                            style={{ color: 'var(--trade-orange)' }}
+                            onMouseEnter={(e) => e.target.style.color = '#d45a1a'}
+                            onMouseLeave={(e) => e.target.style.color = 'var(--trade-orange)'}>
                       Explore Category
                       <HiChevronRight className="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform duration-200" />
                     </button>
@@ -255,9 +261,23 @@ const FeaturedCategories = ({
                 onClick={() => setCurrentPage(index)}
                 className={`w-3 h-3 rounded-full transition-all duration-200 ${
                   index === currentPage
-                    ? "bg-blue-600 w-8"
-                    : "bg-gray-300 hover:bg-gray-400"
+                    ? "w-8"
+                    : ""
                 }`}
+                style={{ 
+                  backgroundColor: index === currentPage ? 'var(--leaf-green)' : 'var(--cobalt-blue)',
+                  opacity: index === currentPage ? '1' : '0.3'
+                }}
+                onMouseEnter={(e) => {
+                  if (index !== currentPage) {
+                    e.target.style.opacity = '0.6';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (index !== currentPage) {
+                    e.target.style.opacity = '0.3';
+                  }
+                }}
               />
             ))}
           </div>
@@ -267,7 +287,10 @@ const FeaturedCategories = ({
         <div className="text-center mt-16">
           <a
             href="/categories"
-            className="inline-flex items-center px-8 py-4 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+            className="inline-flex items-center px-8 py-4 text-white font-medium rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+            style={{ backgroundColor: 'var(--trade-orange)' }}
+            onMouseEnter={(e) => e.target.style.backgroundColor = '#d45a1a'}
+            onMouseLeave={(e) => e.target.style.backgroundColor = 'var(--trade-orange)'}
           >
             View All Categories
             <HiChevronRight className="ml-2 w-5 h-5" />

@@ -82,14 +82,14 @@ const AboutSection = ({
         {/* Header Section */}
         <div className="text-center mb-16 md:mb-20">
           <div className="mb-6">
-            <span className="text-sm font-medium text-blue-600 tracking-wider uppercase">
+            <span className="text-sm font-medium tracking-wider uppercase" style={{ color: 'var(--cobalt-blue)' }}>
               {subtitle}
             </span>
           </div>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-light text-gray-900 mb-8 tracking-wide leading-tight">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-light mb-8 tracking-wide leading-tight" style={{ color: 'var(--cobalt-blue)' }}>
             {title}
           </h2>
-          <p className="text-lg md:text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed font-light">
+          <p className="text-lg md:text-xl max-w-4xl mx-auto leading-relaxed font-light" style={{ color: 'var(--brand-black)' }}>
             {description}
           </p>
         </div>
@@ -99,14 +99,14 @@ const AboutSection = ({
           {stats.map((stat, index) => (
             <div key={index} className="text-center">
               <div className="mb-3">
-                <span className="text-3xl md:text-4xl lg:text-5xl font-extralight text-gray-900 tracking-tight">
+                <span className="text-3xl md:text-4xl lg:text-5xl font-extralight tracking-tight" style={{ color: 'var(--leaf-green)' }}>
                   {stat.number}
                 </span>
               </div>
-              <h3 className="text-base md:text-lg font-medium text-gray-900 mb-1 tracking-wide">
+              <h3 className="text-base md:text-lg font-medium mb-1 tracking-wide" style={{ color: 'var(--cobalt-blue)' }}>
                 {stat.label}
               </h3>
-              <p className="text-sm text-gray-500 font-light">
+              <p className="text-sm font-light" style={{ color: 'var(--brand-black)' }}>
                 {stat.description}
               </p>
             </div>
@@ -120,14 +120,17 @@ const AboutSection = ({
             return (
               <div key={index} className="text-center group">
                 <div className="mb-4 flex justify-center">
-                  <div className="w-16 h-16 bg-gradient-to-br from-blue-50 to-blue-100 rounded-full flex items-center justify-center group-hover:from-blue-100 group-hover:to-blue-200 transition-all duration-300">
-                    <IconComponent className="w-8 h-8 text-blue-600" />
+                  <div className="w-16 h-16 rounded-full flex items-center justify-center transition-all duration-300"
+                       style={{ backgroundColor: 'var(--cobalt-blue)' }}
+                       onMouseEnter={(e) => e.target.style.backgroundColor = 'var(--leaf-green)'}
+                       onMouseLeave={(e) => e.target.style.backgroundColor = 'var(--cobalt-blue)'}>
+                    <IconComponent className="w-8 h-8" style={{ color: 'var(--brand-white)' }} />
                   </div>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-3 tracking-wide">
+                <h3 className="text-lg font-semibold mb-3 tracking-wide" style={{ color: 'var(--cobalt-blue)' }}>
                   {feature.title}
                 </h3>
-                <p className="text-gray-600 font-light leading-relaxed">
+                <p className="font-light leading-relaxed" style={{ color: 'var(--brand-black)' }}>
                   {feature.description}
                 </p>
               </div>
@@ -139,7 +142,10 @@ const AboutSection = ({
         <div className="text-center">
           <a
             href={ctaLink}
-            className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+            className="inline-flex items-center px-8 py-4 text-white font-medium rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+            style={{ backgroundColor: 'var(--trade-orange)' }}
+            onMouseEnter={(e) => e.target.style.backgroundColor = '#d45a1a'}
+            onMouseLeave={(e) => e.target.style.backgroundColor = 'var(--trade-orange)'}
           >
             {ctaText}
             <svg

@@ -55,10 +55,10 @@ const TestimonialSection = ({ title, subtitle, testimonials = [] }) => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">
+          <h2 className="text-3xl font-bold mb-4" style={{ color: 'var(--cobalt-blue)' }}>
             {title || "What our customers say"}
           </h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <p className="text-lg max-w-2xl mx-auto" style={{ color: 'var(--brand-black)' }}>
             {subtitle || "Success stories from our community"}
           </p>
         </div>
@@ -74,7 +74,7 @@ const TestimonialSection = ({ title, subtitle, testimonials = [] }) => {
 
             {/* Testimonial Content */}
             <div className="mb-8">
-              <p className="text-lg md:text-xl text-gray-700 leading-relaxed mb-6">
+              <p className="text-lg md:text-xl leading-relaxed mb-6" style={{ color: 'var(--brand-black)' }}>
                 {testimonials[currentIndex]?.content ||
                   "No testimonial content available"}
               </p>
@@ -109,13 +109,13 @@ const TestimonialSection = ({ title, subtitle, testimonials = [] }) => {
                 />
               </div>
               <div>
-                <h4 className="font-semibold text-gray-900 text-lg">
+                <h4 className="font-semibold text-lg" style={{ color: 'var(--cobalt-blue)' }}>
                   {testimonials[currentIndex]?.name || "Unknown Author"}
                 </h4>
-                <p className="text-gray-600">
+                <p className="text-sm" style={{ color: 'var(--brand-black)' }}>
                   {testimonials[currentIndex]?.role || "Position"}
                 </p>
-                <p className="text-blue-600 font-medium">
+                <p className="font-medium" style={{ color: 'var(--trade-orange)' }}>
                   {testimonials[currentIndex]?.company || "Company"}
                 </p>
               </div>
@@ -130,7 +130,7 @@ const TestimonialSection = ({ title, subtitle, testimonials = [] }) => {
                 className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-3 shadow-lg hover:shadow-xl transition-shadow duration-200 z-10"
                 aria-label="Previous testimonial"
               >
-                <HiChevronLeft className="w-6 h-6 text-gray-600" />
+                <HiChevronLeft className="w-6 h-6" style={{ color: 'var(--cobalt-blue)' }} />
               </button>
 
               <button
@@ -138,7 +138,7 @@ const TestimonialSection = ({ title, subtitle, testimonials = [] }) => {
                 className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-3 shadow-lg hover:shadow-xl transition-shadow duration-200 z-10"
                 aria-label="Next testimonial"
               >
-                <HiChevronRight className="w-6 h-6 text-gray-600" />
+                <HiChevronRight className="w-6 h-6" style={{ color: 'var(--cobalt-blue)' }} />
               </button>
             </>
           )}
@@ -153,9 +153,23 @@ const TestimonialSection = ({ title, subtitle, testimonials = [] }) => {
                 onClick={() => goToSlide(index)}
                 className={`w-3 h-3 rounded-full transition-all duration-200 ${
                   index === currentIndex
-                    ? "bg-blue-600 scale-125"
-                    : "bg-gray-300 hover:bg-gray-400"
+                    ? "scale-125"
+                    : ""
                 }`}
+                style={{ 
+                  backgroundColor: index === currentIndex ? 'var(--leaf-green)' : 'var(--cobalt-blue)',
+                  opacity: index === currentIndex ? '1' : '0.3'
+                }}
+                onMouseEnter={(e) => {
+                  if (index !== currentIndex) {
+                    e.target.style.opacity = '0.6';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (index !== currentIndex) {
+                    e.target.style.opacity = '0.3';
+                  }
+                }}
                 aria-label={`Go to testimonial ${index + 1}`}
               />
             ))}
@@ -164,7 +178,7 @@ const TestimonialSection = ({ title, subtitle, testimonials = [] }) => {
 
         {/* Testimonial Counter */}
         {testimonials.length > 1 && (
-          <div className="text-center mt-4 text-sm text-gray-500">
+          <div className="text-center mt-4 text-sm" style={{ color: 'var(--cobalt-blue)' }}>
             {currentIndex + 1} of {testimonials.length}
           </div>
         )}

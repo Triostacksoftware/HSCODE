@@ -105,11 +105,26 @@ const Herosection = ({
               <div className="flex flex-col sm:flex-row gap-4">
                 <a
                   href={ctaButtonLink}
-                  className="inline-flex items-center justify-center px-8 py-4 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-lg transition-colors duration-200 text-lg"
+                  className="inline-flex items-center justify-center px-8 py-4 text-white font-semibold rounded-lg transition-colors duration-200 text-lg"
+                  style={{ backgroundColor: 'var(--trade-orange)' }}
+                  onMouseEnter={(e) => e.target.style.backgroundColor = '#d45a1a'}
+                  onMouseLeave={(e) => e.target.style.backgroundColor = 'var(--trade-orange)'}
                 >
                   {ctaButtonText}
                 </a>
-                <button className="inline-flex items-center justify-center px-8 py-4 border-2 border-white text-white font-semibold rounded-lg hover:bg-white hover:text-gray-900 transition-colors duration-200 text-lg">
+                <button className="inline-flex items-center justify-center px-8 py-4 border-2 font-semibold rounded-lg transition-colors duration-200 text-lg"
+                        style={{ 
+                          borderColor: 'white',
+                          color: 'black'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.backgroundColor = 'var(--cobalt-blue)';
+                          e.target.style.color = 'var(--brand-white)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.backgroundColor = 'white';
+                          e.target.style.color = 'black';
+                        }}>
                   Learn More
                 </button>
               </div>
@@ -120,26 +135,26 @@ const Herosection = ({
               <div className="relative">
                 {/* Central Icon */}
                 <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                  <div className="w-32 h-32 border-2 border-amber-600 rounded-lg relative">
-                    <div className="absolute inset-4 border border-dashed border-amber-600 rounded flex items-center justify-center">
-                      <span className="text-amber-600 text-2xl font-bold">
-                        +
-                      </span>
-                    </div>
-                    <div className="absolute top-2 left-2 w-2 h-2 bg-amber-600 rounded-full"></div>
-                    <div className="absolute top-2 right-2 w-2 h-2 bg-amber-600 rounded-full"></div>
-                    <div className="absolute bottom-2 left-2 w-2 h-2 bg-amber-600 rounded-full"></div>
-                    <div className="absolute bottom-2 right-2 w-2 h-2 bg-amber-600 rounded-full"></div>
+                                  <div className="w-32 h-32 border-2 rounded-lg relative" style={{ borderColor: 'var(--leaf-green)' }}>
+                  <div className="absolute inset-4 border border-dashed rounded flex items-center justify-center" style={{ borderColor: 'var(--leaf-green)' }}>
+                    <span className="text-2xl font-bold" style={{ color: 'var(--leaf-green)' }}>
+                      +
+                    </span>
                   </div>
+                  <div className="absolute top-2 left-2 w-2 h-2 rounded-full" style={{ backgroundColor: 'var(--leaf-green)' }}></div>
+                  <div className="absolute top-2 right-2 w-2 h-2 rounded-full" style={{ backgroundColor: 'var(--leaf-green)' }}></div>
+                  <div className="absolute bottom-2 left-2 w-2 h-2 rounded-full" style={{ backgroundColor: 'var(--leaf-green)' }}></div>
+                  <div className="absolute bottom-2 right-2 w-2 h-2 rounded-full" style={{ backgroundColor: 'var(--leaf-green)' }}></div>
+                </div>
                 </div>
 
                 {/* Surrounding Icons */}
                 <div className="relative w-96 h-96 mx-auto">
                   {/* Top Icon */}
                   <div className="absolute top-0 left-1/2 transform -translate-x-1/2">
-                    <div className="w-16 h-16 border-2 border-dashed border-amber-600 rounded-full flex items-center justify-center">
-                      <div className="w-8 h-6 border border-amber-600 rounded flex items-center justify-center">
-                        <div className="w-4 h-2 bg-amber-600 rounded"></div>
+                    <div className="w-16 h-16 border-2 border-dashed rounded-full flex items-center justify-center" style={{ borderColor: 'var(--cobalt-blue)' }}>
+                      <div className="w-8 h-6 border rounded flex items-center justify-center" style={{ borderColor: 'var(--cobalt-blue)' }}>
+                        <div className="w-4 h-2 rounded" style={{ backgroundColor: 'var(--cobalt-blue)' }}></div>
                       </div>
                     </div>
                   </div>
@@ -176,7 +191,7 @@ const Herosection = ({
                       y1="0"
                       x2="50%"
                       y2="50%"
-                      stroke="#d97706"
+                      stroke="var(--leaf-green)"
                       strokeWidth="2"
                       strokeDasharray="5,5"
                     />
@@ -185,7 +200,7 @@ const Herosection = ({
                       y1="50%"
                       x2="50%"
                       y2="50%"
-                      stroke="#d97706"
+                      stroke="var(--leaf-green)"
                       strokeWidth="2"
                       strokeDasharray="5,5"
                     />

@@ -36,9 +36,9 @@ const Stats = ({
   ],
 }) => {
   return (
-    <div className="bg-gray-900 py-20 md:py-28 relative overflow-hidden montserrat">
+    <div className="py-20 md:py-28 relative overflow-hidden montserrat bg-gradient-to-br from-slate-800 to-slate-900">
       {/* Background Pattern */}
-      <div className="absolute inset-0 opacity-5">
+      <div className="absolute inset-0 opacity-10">
         <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-purple-700"></div>
         <div
           className="absolute inset-0"
@@ -51,11 +51,11 @@ const Stats = ({
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative">
         {/* Header */}
         <div className="text-center mb-16 md:mb-20">
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-light text-white mb-6 tracking-wide">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-light mb-6 tracking-wide" style={{ color: 'var(--brand-white)' }}>
             {title}
           </h2>
           {subtitle && (
-            <p className="text-gray-300 text-lg md:text-xl max-w-3xl mx-auto leading-relaxed font-light">
+            <p className="text-lg md:text-xl max-w-3xl mx-auto leading-relaxed font-light" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>
               {subtitle}
             </p>
           )}
@@ -80,9 +80,9 @@ const Stats = ({
                     separator=","
                     direction="up"
                     duration={2.5}
-                    className="text-4xl md:text-5xl lg:text-6xl font-extralight text-white tracking-tight"
+                    className="text-4xl md:text-5xl lg:text-6xl font-extralight tracking-tight text-white"
                   />
-                  <span className="text-4xl md:text-5xl lg:text-6xl font-extralight text-blue-400 ml-1 tracking-tight">
+                  <span className="text-4xl md:text-5xl lg:text-6xl font-extralight ml-1 tracking-tight text-blue-400">
                     {stat.suffix}
                   </span>
                 </div>
@@ -92,12 +92,12 @@ const Stats = ({
               <div className="w-12 h-px bg-gradient-to-r from-transparent via-blue-400 to-transparent mx-auto mb-4 group-hover:w-16 transition-all duration-500"></div>
 
               {/* Label */}
-              <h3 className="text-xl md:text-2xl font-light text-white mb-2 tracking-wide">
+              <h3 className="text-xl md:text-2xl font-light mb-2 tracking-wide text-white">
                 {stat.label}
               </h3>
 
               {/* Description */}
-              <p className="text-gray-400 text-sm md:text-base font-light leading-relaxed">
+              <p className="text-sm md:text-base font-light leading-relaxed text-gray-300">
                 {stat.description}
               </p>
             </div>
