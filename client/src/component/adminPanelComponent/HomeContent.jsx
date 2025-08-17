@@ -6,10 +6,12 @@ import axios from "axios";
 
 const HomeContent = () => {
   const [homeData, setHomeData] = useState();
+  const [originalHomeData, setOriginalHomeData] = useState();
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("hero");
+  const [newItemsAdded, setNewItemsAdded] = useState(false);
 
   useEffect(() => {
     fetchHomeData();
@@ -27,6 +29,7 @@ const HomeContent = () => {
       );
 
       setHomeData(response.data.data);
+      setOriginalHomeData(response.data.data);
     } catch (error) {
       console.error("Error fetching home data:", error);
     } finally {
@@ -38,15 +41,28 @@ const HomeContent = () => {
     try {
       setSaving(true);
 
+      // Validate news items - remove empty ones
+      const validatedData = { ...homeData };
+      if (validatedData.news) {
+        validatedData.news = validatedData.news.filter(item => 
+          item.title && item.title.trim() && 
+          item.excerpt && item.excerpt.trim() && 
+          item.image && item.image.trim() && 
+          item.date && item.date.trim() && 
+          item.category && item.category.trim()
+        );
+      }
+
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_BASE_URL}/home-data/admin`,
-        homeData,
+        validatedData,
         {
           withCredentials: true,
         }
       );
 
       setEditing(false);
+      setNewItemsAdded(false);
       await fetchHomeData();
       alert("Home data saved successfully!");
     } catch (error) {
@@ -119,6 +135,10 @@ const HomeContent = () => {
       newData[section][field].push({ ...template, id: newId });
       return newData;
     });
+    // Track that new items were added
+    if (field === "news") {
+      setNewItemsAdded(true);
+    }
   };
 
   const removeArrayItem = (section, field, index) => {
@@ -173,7 +193,12 @@ const HomeContent = () => {
             <div className="flex gap-3">
               {!editing ? (
                 <button
-                  onClick={() => setEditing(true)}
+                  onClick={() => {
+                    console.log('Starting edit mode');
+                    console.log('Original data at edit start:', originalHomeData);
+                    setEditing(true);
+                    setNewItemsAdded(false);
+                  }}
                   className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
                 >
                   <HiPencil className="w-5 h-5" />
@@ -190,7 +215,20 @@ const HomeContent = () => {
                     {saving ? "Saving..." : "Save Changes"}
                   </button>
                   <button
-                    onClick={() => setEditing(false)}
+                    onClick={() => {
+                      // Reset to original data when canceling
+                      console.log('Canceling - resetting to original data');
+                      console.log('Original data:', originalHomeData);
+                      console.log('Current data:', homeData);
+                      if (originalHomeData) {
+                        setHomeData(originalHomeData);
+                      } else {
+                        // Fallback: fetch fresh data
+                        fetchHomeData();
+                      }
+                      setEditing(false);
+                      setNewItemsAdded(false);
+                    }}
                     className="flex items-center gap-2 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
                   >
                     <HiX className="w-5 h-5" />
@@ -680,6 +718,7 @@ const NewsEditor = ({
                 image: "",
                 date: "",
                 category: "",
+                newsUrl: "",
               })
             }
             className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
@@ -688,54 +727,92 @@ const NewsEditor = ({
           </button>
         )}
       </div>
-      {data?.news.map((item, index) => (
-        <div key={index} className="border rounded-lg p-4 bg-gray-50">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <InputField
-              label="Title"
-              value={item?.title}
-              onChange={(value) => onArrayChange("news", index, "title", value)}
-              editing={editing}
-            />
-            <InputField
-              label="Excerpt"
-              value={item?.excerpt}
-              onChange={(value) =>
-                onArrayChange("news", index, "excerpt", value)
-              }
-              editing={editing}
-            />
-            <InputField
-              label="Image URL"
-              value={item?.image}
-              onChange={(value) => onArrayChange("news", index, "image", value)}
-              editing={editing}
-            />
-            <InputField
-              label="Date"
-              value={item?.date}
-              onChange={(value) => onArrayChange("news", index, "date", value)}
-              editing={editing}
-            />
-            <InputField
-              label="Category"
-              value={item?.category}
-              onChange={(value) =>
-                onArrayChange("news", index, "category", value)
-              }
-              editing={editing}
-            />
+      {data?.news.slice().reverse().map((item, index) => {
+        const isComplete = item?.title?.trim() && 
+                          item?.excerpt?.trim() && 
+                          item?.image?.trim() && 
+                          item?.date?.trim() && 
+                          item?.category?.trim();
+        
+        return (
+          <div key={item.id || index} className={`border rounded-lg p-4 ${isComplete ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+            {editing && !isComplete && (
+              <div className="mb-3 p-2 bg-red-100 border border-red-300 rounded text-red-700 text-sm">
+                ⚠️ Please fill in all required fields (Title, Excerpt, Image URL, Date, Category)
+              </div>
+            )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <InputField
+                label="Title *"
+                value={item?.title}
+                onChange={(value) => onArrayChange("news", index, "title", value)}
+                editing={editing}
+                required={!item?.title?.trim()}
+              />
+              <InputField
+                label="Excerpt *"
+                value={item?.excerpt}
+                onChange={(value) =>
+                  onArrayChange("news", index, "excerpt", value)
+                }
+                editing={editing}
+                multiline
+                required={!item?.excerpt?.trim()}
+              />
+              <InputField
+                label="Image URL *"
+                value={item?.image}
+                onChange={(value) => onArrayChange("news", index, "image", value)}
+                editing={editing}
+                fullWidth
+                required={!item?.image?.trim()}
+              />
+              <InputField
+                label="Date *"
+                value={item?.date}
+                onChange={(value) => onArrayChange("news", index, "date", value)}
+                editing={editing}
+                type="date"
+                required={!item?.date?.trim()}
+              />
+              <InputField
+                label="Category *"
+                value={item?.category}
+                onChange={(value) =>
+                  onArrayChange("news", index, "category", value)
+                }
+                editing={editing}
+                required={!item?.category?.trim()}
+              />
+              <InputField
+                label="News URL (Optional)"
+                value={item?.newsUrl || ""}
+                onChange={(value) =>
+                  onArrayChange("news", index, "newsUrl", value)
+                }
+                editing={editing}
+                placeholder="https://example.com/news-article"
+                fullWidth
+              />
+            </div>
+            {editing && (
+              <div className="mt-3 flex gap-2">
+                <button
+                  onClick={() => onRemoveItem("news", index)}
+                  className="text-red-600 hover:text-red-800 text-sm"
+                >
+                  Remove News
+                </button>
+                {!isComplete && (
+                  <span className="text-orange-600 text-sm">
+                    ⚠️ Incomplete - will not be saved
+                  </span>
+                )}
+              </div>
+            )}
           </div>
-          {editing && (
-            <button
-              onClick={() => onRemoveItem("news", index)}
-              className="mt-2 text-red-600 hover:text-red-800 text-sm"
-            >
-              Remove News
-            </button>
-          )}
-        </div>
-      ))}
+        );
+      })}
     </div>
   </div>
 );
@@ -1102,11 +1179,13 @@ const InputField = ({
   multiline = false,
   fullWidth = false,
   type = "text",
+  required = false,
   ...props
 }) => (
   <div className={fullWidth ? "col-span-full" : ""}>
-    <label className="block text-sm font-medium text-gray-700 mb-2">
+    <label className={`block text-sm font-medium mb-2 ${required ? 'text-red-700' : 'text-gray-700'}`}>
       {label}
+      {required && <span className="text-red-500 ml-1">*</span>}
     </label>
     {editing ? (
       multiline ? (
@@ -1114,7 +1193,9 @@ const InputField = ({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           rows={4}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+            required && !value?.trim() ? 'border-red-300 bg-red-50' : 'border-gray-300'
+          }`}
           {...props}
         />
       ) : (
@@ -1122,13 +1203,21 @@ const InputField = ({
           type={type}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+            required && !value?.trim() ? 'border-red-300 bg-red-50' : 'border-gray-300'
+          }`}
           {...props}
         />
       )
     ) : (
-      <div className="px-3 py-2 bg-gray-100 rounded-md text-gray-900">
-        {multiline ? value : value || "Not set"}
+      <div className={`px-3 py-2 rounded-md text-sm overflow-hidden ${
+        required && !value?.trim() ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-900'
+      }`}>
+        {multiline ? value : (value ? (
+          <div className="truncate" title={value}>
+            {value}
+          </div>
+        ) : required ? "Required field" : "Not set")}
       </div>
     )}
   </div>

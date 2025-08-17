@@ -7,7 +7,9 @@ const Herosection = ({
   mobileVideoId = "39HqTUNw8MU", // Mobile/Shorts video ID
   ctaButtonText = "Start Trading",
   ctaButtonLink = "/auth",
-  heading = "Connect Buyers & Sellers in the Ultimate B2B Marketplace Platform"
+  mainHeading = "Connect Buyers & Sellers in the Ultimate B2B Marketplace Platform",
+  subHeading= "",
+  thirdHeading = "",
 }) => {
   const [isClient, setIsClient] = useState(false);
 
@@ -24,7 +26,9 @@ const Herosection = ({
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
             <div className="text-white text-center">
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6">
-                <span className="block">{heading}</span>
+                <span className="block">{mainHeading}</span>
+                <span className="block">{subHeading}</span>
+                <span className="block">{thirdHeading}</span>
               </h1>
             </div>
           </div>
@@ -89,7 +93,9 @@ const Herosection = ({
             {/* Left Side - Text Content */}
             <div className="text-white">
               <h1 className="text-xl md:text-3xl lg:text-5xl font-bold leading-tight mb-6">
-                <span className="block">{heading}</span>
+                <span className="block">{mainHeading}</span>
+                <span className="block">{subHeading}</span>
+                <span className="block">{thirdHeading}</span>
               </h1>
 
               <p className="text-lg md:text-xl text-gray-200 mb-8 max-w-2xl">

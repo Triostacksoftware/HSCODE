@@ -14,6 +14,7 @@ const NewsSection = ({
       image: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400",
       category: "Interior",
       date: "Apr 15",
+      newsUrl: "https://example.com/kitchen-trends-2020",
     },
     {
       id: 2,
@@ -24,6 +25,7 @@ const NewsSection = ({
         "https://images.unsplash.com/photo-1497366216548-37526070297c?w=400",
       category: "Business",
       date: "Apr 12",
+      newsUrl: "https://example.com/modern-office-design",
     },
     {
       id: 3,
@@ -33,6 +35,7 @@ const NewsSection = ({
       image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400",
       category: "Architecture",
       date: "Apr 10",
+      newsUrl: "https://example.com/sustainable-architecture",
     },
     {
       id: 4,
@@ -42,6 +45,7 @@ const NewsSection = ({
       image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400",
       category: "Technology",
       date: "Apr 08",
+      newsUrl: "https://example.com/smart-home-technology",
     },
     {
       id: 5,
@@ -52,6 +56,7 @@ const NewsSection = ({
         "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400",
       category: "Interior",
       date: "Apr 05",
+      newsUrl: "https://example.com/minimalist-interior-design",
     },
   ],
   viewAllLink = "/news",
@@ -92,17 +97,17 @@ const NewsSection = ({
           {news.map((item, index) => (
             <div
               key={item.id}
-              className="bg-white rounded-lg shadow-sm hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
+              className="bg-white rounded-lg shadow-sm hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 overflow-hidden"
               onMouseEnter={() => setHoveredCard(item.id)}
               onMouseLeave={() => setHoveredCard(null)}
             >
-              {/* Image */}
-              <div className="relative overflow-hidden rounded-t-lg">
-                <img
-                  src={item.image}
-                  alt={item.title}
-                  className="w-full h-48 object-cover transition-transform duration-300 hover:scale-105"
-                />
+                              {/* Image */}
+                <div className="relative overflow-hidden rounded-t-lg h-48">
+                  <img
+                    src={item.image}
+                    alt={item.title}
+                    className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                  />
                 <div className="absolute top-4 left-4">
                   <span className="inline-block px-3 py-1 bg-blue-600 text-white text-xs font-medium rounded-full">
                     {item.category}
@@ -126,10 +131,22 @@ const NewsSection = ({
 
                 {/* Read More Button */}
                 <div className="flex items-center justify-between">
-                  <button className="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium text-sm transition-colors duration-200 group">
-                    Read More
-                    <HiChevronRight className="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform duration-200" />
-                  </button>
+                  {item.newsUrl ? (
+                    <a
+                      href={item.newsUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium text-sm transition-colors duration-200 group"
+                    >
+                      Read More
+                      <HiChevronRight className="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform duration-200" />
+                    </a>
+                  ) : (
+                    <span className="inline-flex items-center text-gray-400 font-medium text-sm">
+                      Read More
+                      <HiChevronRight className="w-4 h-4 ml-1" />
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
