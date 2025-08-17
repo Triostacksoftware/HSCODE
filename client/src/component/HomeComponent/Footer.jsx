@@ -76,7 +76,7 @@ const Footer = ({
   ];
 
   return (
-    <footer id="footer" className="bg-slate-800 text-white py-16 montserrat">
+    <footer id="footer" className="text-white py-16 montserrat" style={{ backgroundColor: 'var(--cobalt-blue)' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-6 gap-8 lg:gap-12">
           {/* Company Info Section */}

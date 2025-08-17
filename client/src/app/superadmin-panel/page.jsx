@@ -135,8 +135,12 @@ const SuperAdminPanel = () => {
         </div>
 
         {/* Logo and App Name */}
-        <div className="p-4 md:p-6 font-semibold hidden md:block">
-          HSCODE SuperAdmin
+        <div className="mb-2 px-5 py-5 md:block h-20 overflow-hidden">
+          <img
+            src="/hscode.png"
+            alt="HS CODES"
+            className="h-12"
+          />
         </div>
 
         {/* User Profile Section */}

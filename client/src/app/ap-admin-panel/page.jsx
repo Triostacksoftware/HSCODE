@@ -49,17 +49,17 @@ const AdminPanel = () => {
     { name: "Dashboard", icon: MdOutlineDashboard, component: Dashboard },
     { name: "Home Content", icon: MdOutlineHomeMax, component: HomeContent },
     { name: "Categories", icon: MdOutlineCategory, component: Categories },
-    { name: "Settings", icon: MdOutlineSettings, component: Settings },
     {
-      name: "Requested Leads",
+      name: "Local Leads",
       icon: MdOutlineRequestPage,
       component: RequestedLeads,
     },
     {
-      name: "Global Requested Leads",
+      name: "Global Leads",
       icon: MdOutlinePublic,
       component: GlobalRequestedLeads,
     },
+    { name: "Settings", icon: MdOutlineSettings, component: Settings },
   ];
 
   const renderComponent = () => {
@@ -125,7 +125,13 @@ const AdminPanel = () => {
       >
         {/* Mobile Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200 md:hidden">
-          <div className="font-semibold">HSCODE</div>
+          <div className="font-semibold">
+            <img
+              src="/hscode.png"
+              alt="HS CODES"
+              className="h-8 w-auto"
+            />
+          </div>
           <button
             onClick={() => setSidebarOpen(false)}
             className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
@@ -135,7 +141,13 @@ const AdminPanel = () => {
         </div>
 
         {/* Logo and App Name */}
-        <div className="p-4 md:p-6 font-semibold hidden md:block">HSCODE</div>
+        <div className="p-4 md:p-6 hidden md:block">
+          <img
+            src="/hscode.png"
+            alt="HS CODES"
+            className="h-10 w-auto"
+          />
+        </div>
 
         {/* User Profile Section */}
         <div className="p-4 text-gray-900 text-sm">
@@ -180,12 +192,6 @@ const AdminPanel = () => {
         {/* Support and Community */}
         <div className="p-4 mt-auto text-sm space-y-2 absolute bottom-0 left-0 right-0 text-gray-600">
           <button
-            onClick={() => router.push("/userchat")}
-            className="w-full px-3 py-2 rounded-lg transition-colors border hover:bg-gray-300 text-xs sm:text-sm"
-          >
-            Leads Chat
-          </button>
-          <button
             onClick={handleLogout}
             disabled={isLoggingOut}
             className="w-full px-3 py-2 rounded-lg transition-colors border hover:bg-gray-300 text-xs sm:text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -206,7 +212,13 @@ const AdminPanel = () => {
           >
             <MdMenu className="w-5 h-5" />
           </button>
-          <div className="font-semibold">HSCODE</div>
+          <div className="font-semibold">
+            <img
+              src="/hscode.png"
+              alt="HS CODES"
+              className="h-8 w-auto"
+            />
+          </div>
           <div className="w-10"></div> {/* Spacer for centering */}
         </div>
 

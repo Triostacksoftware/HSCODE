@@ -53,14 +53,14 @@ const Navbar = () => {
   }, []);
 
   return (
-    <nav className="bg-white border-b border-gray-200 fixed w-full top-0 z-50">
+    <nav className="bg-white border-b border-gray-200 fixed w-full top-0 z-50" style={{ borderColor: 'var(--cobalt-blue)' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16 md:h-18">
           {/* Logo */}
           <Link href="/" className="flex-shrink-0">
             <img
-              className="h-16 w-auto"
-              src="http://www.hscodes.com/assets/images/logo_splash_txt.png"
+              className="h-12 w-auto"
+              src="hscode.png"
               alt="HSCODE"
             />
           </Link>
@@ -70,20 +70,29 @@ const Navbar = () => {
             <div className="ml-10 flex items-baseline space-x-6">
               <button
                 onClick={() => handleNavigation("/")}
-                className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium flex items-center"
+                className="px-3 py-2 text-sm font-medium flex items-center transition-colors duration-200"
+                style={{ color: 'var(--cobalt-blue)' }}
+                onMouseEnter={(e) => e.target.style.color = 'var(--leaf-green)'}
+                onMouseLeave={(e) => e.target.style.color = 'var(--cobalt-blue)'}
               >
                 Home
               </button>
               <button
                 onClick={() => handleNavigation("/", "about")}
-                className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium flex items-center"
+                className="px-3 py-2 text-sm font-medium flex items-center transition-colors duration-200"
+                style={{ color: 'var(--cobalt-blue)' }}
+                onMouseEnter={(e) => e.target.style.color = 'var(--leaf-green)'}
+                onMouseLeave={(e) => e.target.style.color = 'var(--cobalt-blue)'}
               >
                 About
               </button>
               <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={handleTrendingToggle}
-                  className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium flex items-center"
+                  className="px-3 py-2 text-sm font-medium flex items-center transition-colors duration-200"
+                  style={{ color: 'var(--cobalt-blue)' }}
+                  onMouseEnter={(e) => e.target.style.color = 'var(--leaf-green)'}
+                  onMouseLeave={(e) => e.target.style.color = 'var(--cobalt-blue)'}
                 >
                   Trending
                   <HiChevronDown className="ml-1 h-4 w-4" />
@@ -109,13 +118,19 @@ const Navbar = () => {
               </div>
               <button
                 onClick={() => handleNavigation("/", "footer")}
-                className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium flex items-center"
+                className="px-3 py-2 text-sm font-medium flex items-center transition-colors duration-200"
+                style={{ color: 'var(--cobalt-blue)' }}
+                onMouseEnter={(e) => e.target.style.color = 'var(--leaf-green)'}
+                onMouseLeave={(e) => e.target.style.color = 'var(--cobalt-blue)'}
               >
                 Contact Us
               </button>
               <Link
                 href="/subscription"
-                className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium flex items-center"
+                className="px-3 py-2 text-sm font-medium flex items-center transition-colors duration-200"
+                style={{ color: 'var(--cobalt-blue)' }}
+                onMouseEnter={(e) => e.target.style.color = 'var(--leaf-green)'}
+                onMouseLeave={(e) => e.target.style.color = 'var(--cobalt-blue)'}
               >
                 Subscription
               </Link>
@@ -128,18 +143,36 @@ const Navbar = () => {
             <NavbarGoogleTranslate />
 
             {/* Language Selector */}
-            <div className="flex items-center text-gray-700 hover:text-gray-900 cursor-pointer">
+            <div className="flex items-center cursor-pointer transition-colors duration-200"
+                 style={{ color: 'var(--cobalt-blue)' }}
+                 onMouseEnter={(e) => e.target.style.color = 'var(--leaf-green)'}
+                 onMouseLeave={(e) => e.target.style.color = 'var(--cobalt-blue)'}>
               <span className="text-sm font-medium">EN</span>
               <HiChevronDown className="ml-1 h-4 w-4" />
             </div>
 
             {/* Search Icon */}
-            <button className="text-gray-700 hover:text-gray-900 p-2">
+            <button className="p-2 transition-colors duration-200"
+                    style={{ color: 'var(--cobalt-blue)' }}
+                    onMouseEnter={(e) => e.target.style.color = 'var(--leaf-green)'}
+                    onMouseLeave={(e) => e.target.style.color = 'var(--cobalt-blue)'}>
               <HiSearch className="h-5 w-5" />
             </button>
 
             {/* Live Demo Button */}
-            <button className="border border-gray-800 text-gray-800 bg-white hover:bg-gray-50 px-4 py-2 rounded-md text-sm font-medium flex items-center">
+            <button className="border bg-white hover:bg-gray-50 px-4 py-2 rounded-md text-sm font-medium flex items-center transition-all duration-200"
+                    style={{ 
+                      borderColor: 'var(--cobalt-blue)',
+                      color: 'var(--cobalt-blue)'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.backgroundColor = 'var(--cobalt-blue)';
+                      e.target.style.color = 'var(--brand-white)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.backgroundColor = 'var(--brand-white)';
+                      e.target.style.color = 'var(--cobalt-blue)';
+                    }}>
               <svg
                 className="w-4 h-4 mr-2"
                 fill="currentColor"

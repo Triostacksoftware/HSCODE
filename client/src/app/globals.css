@@ -5,6 +5,13 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  
+  /* HS CODES Brand Colors */
+  --cobalt-blue: #004B87;
+  --leaf-green: #3E9C35;
+  --trade-orange: #F36F21;
+  --brand-black: #000000;
+  --brand-white: #FFFFFF;
 }
 
 @media (prefers-color-scheme: dark) {
