@@ -9,13 +9,32 @@ import NotificationTab from "../../component/ChatComponents/NotificationTab";
 import { useUserAuth } from "../../utilities/userAuthMiddleware.js";
 import { connectUserSocket } from "../../utilities/socket";
 import { OnlineUsersContext } from "../../contexts/OnlineUsersContext";
+import axios from "axios";
 
 const ChatPage = () => {
   const [activeTab, setActiveTab] = useState("local");
   const [onlineCounts, setOnlineCounts] = useState({});
   const [onlineUsers, setOnlineUsers] = useState({});
   const [socket, setSocket] = useState(null);
+  const [notificationCount, setNotificationCount] = useState(0);
   const { user } = useUserAuth();
+
+  // Fetch notification count
+  const fetchNotificationCount = async () => {
+    try {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/notifications/user/count`,
+        {
+          withCredentials: true,
+        }
+      );
+      if (response.data?.data?.unread) {
+        setNotificationCount(response.data.data.unread);
+      }
+    } catch (error) {
+      console.error("Error fetching notification count:", error);
+    }
+  };
 
   useEffect(() => {
     if (!user || (!user.groupsID?.length && !user.globalGroupsID?.length))
@@ -57,8 +76,44 @@ const ChatPage = () => {
     JSON.stringify(user?.globalGroupsID),
   ]);
 
+  // Fetch notification count when user is available
+  useEffect(() => {
+    if (user) {
+      fetchNotificationCount();
+    }
+  }, [user]);
+
+  // Listen for new notifications via WebSocket
+  useEffect(() => {
+    const handleNewNotification = () => {
+      // Increment the notification count when a new notification arrives
+      setNotificationCount((prev) => prev + 1);
+    };
+
+    window.addEventListener("newNotification", handleNewNotification);
+
+    return () => {
+      window.removeEventListener("newNotification", handleNewNotification);
+    };
+  }, []);
+
+  // Periodic refresh of notification count
+  useEffect(() => {
+    if (!user) return;
+
+    const interval = setInterval(() => {
+      fetchNotificationCount();
+    }, 30000); // Refresh every 30 seconds
+
+    return () => clearInterval(interval);
+  }, [user]);
+
   const handleTabChange = (tab) => {
     setActiveTab(tab);
+    // Refresh notification count when switching to notifications tab
+    if (tab === "notifications") {
+      fetchNotificationCount();
+    }
   };
 
   const renderActiveComponent = () => {
@@ -70,7 +125,7 @@ const ChatPage = () => {
       case "leads":
         return <RequestedLeads />;
       case "notifications":
-        return <NotificationTab />;
+        return <NotificationTab onNotificationRead={fetchNotificationCount} />;
       case "settings":
         return <UserChatSettings />;
       default:
@@ -81,7 +136,11 @@ const ChatPage = () => {
   return (
     <OnlineUsersContext.Provider value={{ onlineCounts, onlineUsers, socket }}>
       <div className="flex h-screen bg-[#FEFEFE]">
-        <Sidebar onTabChange={handleTabChange} activeTab={activeTab} />
+        <Sidebar
+          onTabChange={handleTabChange}
+          activeTab={activeTab}
+          notificationCount={notificationCount}
+        />
         <div className="flex-1 overflow-auto">
           <div className="h-full">{renderActiveComponent()}</div>
         </div>

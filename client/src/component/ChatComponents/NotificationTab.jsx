@@ -10,12 +10,12 @@ import {
   FiEyeOff,
 } from "react-icons/fi";
 
-const NotificationTab = () => {
+const NotificationTab = ({ onNotificationRead }) => {
   const [notifications, setNotifications] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [showPreferences, setShowPreferences] = useState(false);
   const [preferences, setPreferences] = useState({
     email: true,
@@ -106,6 +106,7 @@ const NotificationTab = () => {
         );
         setUnreadCount((prev) => Math.max(0, prev - 1));
         toast.success("Marked as read");
+        onNotificationRead(); // Call the callback to update the parent
       }
     } catch (error) {
       console.error("Error marking as read:", error);
@@ -129,6 +130,7 @@ const NotificationTab = () => {
         );
         setUnreadCount(0);
         toast.success("All notifications marked as read");
+        onNotificationRead(); // Call the callback to update the parent
       }
     } catch (error) {
       console.error("Error marking all as read:", error);
@@ -153,6 +155,7 @@ const NotificationTab = () => {
           prev.filter((notif) => notif.notification._id !== notificationId)
         );
         toast.success("Notification deleted");
+        onNotificationRead(); // Call the callback to update the parent
       }
     } catch (error) {
       console.error("Error deleting notification:", error);

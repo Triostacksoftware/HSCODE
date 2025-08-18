@@ -6,7 +6,7 @@ import { BsGlobeAmericas, BsSendArrowUp } from "react-icons/bs";
 import { MdHomeMax } from "react-icons/md";
 import { FiBell } from "react-icons/fi";
 
-const Sidebar = ({ onTabChange, activeTab }) => {
+const Sidebar = ({ onTabChange, activeTab, notificationCount = 0 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const toggleSidebar = () => {
@@ -37,6 +37,7 @@ const Sidebar = ({ onTabChange, activeTab }) => {
       id: "notifications",
       label: "Notifications",
       icon: <FiBell className="w-[1.1em] h-[1.1em]" />,
+      badge: notificationCount > 0 ? notificationCount : null,
     },
     {
       id: "settings",
@@ -78,8 +79,14 @@ const Sidebar = ({ onTabChange, activeTab }) => {
               {activeTab === item.id && (
                 <div className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[.2em] rounded-md bg-green-600" />
               )}
-              <div className="rounded transition-all duration-300">
+              <div className="rounded transition-all duration-300 relative">
                 {item.icon}
+                {/* Notification Badge */}
+                {item.badge && (
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[18px] h-[18px] flex items-center justify-center">
+                    {item.badge > 99 ? "99+" : item.badge}
+                  </span>
+                )}
               </div>
               {isOpen && (
                 <span className="text-gray-700 text-sm whitespace-nowrap transition-opacity duration-300 opacity-100">
