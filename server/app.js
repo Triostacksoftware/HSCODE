@@ -19,6 +19,7 @@ import globalGroupRoutes from "./routes/globalGroup.routes.js";
 import globalLeadsRoutes from "./routes/globalLeads.routes.js";
 import superadminRoutes from "./routes/superadmin.routes.js";
 import homeDataRoutes from "./routes/homeData.routes.js";
+import notificationRoutes from "./routes/notification.routes.js";
 import { getLocationInfo } from "./utilities/location.util.js";
 
 // middlewares
@@ -85,5 +86,6 @@ app.use("/api/v1/global-groups", globalGroupRoutes);
 app.use("/api/v1/global-leads", globalLeadsRoutes);
 app.use("/api/v1/superadmin", superadminRoutes);
 app.use("/api/v1/home-data", homeDataRoutes);
+app.use("/api/v1/notifications", notificationRoutes);
 
 export default app;

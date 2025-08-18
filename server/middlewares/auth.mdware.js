@@ -5,6 +5,7 @@ import SuperAdminModel from "../models/SuperAdmin.js";
 export const authMiddleware = async (req, res, next) => {
   try {
     const token = req.cookies.auth_token;
+    console.log("token", token);
 
     if (!token) {
       return res
@@ -18,6 +19,9 @@ export const authMiddleware = async (req, res, next) => {
     if (!decoded) {
       return res.status(401).json({ message: "Invalid or expired token" });
     }
+
+    console.log("Auth middleware - decoded token:", decoded);
+    console.log("Auth middleware - setting req.user:", decoded);
 
     req.user = decoded;
     next();
@@ -71,7 +75,9 @@ export const superadminMiddleware = async (req, res, next) => {
     const token = req.cookies.auth_token;
 
     if (!token) {
-      return res.status(401).json({ message: "No token provided. Please log in." });
+      return res
+        .status(401)
+        .json({ message: "No token provided. Please log in." });
     }
 
     // Verify token

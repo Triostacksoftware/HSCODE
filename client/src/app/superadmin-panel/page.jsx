@@ -10,6 +10,7 @@ import SuperGlobalRequestedLeads from "@/component/superadminPanelComponent/Supe
 import SuperLocalRequestedLeads from "@/component/superadminPanelComponent/SuperLocalRequestedLeads";
 import SuperLocalCategories from "@/component/superadminPanelComponent/SuperLocalCategories";
 import ManageAdmins from "@/component/superadminPanelComponent/ManageAdmins";
+import NotificationManager from "@/component/superadminPanelComponent/NotificationManager";
 import {
   MdOutlineDashboard,
   MdOutlineCategory,
@@ -19,6 +20,7 @@ import {
   MdLogout,
   MdOutlineRequestPage,
   MdOutlineAdminPanelSettings,
+  MdOutlineNotifications,
 } from "react-icons/md";
 
 const SuperAdminPanel = () => {
@@ -73,6 +75,11 @@ const SuperAdminPanel = () => {
       name: "Manage Admins",
       icon: MdOutlineAdminPanelSettings,
       component: ManageAdmins,
+    },
+    {
+      name: "Notifications",
+      icon: MdOutlineNotifications,
+      component: NotificationManager,
     },
   ];
 

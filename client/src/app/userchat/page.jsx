@@ -5,6 +5,7 @@ import DomesticChat from "../../component/ChatComponents/DomesticChat";
 import GlobalChat from "../../component/ChatComponents/GlobalChat";
 import RequestedLeads from "../../component/ChatComponents/RequestedLeads";
 import UserChatSettings from "../../component/ChatComponents/UserChatSettings";
+import NotificationTab from "../../component/ChatComponents/NotificationTab";
 import { useUserAuth } from "../../utilities/userAuthMiddleware.js";
 import { connectUserSocket } from "../../utilities/socket";
 import { OnlineUsersContext } from "../../contexts/OnlineUsersContext";
@@ -68,6 +69,8 @@ const ChatPage = () => {
         return <GlobalChat />;
       case "leads":
         return <RequestedLeads />;
+      case "notifications":
+        return <NotificationTab />;
       case "settings":
         return <UserChatSettings />;
       default:

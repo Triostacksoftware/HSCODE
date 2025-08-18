@@ -42,6 +42,9 @@ io.on("connection", (socket) => {
     socket.join(`group-${groupId}`);
   });
 
+  // Join user to their personal room for notifications
+  socket.join(`user-${userId}`);
+
   // Broadcast updated online users list to each group
   groupIds.forEach((groupId) => {
     broadcastGroupOnlineUsers(groupId);
@@ -58,6 +61,12 @@ io.on("connection", (socket) => {
   // Forward lead approval to group
   socket.on("new-approved-lead", ({ groupId, lead }) => {
     io.to(`group-${groupId}`).emit("new-approved-lead", lead);
+  });
+
+  // Handle notification delivery confirmation
+  socket.on("notification-delivered", ({ notificationId, userId }) => {
+    // This will be handled by the notification system
+    console.log(`Notification ${notificationId} delivered to user ${userId}`);
   });
 });
 
@@ -104,6 +113,9 @@ async function broadcastGroupOnlineUsers(groupId) {
   }
 }
 
+// Import scheduled notifications utility
+import { startScheduledNotificationsProcessor } from "./utilities/scheduledNotifications.util.js";
+
 // Connect to MongoDB and start server
 mongoose
   .connect(process.env.MONGO_URI)
@@ -118,6 +130,9 @@ mongoose
           process.env.DOMAIN || "http://localhost:" + PORT
         }`
       );
+
+      // Start the scheduled notifications processor
+      startScheduledNotificationsProcessor();
     });
   })
   .catch((err) => {

@@ -4,6 +4,7 @@ import { HiCog } from "react-icons/hi";
 import { HiBars3 } from "react-icons/hi2";
 import { BsGlobeAmericas, BsSendArrowUp } from "react-icons/bs";
 import { MdHomeMax } from "react-icons/md";
+import { FiBell } from "react-icons/fi";
 
 const Sidebar = ({ onTabChange, activeTab }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -31,6 +32,11 @@ const Sidebar = ({ onTabChange, activeTab }) => {
       id: "leads",
       label: "Requested Leads",
       icon: <BsSendArrowUp className="w-[1.1em] h-[1.1em]" />,
+    },
+    {
+      id: "notifications",
+      label: "Notifications",
+      icon: <FiBell className="w-[1.1em] h-[1.1em]" />,
     },
     {
       id: "settings",

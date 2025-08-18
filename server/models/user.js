@@ -26,6 +26,14 @@ const userSchema = new mongoose.Schema(
     image: { type: String },
     about: { type: String },
     preferences: { type: Object },
+    notificationPreferences: {
+      email: { type: Boolean, default: true },
+      push: { type: Boolean, default: true },
+      inApp: { type: Boolean, default: true },
+      local: { type: Boolean, default: true },
+      global: { type: Boolean, default: true },
+      individual: { type: Boolean, default: true },
+    },
 
     password: {
       type: String,
@@ -70,19 +78,19 @@ const userSchema = new mongoose.Schema(
         lastReadAt: { type: Date, default: null },
       },
     ],
-    
+
     // Admin-specific fields
     role: {
       type: String,
       enum: ["user", "admin"],
       default: "user",
     },
-    
+
     totpSecret: {
       type: String,
       default: null,
     },
-    
+
     totpEnabled: {
       type: Boolean,
       default: false,

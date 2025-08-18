@@ -12,6 +12,22 @@ export const connectUserSocket = (userId, groupIds) => {
     },
     withCredentials: true,
   });
+
+  // Listen for notifications
+  socket.on("notification", (notification) => {
+    // Emit a custom event that components can listen to
+    const event = new CustomEvent("newNotification", { detail: notification });
+    window.dispatchEvent(event);
+
+    // Show toast notification
+    if (window.toast) {
+      window.toast.success(notification.title, {
+        description: notification.message,
+        duration: 5000,
+      });
+    }
+  });
+
   return socket;
 };
 
