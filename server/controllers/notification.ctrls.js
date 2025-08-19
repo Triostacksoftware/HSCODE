@@ -40,6 +40,7 @@ const createNotification = async (req, res) => {
       imageUrl,
       scheduledFor,
       sentBy: req.user.id,
+      sentByModel: req.user.role === "superadmin" ? "SuperAdmin" : "User",
       status: scheduledFor ? "scheduled" : "draft",
     });
 
@@ -74,7 +75,7 @@ const processNotification = async (notification) => {
       case "local":
         // Get users from specific country
         const localUsers = await User.find({
-          country: notification.targetCountry,
+          countryCode: notification.targetCountry,
         });
         targetUsers = localUsers.map((user) => user._id);
         break;
@@ -182,7 +183,11 @@ const getAllNotifications = async (req, res) => {
     if (category) filter.category = category;
 
     const notifications = await Notification.find(filter)
-      .populate("sentBy", "name email")
+      .populate({
+        path: "sentBy",
+        select: "name email",
+        refPath: "sentByModel",
+      })
       .sort({ createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit);
@@ -212,8 +217,12 @@ const getAllNotifications = async (req, res) => {
 const getNotificationById = async (req, res) => {
   try {
     const notification = await Notification.findById(req.params.id)
-      .populate("sentBy", "name email")
-      .populate("targetUsers", "name email country")
+      .populate({
+        path: "sentBy",
+        select: "name email",
+        refPath: "sentByModel",
+      })
+      .populate("targetUsers", "name email countryCode")
       .populate("targetGroups", "name")
       .populate("globalGroups", "name");
 

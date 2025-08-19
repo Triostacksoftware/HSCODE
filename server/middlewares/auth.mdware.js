@@ -31,7 +31,7 @@ export const authMiddleware = async (req, res, next) => {
   }
 };
 
-// Admin-specific middleware
+// Admin-specific middleware (allows both admin and superadmin)
 export const adminMiddleware = async (req, res, next) => {
   try {
     const token = req.cookies.auth_token;
@@ -48,17 +48,24 @@ export const adminMiddleware = async (req, res, next) => {
       return res.status(401).json({ message: "Invalid or expired token" });
     }
 
-    // Check if user is admin
-    if (decoded.role !== "admin") {
+    // Check if user is admin or superadmin
+    if (decoded.role !== "admin" && decoded.role !== "superadmin") {
       return res
         .status(403)
-        .json({ message: "Access denied. Admin role required." });
+        .json({ message: "Access denied. Admin or Superadmin role required." });
     }
 
-    // Verify admin exists in database
-    const admin = await UserModel.findById(decoded.id);
-    if (!admin) {
-      return res.status(401).json({ message: "Admin not found" });
+    // Verify user exists in database
+    if (decoded.role === "admin") {
+      const admin = await UserModel.findById(decoded.id);
+      if (!admin) {
+        return res.status(401).json({ message: "Admin not found" });
+      }
+    } else if (decoded.role === "superadmin") {
+      const superadmin = await SuperAdminModel.findById(decoded.id);
+      if (!superadmin) {
+        return res.status(401).json({ message: "Superadmin not found" });
+      }
     }
 
     req.user = decoded;

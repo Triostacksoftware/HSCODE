@@ -5,11 +5,12 @@ import userNotificationController from "../controllers/userNotification.ctrls.js
 
 import {
   superadminMiddleware,
+  adminMiddleware,
   authMiddleware,
 } from "../middlewares/auth.mdware.js";
 
-// Admin routes (require superadmin authentication)
-router.use("/admin", superadminMiddleware);
+// Admin routes (require admin or superadmin authentication)
+router.use("/admin", adminMiddleware);
 
 // Create notification
 router.post("/admin/create", notificationController.createNotification);
@@ -29,6 +30,30 @@ router.delete("/admin/:id", notificationController.deleteNotification);
 // Get notification statistics
 router.get(
   "/admin/stats/overview",
+  notificationController.getNotificationStats
+);
+
+// Superadmin routes (require superadmin authentication)
+router.use("/superadmin", superadminMiddleware);
+
+// Create notification
+router.post("/superadmin/create", notificationController.createNotification);
+
+// Get all notifications
+router.get("/superadmin/all", notificationController.getAllNotifications);
+
+// Get notification by ID
+router.get("/superadmin/:id", notificationController.getNotificationById);
+
+// Update notification
+router.put("/superadmin/:id", notificationController.updateNotification);
+
+// Delete notification
+router.delete("/superadmin/:id", notificationController.deleteNotification);
+
+// Get notification statistics
+router.get(
+  "/superadmin/stats/overview",
   notificationController.getNotificationStats
 );
 

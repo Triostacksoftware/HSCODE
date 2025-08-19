@@ -68,8 +68,13 @@ const notificationSchema = new mongoose.Schema(
     },
     sentBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "SuperAdmin",
+      refPath: "sentByModel",
       required: true,
+    },
+    sentByModel: {
+      type: String,
+      required: true,
+      enum: ["SuperAdmin", "User"],
     },
     status: {
       type: String,

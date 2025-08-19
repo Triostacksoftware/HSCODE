@@ -3,12 +3,14 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { useAuth } from "../../utilities/authMiddleware";
+import { Toaster } from "react-hot-toast";
 import Dashboard from "@/component/adminPanelComponent/Dashboard";
 import HomeContent from "@/component/adminPanelComponent/HomeContent";
 import Categories from "@/component/adminPanelComponent/Categories";
 import Settings from "@/component/adminPanelComponent/Settings";
 import RequestedLeads from "@/component/adminPanelComponent/RequestedLeads";
 import GlobalRequestedLeads from "@/component/adminPanelComponent/GlobalRequestedLeads";
+import NotificationManager from "@/component/adminPanelComponent/NotificationManager";
 import {
   MdOutlineDashboard,
   MdOutlineHomeMax,
@@ -19,7 +21,8 @@ import {
   MdLogout,
   MdOutlineRequestPage,
   MdOutlinePublic,
-  MdChat
+  MdChat,
+  MdOutlineNotifications,
 } from "react-icons/md";
 import Link from "next/link";
 
@@ -62,6 +65,11 @@ const AdminPanel = () => {
       component: GlobalRequestedLeads,
     },
     { name: "Settings", icon: MdOutlineSettings, component: Settings },
+    {
+      name: "Notifications",
+      icon: MdOutlineNotifications,
+      component: NotificationManager,
+    },
   ];
 
   const renderComponent = () => {
@@ -128,11 +136,7 @@ const AdminPanel = () => {
         {/* Mobile Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200 md:hidden">
           <div className="font-semibold">
-            <img
-              src="/hscode.png"
-              alt="HS CODES"
-              className="h-8 w-auto"
-            />
+            <img src="/hscode.png" alt="HS CODES" className="h-8 w-auto" />
           </div>
           <button
             onClick={() => setSidebarOpen(false)}
@@ -144,11 +148,7 @@ const AdminPanel = () => {
 
         {/* Logo and App Name */}
         <div className="p-4 md:p-6 hidden md:block">
-          <img
-            src="/hscode.png"
-            alt="HS CODES"
-            className="h-10 w-auto"
-          />
+          <img src="/hscode.png" alt="HS CODES" className="h-10 w-auto" />
         </div>
 
         {/* User Profile Section */}
@@ -194,11 +194,11 @@ const AdminPanel = () => {
         {/* Support and Community */}
         <div className="p-4 mt-auto text-sm space-y-2 absolute bottom-0 left-0 right-0 text-gray-600">
           <button
-              onClick={() => window.location.href = '/userchat'}
-              className="w-full px-3 py-2 rounded-lg transition-colors border hover:bg-gray-300 text-xs sm:text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <MdChat className="w-4 h-4" />
-              User Chat
+            onClick={() => (window.location.href = "/userchat")}
+            className="w-full px-3 py-2 rounded-lg transition-colors border hover:bg-gray-300 text-xs sm:text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <MdChat className="w-4 h-4" />
+            User Chat
           </button>
           <button
             onClick={handleLogout}
@@ -222,11 +222,7 @@ const AdminPanel = () => {
             <MdMenu className="w-5 h-5" />
           </button>
           <div className="font-semibold">
-            <img
-              src="/hscode.png"
-              alt="HS CODES"
-              className="h-8 w-auto"
-            />
+            <img src="/hscode.png" alt="HS CODES" className="h-8 w-auto" />
           </div>
           <div className="w-10"></div> {/* Spacer for centering */}
         </div>
@@ -234,6 +230,7 @@ const AdminPanel = () => {
         {/* Content */}
         <div className="flex-1 min-h-0">{renderComponent()}</div>
       </div>
+      <Toaster />
     </div>
   );
 };
