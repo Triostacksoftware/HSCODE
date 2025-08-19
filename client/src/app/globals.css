@@ -106,3 +106,61 @@
 body {
   top: 0px !important;
 }
+
+/* Section-based navigation animations */
+.section-transition-enter {
+  opacity: 0;
+  transform: translateX(-20px);
+}
+
+.section-transition-enter-active {
+  opacity: 1;
+  transform: translateX(0);
+  transition: opacity 300ms ease-in-out, transform 300ms ease-in-out;
+}
+
+.section-transition-exit {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.section-transition-exit-active {
+  opacity: 0;
+  transform: translateX(20px);
+  transition: opacity 300ms ease-in-out, transform 300ms ease-in-out;
+}
+
+/* Smooth slide animations for groups */
+.animate-slide-in-groups {
+  animation: slideInGroups 0.3s ease-out;
+}
+
+@keyframes slideInGroups {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Hover effects for sections and chapters */
+.section-item {
+  transition: all 0.2s ease-in-out;
+}
+
+.section-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.chapter-item {
+  transition: all 0.2s ease-in-out;
+}
+
+.chapter-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}

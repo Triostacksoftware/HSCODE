@@ -9,9 +9,115 @@ export const getCategories = async (req, res) => {
   try {
     const countryCode = req.user.countryCode;
 
-    const categories = await LocalCategoryModel.find({ countryCode });
+    if (!countryCode) {
+      return res.json([]);
+    }
+
+    let categories = await LocalCategoryModel.find({ countryCode });
+
+    // TEMPORARY: If no categories exist for this country, create test data
+    if (categories.length === 0) {
+      // Create test categories for any country that doesn't have them
+      const testCategories = [
+        {
+          name: "Live Animals",
+          chapter: "01",
+          countryCode: countryCode,
+          adminId: req.user.id,
+        },
+        {
+          name: "Meat And Edible Meat Offal",
+          chapter: "02",
+          countryCode: countryCode,
+          adminId: req.user.id,
+        },
+        {
+          name: "Fish; Crustaceans & Aquatic Invertebrates",
+          chapter: "03",
+          countryCode: countryCode,
+          adminId: req.user.id,
+        },
+        {
+          name: "Dairy Products; Birds Eggs; Honey",
+          chapter: "04",
+          countryCode: countryCode,
+          adminId: req.user.id,
+        },
+        {
+          name: "Products Of Animal Origin",
+          chapter: "05",
+          countryCode: countryCode,
+          adminId: req.user.id,
+        },
+        {
+          name: "Live Trees; Plants; Bulbs; Cut Flowers",
+          chapter: "06",
+          countryCode: countryCode,
+          adminId: req.user.id,
+        },
+        {
+          name: "Edible Vegetables And Roots",
+          chapter: "07",
+          countryCode: countryCode,
+          adminId: req.user.id,
+        },
+        {
+          name: "Edible Fruit And Nuts",
+          chapter: "08",
+          countryCode: countryCode,
+          adminId: req.user.id,
+        },
+        {
+          name: "Coffee; Tea; Mate And Spices",
+          chapter: "09",
+          countryCode: countryCode,
+          adminId: req.user.id,
+        },
+        {
+          name: "Cereals",
+          chapter: "10",
+          countryCode: countryCode,
+          adminId: req.user.id,
+        },
+        {
+          name: "Milling Products; Malt; Starch",
+          chapter: "11",
+          countryCode: countryCode,
+          adminId: req.user.id,
+        },
+        {
+          name: "Oil Seeds; Misc Grain; Seeds",
+          chapter: "12",
+          countryCode: countryCode,
+          adminId: req.user.id,
+        },
+        {
+          name: "Lac; Gums; Resins; Vegetable Saps",
+          chapter: "13",
+          countryCode: countryCode,
+          adminId: req.user.id,
+        },
+        {
+          name: "Vegetable Plaiting Materials",
+          chapter: "14",
+          countryCode: countryCode,
+          adminId: req.user.id,
+        },
+      ];
+
+      try {
+        const createdCategories = await LocalCategoryModel.insertMany(
+          testCategories
+        );
+        categories = createdCategories;
+      } catch (createError) {
+        console.error("Error creating test categories:", createError);
+      }
+    }
+
     res.json(categories);
   } catch (err) {
+    console.error("Error in getCategories:", err);
     res.status(500).json({ message: "Error fetching categories" });
   }
 };
@@ -37,7 +143,6 @@ export const createCategory = async (req, res) => {
 };
 
 export const createManyCategory = async (req, res) => {
-
   try {
     const { id, countryCode } = req.user; // Admin ID & country
     const array = parseFile(req.file);
@@ -108,7 +213,10 @@ export const updateCategory = async (req, res) => {
 export const getGroups = async (req, res) => {
   const { id: categoryId } = req.params;
   try {
-    const groups = await LocalGroupModel.find({ categoryId }).populate("categoryId", "chapter");
+    const groups = await LocalGroupModel.find({ categoryId }).populate(
+      "categoryId",
+      "chapter"
+    );
     res.json(groups);
   } catch (err) {
     res.status(500).json({ message: "Error fetching groups" });
