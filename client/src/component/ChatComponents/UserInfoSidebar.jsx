@@ -10,6 +10,7 @@ import {
   HiOutlineUser,
   HiOutlineCalendar,
   HiOutlineUserGroup,
+  HiOutlineLink,
 } from "react-icons/hi2";
 import { useUserAuth } from "../../utilities/userAuthMiddleware";
 
@@ -196,6 +197,23 @@ const UserInfoSidebar = ({ userId, isOpen, onClose }) => {
                           <span className="text-gray-700 font-medium">
                             {userInfo.countryCode}
                           </span>
+                        </div>
+                      )}
+                      {userInfo.companyWebsite && (
+                        <div className="flex items-center gap-3 text-sm p-2 bg-gray-50 rounded-lg">
+                          <HiOutlineLink className="w-4 h-4 text-gray-800" />
+                          <a
+                            href={
+                              userInfo.companyWebsite.startsWith("http")
+                                ? userInfo.companyWebsite
+                                : `https://${userInfo.companyWebsite}`
+                            }
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:text-blue-800 underline font-medium"
+                          >
+                            {userInfo.companyWebsite}
+                          </a>
                         </div>
                       )}
                     </div>

@@ -12,17 +12,31 @@ export const getGroups = async (req, res) => {
     const user = await UserModel.findById(id);
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    const groups = await LocalGroupModel.find({ _id: { $in: user.groupsID } }).populate("categoryId", "chapter");
+    const groups = await LocalGroupModel.find({
+      _id: { $in: user.groupsID },
+    }).populate("categoryId", "chapter");
 
     // compute unread counts: approved leads after lastReadAt
-    const groupIdToLastRead = new Map((user.groupReads || []).map((gr) => [String(gr.groupId), gr.lastReadAt]));
+    const groupIdToLastRead = new Map(
+      (user.groupReads || []).map((gr) => [String(gr.groupId), gr.lastReadAt])
+    );
     const unreadMap = {};
     await Promise.all(
       groups.map(async (g) => {
         const lastRead = groupIdToLastRead.get(String(g._id)) || new Date(0);
         const [buy, sell] = await Promise.all([
-          ApprovedLeads.countDocuments({ groupId: g._id, createdAt: { $gt: lastRead }, type: "buy", userId: { $ne: user._id } }),
-          ApprovedLeads.countDocuments({ groupId: g._id, createdAt: { $gt: lastRead }, type: "sell", userId: { $ne: user._id } }),
+          ApprovedLeads.countDocuments({
+            groupId: g._id,
+            createdAt: { $gt: lastRead },
+            type: "buy",
+            userId: { $ne: user._id },
+          }),
+          ApprovedLeads.countDocuments({
+            groupId: g._id,
+            createdAt: { $gt: lastRead },
+            type: "sell",
+            userId: { $ne: user._id },
+          }),
         ]);
         unreadMap[String(g._id)] = { buy, sell };
       })
@@ -50,17 +64,34 @@ export const getGlobalGroups = async (req, res) => {
     const user = await UserModel.findById(userId);
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    const groups = await GlobalGroupModel.find({ _id: { $in: groupIds } }).populate("categoryId");
+    const groups = await GlobalGroupModel.find({
+      _id: { $in: groupIds },
+    }).populate("categoryId");
 
     // unread for global groups
-    const groupIdToLastRead = new Map((user.globalGroupReads || []).map((gr) => [String(gr.groupId), gr.lastReadAt]));
+    const groupIdToLastRead = new Map(
+      (user.globalGroupReads || []).map((gr) => [
+        String(gr.groupId),
+        gr.lastReadAt,
+      ])
+    );
     const unreadMap = {};
     await Promise.all(
       groups.map(async (g) => {
         const lastRead = groupIdToLastRead.get(String(g._id)) || new Date(0);
         const [buy, sell] = await Promise.all([
-          GlobalApprovedLeads.countDocuments({ groupId: g._id, createdAt: { $gt: lastRead }, type: "buy", userId: { $ne: user._id } }),
-          GlobalApprovedLeads.countDocuments({ groupId: g._id, createdAt: { $gt: lastRead }, type: "sell", userId: { $ne: user._id } }),
+          GlobalApprovedLeads.countDocuments({
+            groupId: g._id,
+            createdAt: { $gt: lastRead },
+            type: "buy",
+            userId: { $ne: user._id },
+          }),
+          GlobalApprovedLeads.countDocuments({
+            groupId: g._id,
+            createdAt: { $gt: lastRead },
+            type: "sell",
+            userId: { $ne: user._id },
+          }),
         ]);
         unreadMap[String(g._id)] = { buy, sell };
       })
@@ -84,7 +115,9 @@ export const markGroupRead = async (req, res) => {
     const { groupId } = req.body;
     const user = await UserModel.findById(userId);
     if (!user) return res.status(404).json({ message: "User not found" });
-    const idx = (user.groupReads || []).findIndex((gr) => String(gr.groupId) === String(groupId));
+    const idx = (user.groupReads || []).findIndex(
+      (gr) => String(gr.groupId) === String(groupId)
+    );
     if (idx >= 0) {
       user.groupReads[idx].lastReadAt = new Date();
     } else {
@@ -105,7 +138,9 @@ export const markGlobalGroupRead = async (req, res) => {
     const { groupId } = req.body;
     const user = await UserModel.findById(userId);
     if (!user) return res.status(404).json({ message: "User not found" });
-    const idx = (user.globalGroupReads || []).findIndex((gr) => String(gr.groupId) === String(groupId));
+    const idx = (user.globalGroupReads || []).findIndex(
+      (gr) => String(gr.groupId) === String(groupId)
+    );
     if (idx >= 0) {
       user.globalGroupReads[idx].lastReadAt = new Date();
     } else {
@@ -140,6 +175,7 @@ export const getUserById = async (req, res) => {
       countryCode: user.countryCode,
       image: user.image,
       about: user.about,
+      companyWebsite: user.companyWebsite,
       groupsID: user.groupsID,
       globalGroupsID: user.globalGroupsID,
       createdAt: user.createdAt,

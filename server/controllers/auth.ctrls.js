@@ -32,7 +32,16 @@ export const updateProfile = async (req, res) => {
     const user = await UserModel.findById(decoded.id);
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    let { name, email, phone, password, about, preferences, image } = req.body;
+    let {
+      name,
+      email,
+      phone,
+      password,
+      about,
+      companyWebsite,
+      preferences,
+      image,
+    } = req.body;
     if (typeof preferences === "string") {
       try {
         preferences = JSON.parse(preferences);
@@ -44,6 +53,8 @@ export const updateProfile = async (req, res) => {
     if (email) user.email = email;
     if (phone) user.phone = phone;
     if (typeof about !== "undefined") user.about = about;
+    if (typeof companyWebsite !== "undefined")
+      user.companyWebsite = companyWebsite;
     if (preferences && typeof preferences === "object") {
       user.preferences = { ...(user.preferences || {}), ...preferences };
     }
@@ -417,7 +428,10 @@ export const adminVerification = async (req, res) => {
       return res.status(401).json({ message: "Invalid or expired OTP" });
     }
 
-    const admin = await UserModel.findOne({ email: decoded.email, role: "admin" });
+    const admin = await UserModel.findOne({
+      email: decoded.email,
+      role: "admin",
+    });
     if (!admin) return res.status(404).json("Admin not found");
 
     // Auth success: issue final token
@@ -585,7 +599,10 @@ export const verifyAndEnableTOTP = async (req, res) => {
     }
 
     // Update admin with TOTP secret and enable it
-    const admin = await UserModel.findOne({ email: decoded.email, role: "admin" });
+    const admin = await UserModel.findOne({
+      email: decoded.email,
+      role: "admin",
+    });
     if (!admin) {
       return res.status(404).json({ message: "Admin not found" });
     }

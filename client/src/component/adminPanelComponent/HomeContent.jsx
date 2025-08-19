@@ -44,12 +44,18 @@ const HomeContent = () => {
       // Validate news items - remove empty ones
       const validatedData = { ...homeData };
       if (validatedData.news) {
-        validatedData.news = validatedData.news.filter(item => 
-          item.title && item.title.trim() && 
-          item.excerpt && item.excerpt.trim() && 
-          item.image && item.image.trim() && 
-          item.date && item.date.trim() && 
-          item.category && item.category.trim()
+        validatedData.news = validatedData.news.filter(
+          (item) =>
+            item.title &&
+            item.title.trim() &&
+            item.excerpt &&
+            item.excerpt.trim() &&
+            item.image &&
+            item.image.trim() &&
+            item.date &&
+            item.date.trim() &&
+            item.category &&
+            item.category.trim()
         );
       }
 
@@ -173,6 +179,7 @@ const HomeContent = () => {
     { id: "testimonials", label: "Testimonials", icon: "💬" },
     { id: "stats", label: "Statistics", icon: "📊" },
     { id: "faq", label: "FAQ Section", icon: "❓" },
+    { id: "subscription", label: "Subscription Plans", icon: "💳" },
     { id: "footer", label: "Footer", icon: "🔗" },
   ];
 
@@ -194,8 +201,11 @@ const HomeContent = () => {
               {!editing ? (
                 <button
                   onClick={() => {
-                    console.log('Starting edit mode');
-                    console.log('Original data at edit start:', originalHomeData);
+                    console.log("Starting edit mode");
+                    console.log(
+                      "Original data at edit start:",
+                      originalHomeData
+                    );
                     setEditing(true);
                     setNewItemsAdded(false);
                   }}
@@ -217,9 +227,9 @@ const HomeContent = () => {
                   <button
                     onClick={() => {
                       // Reset to original data when canceling
-                      console.log('Canceling - resetting to original data');
-                      console.log('Original data:', originalHomeData);
-                      console.log('Current data:', homeData);
+                      console.log("Canceling - resetting to original data");
+                      console.log("Original data:", originalHomeData);
+                      console.log("Current data:", homeData);
                       if (originalHomeData) {
                         setHomeData(originalHomeData);
                       } else {
@@ -423,6 +433,72 @@ const HomeContent = () => {
               onRemoveItem={(field, index) =>
                 removeArrayItem("faqSection", field, index)
               }
+            />
+          )}
+
+          {activeTab === "subscription" && (
+            <SubscriptionPlansEditor
+              data={homeData.subscriptionPlans}
+              editing={editing}
+              onChange={(field, value) =>
+                handleInputChange("subscriptionPlans", field, value)
+              }
+              onArrayChange={(field, index, subField, value) => {
+                if (field === "faqSection.faqs") {
+                  // Handle nested FAQ array
+                  const [parent, child] = field.split(".");
+                  handleArrayItemChange(
+                    "subscriptionPlans",
+                    parent,
+                    index,
+                    child,
+                    value
+                  );
+                } else {
+                  // Handle regular array
+                  handleArrayItemChange(
+                    "subscriptionPlans",
+                    field,
+                    index,
+                    subField,
+                    value
+                  );
+                }
+              }}
+              onAddItem={(field, template) => {
+                if (field === "faqSection.faqs") {
+                  // Handle nested FAQ array
+                  const [parent, child] = field.split(".");
+                  const currentData =
+                    homeData.subscriptionPlans?.[parent]?.[child] || [];
+                  const newArray = [...currentData, template];
+                  handleInputChange(
+                    "subscriptionPlans",
+                    `${parent}.${child}`,
+                    newArray
+                  );
+                } else {
+                  // Handle regular array
+                  addArrayItem("subscriptionPlans", field, template);
+                }
+              }}
+              onRemoveItem={(field, index) => {
+                if (field === "faqSection.faqs") {
+                  // Handle nested FAQ array
+                  const [parent, child] = field.split(".");
+                  const currentData =
+                    homeData.subscriptionPlans?.[parent]?.[child] || [];
+                  const newArray = currentData.filter((_, i) => i !== index);
+                  handleInputChange(
+                    "subscriptionPlans",
+                    `${parent}.${child}`,
+                    newArray
+                  );
+                } else {
+                  // Handle regular array
+                  removeArrayItem("subscriptionPlans", field, index);
+                }
+              }}
             />
           )}
 
@@ -727,92 +803,110 @@ const NewsEditor = ({
           </button>
         )}
       </div>
-      {data?.news.slice().reverse().map((item, index) => {
-        const isComplete = item?.title?.trim() && 
-                          item?.excerpt?.trim() && 
-                          item?.image?.trim() && 
-                          item?.date?.trim() && 
-                          item?.category?.trim();
-        
-        return (
-          <div key={item.id || index} className={`border rounded-lg p-4 ${isComplete ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
-            {editing && !isComplete && (
-              <div className="mb-3 p-2 bg-red-100 border border-red-300 rounded text-red-700 text-sm">
-                ⚠️ Please fill in all required fields (Title, Excerpt, Image URL, Date, Category)
+      {data?.news
+        .slice()
+        .reverse()
+        .map((item, index) => {
+          const isComplete =
+            item?.title?.trim() &&
+            item?.excerpt?.trim() &&
+            item?.image?.trim() &&
+            item?.date?.trim() &&
+            item?.category?.trim();
+
+          return (
+            <div
+              key={item.id || index}
+              className={`border rounded-lg p-4 ${
+                isComplete
+                  ? "bg-green-50 border-green-200"
+                  : "bg-red-50 border-red-200"
+              }`}
+            >
+              {editing && !isComplete && (
+                <div className="mb-3 p-2 bg-red-100 border border-red-300 rounded text-red-700 text-sm">
+                  ⚠️ Please fill in all required fields (Title, Excerpt, Image
+                  URL, Date, Category)
+                </div>
+              )}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <InputField
+                  label="Title *"
+                  value={item?.title}
+                  onChange={(value) =>
+                    onArrayChange("news", index, "title", value)
+                  }
+                  editing={editing}
+                  required={!item?.title?.trim()}
+                />
+                <InputField
+                  label="Excerpt *"
+                  value={item?.excerpt}
+                  onChange={(value) =>
+                    onArrayChange("news", index, "excerpt", value)
+                  }
+                  editing={editing}
+                  multiline
+                  required={!item?.excerpt?.trim()}
+                />
+                <InputField
+                  label="Image URL *"
+                  value={item?.image}
+                  onChange={(value) =>
+                    onArrayChange("news", index, "image", value)
+                  }
+                  editing={editing}
+                  fullWidth
+                  required={!item?.image?.trim()}
+                />
+                <InputField
+                  label="Date *"
+                  value={item?.date}
+                  onChange={(value) =>
+                    onArrayChange("news", index, "date", value)
+                  }
+                  editing={editing}
+                  type="date"
+                  required={!item?.date?.trim()}
+                />
+                <InputField
+                  label="Category *"
+                  value={item?.category}
+                  onChange={(value) =>
+                    onArrayChange("news", index, "category", value)
+                  }
+                  editing={editing}
+                  required={!item?.category?.trim()}
+                />
+                <InputField
+                  label="News URL (Optional)"
+                  value={item?.newsUrl || ""}
+                  onChange={(value) =>
+                    onArrayChange("news", index, "newsUrl", value)
+                  }
+                  editing={editing}
+                  placeholder="https://example.com/news-article"
+                  fullWidth
+                />
               </div>
-            )}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <InputField
-                label="Title *"
-                value={item?.title}
-                onChange={(value) => onArrayChange("news", index, "title", value)}
-                editing={editing}
-                required={!item?.title?.trim()}
-              />
-              <InputField
-                label="Excerpt *"
-                value={item?.excerpt}
-                onChange={(value) =>
-                  onArrayChange("news", index, "excerpt", value)
-                }
-                editing={editing}
-                multiline
-                required={!item?.excerpt?.trim()}
-              />
-              <InputField
-                label="Image URL *"
-                value={item?.image}
-                onChange={(value) => onArrayChange("news", index, "image", value)}
-                editing={editing}
-                fullWidth
-                required={!item?.image?.trim()}
-              />
-              <InputField
-                label="Date *"
-                value={item?.date}
-                onChange={(value) => onArrayChange("news", index, "date", value)}
-                editing={editing}
-                type="date"
-                required={!item?.date?.trim()}
-              />
-              <InputField
-                label="Category *"
-                value={item?.category}
-                onChange={(value) =>
-                  onArrayChange("news", index, "category", value)
-                }
-                editing={editing}
-                required={!item?.category?.trim()}
-              />
-              <InputField
-                label="News URL (Optional)"
-                value={item?.newsUrl || ""}
-                onChange={(value) =>
-                  onArrayChange("news", index, "newsUrl", value)
-                }
-                editing={editing}
-                placeholder="https://example.com/news-article"
-                fullWidth
-              />
+              {editing && (
+                <div className="mt-3 flex gap-2">
+                  <button
+                    onClick={() => onRemoveItem("news", index)}
+                    className="text-red-600 hover:text-red-800 text-sm"
+                  >
+                    Remove News
+                  </button>
+                  {!isComplete && (
+                    <span className="text-orange-600 text-sm">
+                      ⚠️ Incomplete - will not be saved
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
-            {editing && (
-              <div className="mt-3 flex gap-2">
-                <button
-                  onClick={() => onRemoveItem("news", index)}
-                  className="text-red-600 hover:text-red-800 text-sm"
-                >
-                  Remove News
-                </button>
-                {!isComplete && (
-                  <span className="text-orange-600 text-sm">
-                    ⚠️ Incomplete - will not be saved
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
-        );
-      })}
+          );
+        })}
     </div>
   </div>
 );
@@ -1103,6 +1197,347 @@ const FAQEditor = ({
   </div>
 );
 
+const SubscriptionPlansEditor = ({
+  data,
+  editing,
+  onChange,
+  onArrayChange,
+  onAddItem,
+  onRemoveItem,
+}) => (
+  <div className="space-y-6">
+    <h3 className="text-xl font-semibold text-gray-900">Subscription Plans</h3>
+
+    {/* General Settings */}
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <InputField
+        label="Section Title"
+        value={data?.title}
+        onChange={(value) => onChange("title", value)}
+        editing={editing}
+      />
+      <InputField
+        label="Section Subtitle"
+        value={data?.subtitle}
+        onChange={(value) => onChange("subtitle", value)}
+        editing={editing}
+      />
+      <InputField
+        label="Currency"
+        value={data?.currency}
+        onChange={(value) => onChange("currency", value)}
+        editing={editing}
+      />
+    </div>
+
+    <InputField
+      label="Yearly Discount (%)"
+      value={data?.yearlyDiscount}
+      onChange={(value) => onChange("yearlyDiscount", parseInt(value) || 0)}
+      editing={editing}
+      type="number"
+      min="0"
+      max="100"
+    />
+
+    {/* Plans Management */}
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <h4 className="text-lg font-medium text-gray-900">Pricing Plans</h4>
+        {editing && (
+          <button
+            onClick={() =>
+              onAddItem("plans", {
+                id: `plan_${Date.now()}`,
+                name: "New Plan",
+                price: { monthly: 0, yearly: 0 },
+                description: "Plan description",
+                features: ["Feature 1", "Feature 2"],
+                icon: "🌟",
+                popular: false,
+                color: "blue",
+              })
+            }
+            className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
+          >
+            Add Plan
+          </button>
+        )}
+      </div>
+
+      {data?.plans?.map((plan, index) => (
+        <div
+          key={plan.id || index}
+          className="border rounded-lg p-4 bg-gray-50"
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <InputField
+              label="Plan ID"
+              value={plan?.id}
+              onChange={(value) => onArrayChange("plans", index, "id", value)}
+              editing={editing}
+            />
+            <InputField
+              label="Plan Name"
+              value={plan?.name}
+              onChange={(value) => onArrayChange("plans", index, "name", value)}
+              editing={editing}
+            />
+            <InputField
+              label="Description"
+              value={plan?.description}
+              onChange={(value) =>
+                onArrayChange("plans", index, "description", value)
+              }
+              editing={editing}
+              multiline
+            />
+            <InputField
+              label="Icon"
+              value={plan?.icon}
+              onChange={(value) => onArrayChange("plans", index, "icon", value)}
+              editing={editing}
+            />
+          </div>
+
+          {/* Pricing */}
+          <div className="mt-4">
+            <h5 className="text-md font-semibold text-gray-900 mb-3">
+              Pricing
+            </h5>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <InputField
+                label="Monthly Price"
+                value={plan?.price?.monthly}
+                onChange={(value) => {
+                  const newPrice = {
+                    ...plan.price,
+                    monthly: parseFloat(value) || 0,
+                  };
+                  onArrayChange("plans", index, "price", newPrice);
+                }}
+                editing={editing}
+                type="number"
+                min="0"
+                step="0.01"
+              />
+              <InputField
+                label="Yearly Price"
+                value={plan?.price?.yearly}
+                onChange={(value) => {
+                  const newPrice = {
+                    ...plan.price,
+                    yearly: parseFloat(value) || 0,
+                  };
+                  onArrayChange("plans", index, "price", newPrice);
+                }}
+                editing={editing}
+                type="number"
+                min="0"
+                step="0.01"
+              />
+            </div>
+          </div>
+
+          {/* Plan Options */}
+          <div className="mt-4 flex gap-4">
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                checked={plan?.popular || false}
+                onChange={(e) =>
+                  onArrayChange("plans", index, "popular", e.target.checked)
+                }
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                disabled={!editing}
+              />
+              <span className="ml-2 text-sm text-gray-700">Most Popular</span>
+            </label>
+            <InputField
+              label="Color Theme"
+              value={plan?.color}
+              onChange={(value) =>
+                onArrayChange("plans", index, "color", value)
+              }
+              editing={editing}
+            />
+          </div>
+
+          {/* Features */}
+          <div className="mt-4">
+            <h5 className="text-md font-semibold text-gray-900 mb-3">
+              Features
+            </h5>
+            <div className="space-y-2">
+              {plan?.features?.map((feature, fIndex) => (
+                <div key={fIndex} className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={feature}
+                    onChange={(e) => {
+                      const newFeatures = [...plan.features];
+                      newFeatures[fIndex] = e.target.value;
+                      onArrayChange("plans", index, "features", newFeatures);
+                    }}
+                    className="flex-1 px-3 py-1 border border-gray-300 rounded text-sm"
+                    disabled={!editing}
+                  />
+                  {editing && (
+                    <button
+                      onClick={() => {
+                        const newFeatures = plan.features.filter(
+                          (_, i) => i !== fIndex
+                        );
+                        onArrayChange("plans", index, "features", newFeatures);
+                      }}
+                      className="text-red-600 hover:text-red-800 text-sm"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+              ))}
+              {editing && (
+                <button
+                  onClick={() => {
+                    const newFeatures = [
+                      ...(plan.features || []),
+                      "New Feature",
+                    ];
+                    onArrayChange("plans", index, "features", newFeatures);
+                  }}
+                  className="text-blue-600 hover:text-blue-800 text-sm"
+                >
+                  + Add Feature
+                </button>
+              )}
+            </div>
+          </div>
+
+          {editing && (
+            <button
+              onClick={() => onRemoveItem("plans", index)}
+              className="mt-4 text-red-600 hover:text-red-800 text-sm"
+            >
+              Remove Plan
+            </button>
+          )}
+        </div>
+      ))}
+    </div>
+
+    {/* FAQ Section */}
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <h4 className="text-lg font-medium text-gray-900">FAQ Section</h4>
+        {editing && (
+          <button
+            onClick={() =>
+              onAddItem("faqSection.faqs", {
+                id: Date.now(),
+                question: "",
+                answer: "",
+              })
+            }
+            className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
+          >
+            Add FAQ
+          </button>
+        )}
+      </div>
+
+      <InputField
+        label="FAQ Section Title"
+        value={data?.faqSection?.title}
+        onChange={(value) => onChange("faqSection.title", value)}
+        editing={editing}
+      />
+
+      {data?.faqSection?.faqs?.map((faq, index) => (
+        <div key={faq.id || index} className="border rounded-lg p-4 bg-gray-50">
+          <div className="space-y-4">
+            <InputField
+              label="Question"
+              value={faq?.question}
+              onChange={(value) =>
+                onArrayChange("faqSection.faqs", index, "question", value)
+              }
+              editing={editing}
+            />
+            <InputField
+              label="Answer"
+              value={faq?.answer}
+              onChange={(value) =>
+                onArrayChange("faqSection.faqs", index, "answer", value)
+              }
+              editing={editing}
+              multiline
+              fullWidth
+            />
+          </div>
+          {editing && (
+            <button
+              onClick={() => onRemoveItem("faqSection.faqs", index)}
+              className="mt-2 text-red-600 hover:text-red-800 text-sm"
+            >
+              Remove FAQ
+            </button>
+          )}
+        </div>
+      ))}
+    </div>
+
+    {/* CTA Section */}
+    <div className="space-y-4">
+      <h4 className="text-lg font-medium text-gray-900">
+        Call-to-Action Section
+      </h4>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <InputField
+          label="CTA Title"
+          value={data?.ctaSection?.title}
+          onChange={(value) => onChange("ctaSection.title", value)}
+          editing={editing}
+        />
+        <InputField
+          label="CTA Subtitle"
+          value={data?.ctaSection?.subtitle}
+          onChange={(value) => onChange("ctaSection.subtitle", value)}
+          editing={editing}
+        />
+        <InputField
+          label="Primary Button Text"
+          value={data?.ctaSection?.primaryButtonText}
+          onChange={(value) => onChange("ctaSection.primaryButtonText", value)}
+          editing={editing}
+        />
+        <InputField
+          label="Primary Button Link"
+          value={data?.ctaSection?.primaryButtonLink}
+          onChange={(value) => onChange("ctaSection.primaryButtonLink", value)}
+          editing={editing}
+        />
+        <InputField
+          label="Secondary Button Text"
+          value={data?.ctaSection?.secondaryButtonText}
+          onChange={(value) =>
+            onChange("ctaSection.secondaryButtonText", value)
+          }
+          editing={editing}
+        />
+        <InputField
+          label="Secondary Button Link"
+          value={data?.ctaSection?.secondaryButtonLink}
+          onChange={(value) =>
+            onChange("ctaSection.secondaryButtonLink", value)
+          }
+          editing={editing}
+        />
+      </div>
+    </div>
+  </div>
+);
+
 const FooterEditor = ({ data, editing, onChange }) => (
   <div className="space-y-6">
     <h3 className="text-xl font-semibold text-gray-900">Footer Section</h3>
@@ -1183,7 +1618,11 @@ const InputField = ({
   ...props
 }) => (
   <div className={fullWidth ? "col-span-full" : ""}>
-    <label className={`block text-sm font-medium mb-2 ${required ? 'text-red-700' : 'text-gray-700'}`}>
+    <label
+      className={`block text-sm font-medium mb-2 ${
+        required ? "text-red-700" : "text-gray-700"
+      }`}
+    >
       {label}
       {required && <span className="text-red-500 ml-1">*</span>}
     </label>
@@ -1194,7 +1633,9 @@ const InputField = ({
           onChange={(e) => onChange(e.target.value)}
           rows={4}
           className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-            required && !value?.trim() ? 'border-red-300 bg-red-50' : 'border-gray-300'
+            required && !value?.trim()
+              ? "border-red-300 bg-red-50"
+              : "border-gray-300"
           }`}
           {...props}
         />
@@ -1204,20 +1645,32 @@ const InputField = ({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-            required && !value?.trim() ? 'border-red-300 bg-red-50' : 'border-gray-300'
+            required && !value?.trim()
+              ? "border-red-300 bg-red-50"
+              : "border-gray-300"
           }`}
           {...props}
         />
       )
     ) : (
-      <div className={`px-3 py-2 rounded-md text-sm overflow-hidden ${
-        required && !value?.trim() ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-900'
-      }`}>
-        {multiline ? value : (value ? (
+      <div
+        className={`px-3 py-2 rounded-md text-sm overflow-hidden ${
+          required && !value?.trim()
+            ? "bg-red-100 text-red-700"
+            : "bg-gray-100 text-gray-900"
+        }`}
+      >
+        {multiline ? (
+          value
+        ) : value ? (
           <div className="truncate" title={value}>
             {value}
           </div>
-        ) : required ? "Required field" : "Not set")}
+        ) : required ? (
+          "Required field"
+        ) : (
+          "Not set"
+        )}
       </div>
     )}
   </div>

@@ -73,6 +73,22 @@ export const getAdminHomeData = async (req, res) => {
           testimonialSection: { testimonials: [] },
           stats: { stats: [] },
           faqSection: { faqs: [] },
+          subscriptionPlans: {
+            title: "Choose Your Plan",
+            subtitle: "Select the perfect plan for your business needs",
+            currency: "USD",
+            yearlyDiscount: 17,
+            plans: [],
+            faqSection: { title: "Frequently Asked Questions", faqs: [] },
+            ctaSection: {
+              title: "Ready to Get Started?",
+              subtitle: "Join thousands of businesses already using HSCODE",
+              primaryButtonText: "Start Free Trial",
+              primaryButtonLink: "/auth",
+              secondaryButtonText: "Contact Sales",
+              secondaryButtonLink: "/contact",
+            },
+          },
           footer: { contactInfo: {}, socialLinks: {} },
         },
       });
@@ -324,6 +340,115 @@ export const saveDummyData = async (req, res) => {
               "We have a comprehensive verification process including document checks and business validation.",
           },
         ],
+      },
+      subscriptionPlans: {
+        title: "Choose Your Plan",
+        subtitle:
+          "Select the perfect plan for your business needs. All plans include our core B2B marketplace features with different levels of access and support.",
+        currency: "USD",
+        yearlyDiscount: 17,
+        plans: [
+          {
+            id: "basic",
+            name: "Basic Plan",
+            price: {
+              monthly: 29,
+              yearly: 290,
+            },
+            description: "Perfect for small businesses getting started",
+            features: [
+              "Access to basic categories",
+              "Limited lead generation",
+              "Basic chat support",
+              "Standard analytics",
+              "Email notifications",
+            ],
+            icon: "👥",
+            popular: false,
+            color: "gray",
+          },
+          {
+            id: "professional",
+            name: "Professional Plan",
+            price: {
+              monthly: 79,
+              yearly: 790,
+            },
+            description: "Ideal for growing businesses",
+            features: [
+              "All categories access",
+              "Advanced lead generation",
+              "Priority chat support",
+              "Advanced analytics",
+              "Push notifications",
+              "Custom branding",
+              "API access",
+            ],
+            icon: "📊",
+            popular: true,
+            color: "blue",
+          },
+          {
+            id: "enterprise",
+            name: "Enterprise Plan",
+            price: {
+              monthly: 199,
+              yearly: 1990,
+            },
+            description: "For large enterprises and corporations",
+            features: [
+              "Unlimited access",
+              "Premium lead generation",
+              "24/7 dedicated support",
+              "Custom analytics dashboard",
+              "White-label solution",
+              "Advanced API access",
+              "Custom integrations",
+              "Dedicated account manager",
+            ],
+            icon: "🌍",
+            popular: false,
+            color: "purple",
+          },
+        ],
+        faqSection: {
+          title: "Frequently Asked Questions",
+          faqs: [
+            {
+              id: 1,
+              question: "Can I change my plan at any time?",
+              answer:
+                "Yes, you can upgrade or downgrade your plan at any time. Changes will be reflected in your next billing cycle.",
+            },
+            {
+              id: 2,
+              question: "Is there a free trial available?",
+              answer:
+                "We offer a 7-day free trial for all plans. No credit card required to start your trial.",
+            },
+            {
+              id: 3,
+              question: "What payment methods do you accept?",
+              answer:
+                "We accept all major credit cards, PayPal, and bank transfers for annual plans.",
+            },
+            {
+              id: 4,
+              question: "Do you offer refunds?",
+              answer:
+                "We offer a 30-day money-back guarantee. If you're not satisfied, contact our support team for a full refund.",
+            },
+          ],
+        },
+        ctaSection: {
+          title: "Ready to Get Started?",
+          subtitle:
+            "Join thousands of businesses already using HSCODE to grow their B2B network.",
+          primaryButtonText: "Start Free Trial",
+          primaryButtonLink: "/auth",
+          secondaryButtonText: "Contact Sales",
+          secondaryButtonLink: "/contact",
+        },
       },
       footer: {
         companyDescription:

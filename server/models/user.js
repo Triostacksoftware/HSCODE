@@ -25,6 +25,7 @@ const userSchema = new mongoose.Schema(
 
     image: { type: String },
     about: { type: String },
+    companyWebsite: { type: String, trim: true },
     preferences: { type: Object },
     notificationPreferences: {
       email: { type: Boolean, default: true },

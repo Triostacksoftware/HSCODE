@@ -1,7 +1,9 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Navbar from "../../component/HomeComponent/Navbar";
+import useHomeData from "../../utilities/useHomeData";
+import useCountryCode from "../../utilities/useCountryCode";
 import {
   HiCheck,
   HiStar,
@@ -15,7 +17,11 @@ const SubscriptionPage = () => {
   const [selectedPlan, setSelectedPlan] = useState("basic");
   const [billingCycle, setBillingCycle] = useState("monthly");
 
-  const plans = [
+  const { countryCode } = useCountryCode();
+  const { homeData, loading, error } = useHomeData(countryCode);
+
+  // Default plans fallback
+  const defaultPlans = [
     {
       id: "basic",
       name: "Basic Plan",
@@ -28,8 +34,9 @@ const SubscriptionPage = () => {
         "Standard analytics",
         "Email notifications",
       ],
-      icon: HiUsers,
+      icon: "👥",
       popular: false,
+      color: "gray",
     },
     {
       id: "professional",
@@ -45,8 +52,9 @@ const SubscriptionPage = () => {
         "Custom branding",
         "API access",
       ],
-      icon: HiChartBar,
+      icon: "📊",
       popular: true,
+      color: "blue",
     },
     {
       id: "enterprise",
@@ -63,13 +71,99 @@ const SubscriptionPage = () => {
         "Custom integrations",
         "Dedicated account manager",
       ],
-      icon: HiGlobe,
+      icon: "🌍",
       popular: false,
+      color: "purple",
     },
   ];
 
+  // Use home data if available, otherwise fallback to defaults
+  const subscriptionData = homeData?.subscriptionPlans;
+  const plans = subscriptionData?.plans || defaultPlans;
+  const currency = subscriptionData?.currency || "USD";
+  const yearlyDiscount = subscriptionData?.yearlyDiscount || 17;
+  const sectionTitle = subscriptionData?.title || "Choose Your Plan";
+  const sectionSubtitle =
+    subscriptionData?.subtitle ||
+    "Select the perfect plan for your business needs. All plans include our core B2B marketplace features with different levels of access and support.";
+  const faqData = subscriptionData?.faqSection || {
+    title: "Frequently Asked Questions",
+    faqs: [
+      {
+        id: 1,
+        question: "Can I change my plan at any time?",
+        answer:
+          "Yes, you can upgrade or downgrade your plan at any time. Changes will be reflected in your next billing cycle.",
+      },
+      {
+        id: 2,
+        question: "Is there a free trial available?",
+        answer:
+          "We offer a 7-day free trial for all plans. No credit card required to start your trial.",
+      },
+      {
+        id: 3,
+        question: "What payment methods do you accept?",
+        answer:
+          "We accept all major credit cards, PayPal, and bank transfers for annual plans.",
+      },
+      {
+        id: 4,
+        question: "Do you offer refunds?",
+        answer:
+          "We offer a 30-day money-back guarantee. If you're not satisfied, contact our support team for a full refund.",
+      },
+    ],
+  };
+  const ctaData = subscriptionData?.ctaSection || {
+    title: "Ready to Get Started?",
+    subtitle:
+      "Join thousands of businesses already using HSCODE to grow their B2B network.",
+    primaryButtonText: "Start Free Trial",
+    primaryButtonLink: "/auth",
+    secondaryButtonText: "Contact Sales",
+    secondaryButtonLink: "/contact",
+  };
+
   const currentPlan = plans.find((plan) => plan.id === selectedPlan);
-  const discount = billingCycle === "yearly" ? 0.17 : 0; // 17% discount for yearly
+  const discount = billingCycle === "yearly" ? yearlyDiscount / 100 : 0;
+
+  // Get icon component based on plan icon
+  const getIconComponent = (icon) => {
+    const iconMap = {
+      "👥": HiUsers,
+      "📊": HiChartBar,
+      "🌍": HiGlobe,
+      "🌟": HiStar,
+    };
+    return iconMap[icon] || HiUsers;
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            Error Loading Plans
+          </h2>
+          <p className="text-gray-600 mb-4">
+            Unable to load subscription plans. Please try again later.
+          </p>
+          <Link href="/" className="text-blue-600 hover:text-blue-700">
+            Return to Home
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -106,12 +200,10 @@ const SubscriptionPage = () => {
 
             <div className="text-center">
               <h1 className="text-4xl font-bold text-gray-900 mb-4">
-                Choose Your Plan
+                {sectionTitle}
               </h1>
               <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                Select the perfect plan for your business needs. All plans
-                include our core B2B marketplace features with different levels
-                of access and support.
+                {sectionSubtitle}
               </p>
             </div>
           </div>
@@ -154,7 +246,7 @@ const SubscriptionPage = () => {
                 Yearly
                 {billingCycle === "yearly" && (
                   <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                    Save 17%
+                    Save {yearlyDiscount}%
                   </span>
                 )}
               </span>
@@ -166,7 +258,7 @@ const SubscriptionPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {plans.map((plan) => {
-              const IconComponent = plan.icon;
+              const IconComponent = getIconComponent(plan.icon);
               const price = plan.price[billingCycle];
               const discountedPrice = price * (1 - discount);
 
@@ -201,7 +293,8 @@ const SubscriptionPage = () => {
                     <div className="mb-6">
                       <div className="flex items-baseline">
                         <span className="text-4xl font-bold text-gray-900">
-                          ${discountedPrice}
+                          {currency === "USD" ? "$" : currency}{" "}
+                          {discountedPrice.toFixed(0)}
                         </span>
                         <span className="text-gray-500 ml-2">
                           /{billingCycle === "monthly" ? "month" : "year"}
@@ -209,8 +302,10 @@ const SubscriptionPage = () => {
                       </div>
                       {billingCycle === "yearly" && (
                         <p className="text-sm text-gray-500 mt-1">
-                          <span className="line-through">${price}</span> per
-                          year
+                          <span className="line-through">
+                            {currency === "USD" ? "$" : currency} {price}
+                          </span>{" "}
+                          per year
                         </p>
                       )}
                     </div>
@@ -247,49 +342,18 @@ const SubscriptionPage = () => {
         <div className="bg-white border-t border-gray-200">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
             <h2 className="text-3xl font-bold text-center text-gray-900 mb-8">
-              Frequently Asked Questions
+              {faqData.title}
             </h2>
 
             <div className="space-y-6">
-              <div className="border-b border-gray-200 pb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  Can I change my plan at any time?
-                </h3>
-                <p className="text-gray-600">
-                  Yes, you can upgrade or downgrade your plan at any time.
-                  Changes will be reflected in your next billing cycle.
-                </p>
-              </div>
-
-              <div className="border-b border-gray-200 pb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  Is there a free trial available?
-                </h3>
-                <p className="text-gray-600">
-                  We offer a 7-day free trial for all plans. No credit card
-                  required to start your trial.
-                </p>
-              </div>
-
-              <div className="border-b border-gray-200 pb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  What payment methods do you accept?
-                </h3>
-                <p className="text-gray-600">
-                  We accept all major credit cards, PayPal, and bank transfers
-                  for annual plans.
-                </p>
-              </div>
-
-              <div className="pb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  Do you offer refunds?
-                </h3>
-                <p className="text-gray-600">
-                  We offer a 30-day money-back guarantee. If you're not
-                  satisfied, contact our support team for a full refund.
-                </p>
-              </div>
+              {faqData.faqs.map((faq) => (
+                <div key={faq.id} className="border-b border-gray-200 pb-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    {faq.question}
+                  </h3>
+                  <p className="text-gray-600">{faq.answer}</p>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -298,23 +362,23 @@ const SubscriptionPage = () => {
         <div className="bg-blue-600">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
             <h2 className="text-3xl font-bold text-white mb-4">
-              Ready to Get Started?
+              {ctaData.title}
             </h2>
-            <p className="text-xl text-blue-100 mb-8">
-              Join thousands of businesses already using HSCODE to grow their
-              B2B network.
-            </p>
+            <p className="text-xl text-blue-100 mb-8">{ctaData.subtitle}</p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
-                href="/auth"
+                href={ctaData.primaryButtonLink}
                 className="inline-flex items-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-blue-600 bg-white hover:bg-gray-50 transition-colors"
               >
-                Start Free Trial
+                {ctaData.primaryButtonText}
               </Link>
-              <button className="inline-flex items-center px-8 py-3 border border-white text-base font-medium rounded-md text-white hover:bg-blue-700 transition-colors">
+              <Link
+                href={ctaData.secondaryButtonLink}
+                className="inline-flex items-center px-8 py-3 border border-white text-base font-medium rounded-md text-white hover:bg-blue-700 transition-colors"
+              >
                 <HiShieldCheck className="w-5 h-5 mr-2" />
-                Contact Sales
-              </button>
+                {ctaData.secondaryButtonText}
+              </Link>
             </div>
           </div>
         </div>

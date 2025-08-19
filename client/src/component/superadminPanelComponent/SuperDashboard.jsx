@@ -29,21 +29,21 @@ const SuperDashboard = () => {
   useEffect(() => {
     // Group admins by country and calculate total leads per country
     const countryMap = new Map();
-    
-    admins.forEach(admin => {
+
+    admins.forEach((admin) => {
       if (!countryMap.has(admin.countryCode)) {
         countryMap.set(admin.countryCode, {
           countryCode: admin.countryCode,
           admins: [],
-          totalLeads: 0
+          totalLeads: 0,
         });
       }
-      
+
       const country = countryMap.get(admin.countryCode);
       country.admins.push(admin);
-      country.totalLeads += (admin.localLeadsCount || 0);
+      country.totalLeads += admin.localLeadsCount || 0;
     });
-    
+
     setCountriesWithAdmins(Array.from(countryMap.values()));
   }, [admins]);
 
@@ -80,9 +80,12 @@ const SuperDashboard = () => {
   };
 
   // Filter countries based on search term
-  const filteredCountries = countriesWithAdmins.filter(country =>
-    country.countryCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    country.admins.some(admin => admin.name.toLowerCase().includes(searchTerm.toLowerCase()))
+  const filteredCountries = countriesWithAdmins.filter(
+    (country) =>
+      country.countryCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      country.admins.some((admin) =>
+        admin.name.toLowerCase().includes(searchTerm.toLowerCase())
+      )
   );
 
   if (loading) {
@@ -193,8 +196,18 @@ const SuperDashboard = () => {
                 className="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
               />
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                <svg
+                  className="h-5 w-5 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
                 </svg>
               </div>
             </div>
@@ -206,18 +219,25 @@ const SuperDashboard = () => {
                 <MdOutlineAdminPanelSettings className="w-8 h-8 text-gray-400" />
               </div>
               <p className="text-gray-500 text-sm">
-                {searchTerm ? `No countries found for "${searchTerm}"` : 'No country admins found'}
+                {searchTerm
+                  ? `No countries found for "${searchTerm}"`
+                  : "No country admins found"}
               </p>
               <p className="text-gray-400 text-xs mt-1">
-                {searchTerm ? 'Try a different search term' : 'Add country admins to manage local content'}
+                {searchTerm
+                  ? "Try a different search term"
+                  : "Add country admins to manage local content"}
               </p>
             </div>
           ) : (
             <div className="space-y-4">
               {filteredCountries.map((country) => (
-                <div key={country.countryCode} className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                <div
+                  key={country.countryCode}
+                  className="bg-white border border-gray-200 rounded-lg overflow-hidden"
+                >
                   {/* Country Card Header */}
-                  <div 
+                  <div
                     onClick={() => handleCountryClick(country.countryCode)}
                     className="p-4 cursor-pointer hover:bg-gray-50 transition-colors duration-200"
                   >
@@ -225,7 +245,7 @@ const SuperDashboard = () => {
                       <div className="flex items-center space-x-4">
                         {/* Country Flag */}
                         <div className="w-16 h-12 rounded-lg overflow-hidden border border-gray-200">
-                          <img 
+                          <img
                             src={getFlagUrl(country.countryCode)}
                             alt={`${country.countryCode} flag`}
                             className="w-full h-full object-cover"
@@ -234,22 +254,28 @@ const SuperDashboard = () => {
                             }}
                           />
                         </div>
-                        
+
                         {/* Country Info */}
                         <div>
                           <h3 className="text-lg font-semibold text-gray-900">
                             {country.countryCode}
                           </h3>
                           <p className="text-sm text-gray-600">
-                            {country.admins.length} Admin{country.admins.length > 1 ? 's' : ''} • {country.totalLeads} Total Leads
+                            {country.admins.length} Admin
+                            {country.admins.length > 1 ? "s" : ""} •{" "}
+                            {country.totalLeads} Total Leads
                           </p>
                         </div>
                       </div>
-                      
+
                       {/* Expand/Collapse Icon */}
-                      <div className={`transform transition-transform duration-200 ${
-                        expandedCountry === country.countryCode ? 'rotate-180' : ''
-                      }`}>
+                      <div
+                        className={`transform transition-transform duration-200 ${
+                          expandedCountry === country.countryCode
+                            ? "rotate-180"
+                            : ""
+                        }`}
+                      >
                         ▼
                       </div>
                     </div>
@@ -262,23 +288,36 @@ const SuperDashboard = () => {
                       <div className="bg-blue-50 border border-blue-200 rounded p-3 mb-3">
                         <div className="flex items-center justify-between">
                           <div>
-                            <h4 className="font-medium text-blue-900 text-sm">Total Leads Posted in {country.countryCode}</h4>
+                            <h4 className="font-medium text-blue-900 text-sm">
+                              Total Leads Posted in {country.countryCode}
+                            </h4>
                           </div>
                           <div className="text-right">
-                            <p className="text-xl font-bold text-blue-900">{country.totalLeads}</p>
+                            <p className="text-xl font-bold text-blue-900">
+                              {country.totalLeads}
+                            </p>
                           </div>
                         </div>
                       </div>
 
                       {/* Admin List */}
                       <div className="space-y-2">
-                        <h5 className="font-medium text-gray-700 text-sm mb-2">Admins:</h5>
+                        <h5 className="font-medium text-gray-700 text-sm mb-2">
+                          Admins:
+                        </h5>
                         {country.admins.map((admin, index) => (
-                          <div key={admin._id} className="bg-white rounded p-3 border border-gray-200">
+                          <div
+                            key={admin._id}
+                            className="bg-white rounded p-3 border border-gray-200"
+                          >
                             <div className="flex items-center justify-between">
                               <div>
-                                <h4 className="font-medium text-gray-900 text-sm">{admin.name}</h4>
-                                <p className="text-xs text-gray-600">{admin.email}</p>
+                                <h4 className="font-medium text-gray-900 text-sm">
+                                  {admin.name}
+                                </h4>
+                                <p className="text-xs text-gray-600">
+                                  {admin.email}
+                                </p>
                               </div>
                               <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                 Active
