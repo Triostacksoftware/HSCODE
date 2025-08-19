@@ -1,31 +1,44 @@
 "use client";
 import React, { useState } from "react";
-import GlobalChaptersList from "./GlobalChaptersList";
+import { IoArrowBack } from "react-icons/io5";
+import SectionsList from "./SectionsList";
+import GlobalSectionChaptersList from "./GlobalSectionChaptersList";
 import GlobalMyGroups from "./GlobalMyGroups";
 import GlobalGroupsList from "./GlobalGroupsList";
 import GlobalChatWindow from "./GlobalChatWindow";
-import { IoArrowBack } from "react-icons/io5";
 
 const GlobalChat = () => {
-  const [activeTab, setActiveTab] = useState("groups"); // "groups" or "chapters"
+  const [activeTab, setActiveTab] = useState("groups"); // "groups", "sections", or "chapters"
+  const [selectedSection, setSelectedSection] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [showGroupsList, setShowGroupsList] = useState(false);
+
+  const handleSectionSelect = (section) => {
+    setSelectedSection(section);
+    setActiveTab("chapters");
+  };
 
   const handleCategorySelect = (category) => {
     setSelectedCategory(category);
     setShowGroupsList(true);
   };
 
+  const handleBackToSections = () => {
+    setSelectedSection(null);
+    setSelectedCategory(null);
+    setShowGroupsList(false);
+    setActiveTab("sections");
+  };
+
   const handleBackToChapters = () => {
     setSelectedCategory(null);
-    setSelectedGroup(null);
     setShowGroupsList(false);
+    setActiveTab("chapters");
   };
 
   const handleGroupSelect = (group) => {
     setSelectedGroup(group);
-    setShowGroupsList(false);
   };
 
   const handleBackToGroups = () => {
@@ -75,36 +88,43 @@ const GlobalChat = () => {
             </button>
             <button
               suppressHydrationWarning={true}
-              onClick={() => setActiveTab("chapters")}
+              onClick={() => setActiveTab("sections")}
               className={`flex-1 py-3 md:py-[.6em] px-4 rounded-md text-sm md:text-xs font-medium transition-colors ${
-                activeTab === "chapters"
+                activeTab === "sections"
                   ? "bg-gray-800 text-white"
                   : "bg-gray-200 hover:text-gray-900"
               }`}
             >
-              Chapters
+              Sections
             </button>
           </div>
         </div>
 
         {/* Content Area */}
         <div className="flex-1 overflow-hidden">
-          {activeTab === "chapters" ? (
-            <GlobalChaptersList
-              onCategorySelect={handleCategorySelect}
-              selectedCategory={selectedCategory}
-            />
-          ) : (
+          {activeTab === "groups" ? (
             <GlobalMyGroups
               onGroupSelect={handleGroupSelect}
               selectedGroupId={selectedGroup?._id}
             />
-          )}
+          ) : activeTab === "sections" && !selectedSection ? (
+            <SectionsList
+              onSectionSelect={handleSectionSelect}
+              selectedSection={selectedSection}
+            />
+          ) : activeTab === "chapters" && selectedSection ? (
+            <GlobalSectionChaptersList
+              selectedSection={selectedSection}
+              onBack={handleBackToSections}
+              onCategorySelect={handleCategorySelect}
+              selectedCategory={selectedCategory}
+            />
+          ) : null}
         </div>
       </div>
 
       {/* Middle Section - Groups (only show when chapters tab is active AND a category is selected) */}
-      {activeTab === "chapters" && selectedCategory && (
+      {activeTab === "chapters" && selectedCategory && showGroupsList && (
         <div
           className={`
             border-r border-gray-200 flex overflow-hidden flex-col animate-slide-in-groups
@@ -130,20 +150,20 @@ const GlobalChat = () => {
       >
         {selectedGroup ? (
           <GlobalChatWindow
-            chapterNo={selectedGroup?.categoryId?.chapter}
+            chapterNo={selectedGroup.categoryId.chapter}
             selectedGroupId={selectedGroup._id}
             groupName={selectedGroup.name}
             groupImage={selectedGroup.image}
             onBack={handleBackToGroups}
           />
         ) : (
-          <div className="flex-1 flex items-center justify-center p-4">
-            <div className="text-center max-w-md">
-              <div className="text-2xl md:text-3xl font-handwriting text-gray-700 mb-4">
-                Global Chat
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <div className="text-2xl font-handwriting text-gray-700 mb-2">
+                Global Leadsup
               </div>
-              <div className="text-gray-500 text-sm md:text-base">
-                Select a global group or chapter to start chatting
+              <div className="text-gray-500 text-sm">
+                Connect with businesses worldwide
               </div>
             </div>
           </div>

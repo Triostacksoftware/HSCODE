@@ -1,44 +1,73 @@
 "use client";
-import React, { useState } from "react";
-import ChaptersList from "./ChaptersList";
+import React, { useState, useEffect } from "react";
+import SectionsList from "./SectionsList";
+import SectionChaptersList from "./SectionChaptersList";
 import MyGroups from "./MyGroups";
 import GroupsList from "./GroupsList";
 import ChatWindow from "./ChatWindow";
 
 const DomesticChat = () => {
-  const [activeTab, setActiveTab] = useState("groups"); // "groups" or "chapters"
+  const [activeTab, setActiveTab] = useState("groups"); // "groups", "sections", or "chapters"
+  const [selectedSection, setSelectedSection] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [selectedGroup, setSelectedGroup] = useState(null);
+
+  const handleSectionSelect = (section) => {
+    setSelectedSection(section);
+    setActiveTab("chapters");
+  };
 
   const handleCategorySelect = (category) => {
     setSelectedCategory(category);
   };
 
+  const handleBackToSections = () => {
+    setSelectedSection(null);
+    setSelectedCategory(null);
+    setActiveTab("sections");
+  };
+
   const handleBackToChapters = () => {
     setSelectedCategory(null);
-    setSelectedGroup(null);
+    setActiveTab("chapters");
   };
 
   const handleGroupSelect = (group) => {
     setSelectedGroup(group);
   };
 
+  const handleBackToGroups = () => {
+    setSelectedGroup(null);
+  };
+
+  const handleTabChange = (tab) => {
+    if (tab === "sections") {
+      setSelectedSection(null);
+      setSelectedCategory(null);
+    }
+    setActiveTab(tab);
+  };
+
   return (
     <div className="flex h-screen">
-      {/* Left Section - Local Chat */}
+      {/* Left Section - Sections/Chapters/Groups */}
       <div className="flex flex-col w-80 border-r-1 border-gray-200">
         {/* Header */}
-        <div className="p-4 px-5 ">
-          <h2 className="text-xl font-semibold text-gray-800">Local Chats</h2>
+        <div className="p-4 px-5 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold text-gray-800">
+              Domestic Chats
+            </h2>
+          </div>
         </div>
 
         {/* Toggle Buttons */}
         <div className="px-2 mb-4">
-          <div className="flex rounded-lg p-1 gap-5">
+          <div className="flex rounded-lg p-1 gap-1 md:gap-5">
             <button
               suppressHydrationWarning={true}
-              onClick={() => setActiveTab("groups")}
-              className={`w-full py-[.6em] px-4 rounded-md text-xs font-medium transition-colors ${
+              onClick={() => handleTabChange("groups")}
+              className={`flex-1 py-3 md:py-[.6em] px-4 rounded-md text-sm md:text-xs font-medium transition-colors ${
                 activeTab === "groups"
                   ? "bg-gray-800 text-white"
                   : "bg-gray-200 hover:text-gray-900"
@@ -48,30 +77,43 @@ const DomesticChat = () => {
             </button>
             <button
               suppressHydrationWarning={true}
-              onClick={() => setActiveTab("chapters")}
-              className={`w-full py-[.6em] px-4 rounded-md text-xs font-medium transition-colors ${
-                activeTab === "chapters"
+              onClick={() => handleTabChange("sections")}
+              className={`flex-1 py-3 md:py-[.6em] px-4 rounded-md text-sm md:text-xs font-medium transition-colors ${
+                activeTab === "sections"
                   ? "bg-gray-800 text-white"
                   : "bg-gray-200 hover:text-gray-900"
               }`}
             >
-              Chapters
+              Sections
             </button>
           </div>
         </div>
 
         {/* Content Area */}
         <div className="flex-1 overflow-hidden">
-          {activeTab === "chapters" ? (
-            <ChaptersList
-              onCategorySelect={handleCategorySelect}
-              selectedCategory={selectedCategory}
-            />
-          ) : (
+          {activeTab === "groups" ? (
             <MyGroups
               onGroupSelect={handleGroupSelect}
               selectedGroupId={selectedGroup?._id}
             />
+          ) : activeTab === "sections" ? (
+            <div>
+              <SectionsList
+                onSectionSelect={handleSectionSelect}
+                selectedSection={selectedSection}
+              />
+            </div>
+          ) : activeTab === "chapters" && selectedSection ? (
+            <SectionChaptersList
+              selectedSection={selectedSection}
+              onBack={handleBackToSections}
+              onCategorySelect={handleCategorySelect}
+              selectedCategory={selectedCategory}
+            />
+          ) : (
+            <div className="p-4 text-center text-gray-500">
+              No content for tab: {activeTab}
+            </div>
           )}
         </div>
       </div>
