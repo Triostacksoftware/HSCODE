@@ -4,12 +4,12 @@ import axios from "axios";
 import { useUserAuth } from "../../utilities/userAuthMiddleware";
 import { OnlineUsersContext } from "../../contexts/OnlineUsersContext";
 import toast from "react-hot-toast";
-import socket from "../../utilities/socket";
 import { LiaSearchSolid } from "react-icons/lia";
 import { IoMdClose } from "react-icons/io";
 import { FaRegPaperPlane, FaUserFriends } from "react-icons/fa";
 import { MdOutlineGroup } from "react-icons/md";
 import { IoArrowBack } from "react-icons/io5";
+import { HiMegaphone } from "react-icons/hi2";
 import UserInfoSidebar from "./UserInfoSidebar";
 import MapPicker from "./MapPicker";
 import LeadFormModal from "./LeadFormModal";
@@ -24,6 +24,8 @@ const ChatWindow = ({
   const { user } = useUserAuth();
   const { onlineCounts, onlineUsers, socket } = useContext(OnlineUsersContext);
   const [leads, setLeads] = useState([]);
+  const [broadcastLeads, setBroadcastLeads] = useState([]);
+  const [processingBroadcast, setProcessingBroadcast] = useState({});
   // Lead form state
   const [leadType, setLeadType] = useState("buy");
   const [hscode, setHscode] = useState("");
@@ -116,6 +118,7 @@ const ChatWindow = ({
   useEffect(() => {
     if (selectedGroupId && user) {
       fetchLeads();
+      fetchBroadcastLeads();
     }
   }, [selectedGroupId, user]);
 
@@ -157,6 +160,57 @@ const ChatWindow = ({
       setError("Failed to load leads");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchBroadcastLeads = async () => {
+    try {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/leads/${selectedGroupId}`,
+        { withCredentials: true }
+      );
+      const approvedLeads = response.data.leads || [];
+      const broadcasts = approvedLeads.filter(
+        (lead) => lead.broadcast === "approved"
+      );
+      setBroadcastLeads(broadcasts);
+    } catch (error) {
+      console.error("Error fetching broadcast leads:", error);
+    }
+  };
+
+  const handleBroadcastRequest = async (leadId) => {
+    try {
+      setProcessingBroadcast((prev) => ({ ...prev, [leadId]: true }));
+
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/leads/broadcast-request/${leadId}`,
+        {},
+        { withCredentials: true }
+      );
+
+      if (response.data.success) {
+        toast.success("Broadcast request submitted successfully!");
+        // Update the lead in the local state
+        setLeads((prev) =>
+          prev.map((lead) =>
+            lead._id === leadId
+              ? {
+                  ...lead,
+                  broadcast: "pending",
+                  broadcastRequestedAt: new Date(),
+                }
+              : lead
+          )
+        );
+      }
+    } catch (error) {
+      console.error("Error requesting broadcast:", error);
+      toast.error(
+        error.response?.data?.message || "Failed to request broadcast"
+      );
+    } finally {
+      setProcessingBroadcast((prev) => ({ ...prev, [leadId]: false }));
     }
   };
 
@@ -275,6 +329,18 @@ const ChatWindow = ({
     });
   };
 
+  const scrollToLead = (leadId) => {
+    const element = document.getElementById(`lead-${leadId}`);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "center" });
+      // Add highlight effect
+      element.classList.add("ring-2", "ring-blue-500", "ring-opacity-50");
+      setTimeout(() => {
+        element.classList.remove("ring-2", "ring-blue-500", "ring-opacity-50");
+      }, 3000);
+    }
+  };
+
   if (!selectedGroupId) {
     return (
       <div className="flex-1 flex items-center justify-center">
@@ -287,6 +353,31 @@ const ChatWindow = ({
 
   return (
     <div className="relative flex flex-col h-full">
+      {/* Broadcast Marquee */}
+      {broadcastLeads.length > 0 && (
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2 px-4 overflow-hidden">
+          <div className="flex items-center justify-center space-x-4">
+            <HiMegaphone className="w-5 h-5 flex-shrink-0" />
+            <div className="flex-1 overflow-hidden">
+              <div className="animate-marquee whitespace-nowrap">
+                {broadcastLeads.map((lead, index) => (
+                  <span
+                    key={lead._id}
+                    onClick={() => scrollToLead(lead._id)}
+                    className="inline-block mx-4 cursor-pointer hover:underline font-medium"
+                    title="Click to scroll to this lead"
+                  >
+                    📢 {lead.hscode ? `HS: ${lead.hscode}` : "Lead"}:{" "}
+                    {lead.description || lead.content || "Text message"}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <HiMegaphone className="w-5 h-5 flex-shrink-0" />
+          </div>
+        </div>
+      )}
+
       {/* Top Bar */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white sticky top-0 z-10">
         <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -386,13 +477,17 @@ const ChatWindow = ({
                     key={`on-${m.id}`}
                     className="flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50"
                   >
-                    <span className={`w-2 h-2 rounded-full ${
-                      m.role === "admin" ? "bg-violet-500" : "bg-green-500"
-                    }`}></span>
+                    <span
+                      className={`w-2 h-2 rounded-full ${
+                        m.role === "admin" ? "bg-violet-500" : "bg-green-500"
+                      }`}
+                    ></span>
                     <span className="text-xs text-gray-900 truncate">
                       {m.name}
                       {m.role === "admin" && (
-                        <span className="ml-1 text-violet-600 font-medium">(Admin)</span>
+                        <span className="ml-1 text-violet-600 font-medium">
+                          (Admin)
+                        </span>
                       )}
                     </span>
                   </div>
@@ -443,6 +538,7 @@ const ChatWindow = ({
                       </div>
                     )}
                     <div
+                      id={`lead-${lead._id}`}
                       className={`flex ${
                         isOwnMessage ? "justify-end" : "justify-start"
                       }`}
@@ -477,7 +573,7 @@ const ChatWindow = ({
                       >
                         <div
                           className={`rounded-xl px-3 md:px-4 py-2 shadow-sm border ${
-                              lead.type === "buy"
+                            lead.type === "buy"
                               ? "bg-blue-50 border-blue-100 text-gray-900"
                               : lead.type === "sell"
                               ? "bg-green-50 border-green-100 text-gray-900"
@@ -504,6 +600,19 @@ const ChatWindow = ({
                                 {lead.hscode && (
                                   <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-[11px]">
                                     HS: {lead.hscode}
+                                  </span>
+                                )}
+                                {/* Broadcast Status Badge */}
+                                {lead.broadcast === "approved" && (
+                                  <span className="px-2 py-0.5 rounded-full text-[11px] bg-green-100 text-green-700 flex items-center gap-1">
+                                    <HiMegaphone className="w-3 h-3" />
+                                    BROADCAST
+                                  </span>
+                                )}
+                                {lead.broadcast === "pending" && (
+                                  <span className="px-2 py-0.5 rounded-full text-[11px] bg-yellow-100 text-yellow-700 flex items-center gap-1">
+                                    <HiMegaphone className="w-3 h-3" />
+                                    PENDING
                                   </span>
                                 )}
                               </div>
@@ -574,12 +683,29 @@ const ChatWindow = ({
                             </p>
                           )}
                         </div>
-                        <div
-                          className={`text-xs text-gray-500 mt-1 ${
-                            isOwnMessage ? "text-right" : "text-left"
-                          }`}
-                        >
-                          {formatTime(lead.createdAt)}
+                        <div className="flex items-center justify-between mt-1">
+                          <div
+                            className={`text-xs text-gray-500 ${
+                              isOwnMessage ? "text-right" : "text-left"
+                            }`}
+                          >
+                            {formatTime(lead.createdAt)}
+                          </div>
+                          {/* Broadcast Button - Only show for own leads that haven't been broadcasted */}
+                          {isOwnMessage &&
+                            (!lead.broadcast || lead.broadcast === "none") && (
+                              <button
+                                onClick={() => handleBroadcastRequest(lead._id)}
+                                disabled={processingBroadcast[lead._id]}
+                                className="flex items-center gap-1 px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200 transition-colors disabled:opacity-50"
+                                title="Request broadcast for this lead"
+                              >
+                                <HiMegaphone className="w-3 h-3" />
+                                {processingBroadcast[lead._id]
+                                  ? "Requesting..."
+                                  : "Boost"}
+                              </button>
+                            )}
                         </div>
                       </div>
                     </div>

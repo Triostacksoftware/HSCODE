@@ -11,6 +11,7 @@ import Settings from "@/component/adminPanelComponent/Settings";
 import RequestedLeads from "@/component/adminPanelComponent/RequestedLeads";
 import GlobalRequestedLeads from "@/component/adminPanelComponent/GlobalRequestedLeads";
 import NotificationManager from "@/component/adminPanelComponent/NotificationManager";
+import BroadcastManager from "@/component/adminPanelComponent/BroadcastManager";
 import {
   MdOutlineDashboard,
   MdOutlineHomeMax,
@@ -23,6 +24,7 @@ import {
   MdOutlinePublic,
   MdChat,
   MdOutlineNotifications,
+  MdOutlineCampaign,
 } from "react-icons/md";
 import Link from "next/link";
 
@@ -63,6 +65,11 @@ const AdminPanel = () => {
       name: "Global Leads",
       icon: MdOutlinePublic,
       component: GlobalRequestedLeads,
+    },
+    {
+      name: "Broadcast Manager",
+      icon: MdOutlineCampaign,
+      component: BroadcastManager,
     },
     { name: "Settings", icon: MdOutlineSettings, component: Settings },
     {
