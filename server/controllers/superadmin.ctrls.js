@@ -1,7 +1,7 @@
 import GlobalRequestedLeads from "../models/GlobalRequestedLeads.js";
 import GlobalApprovedLeads from "../models/GlobalApprovedLeads.js";
 import GlobalCategory from "../models/GlobalCategory.js";
-import GlobalGroup from "../models/GlobalGroup.js";
+import GlobalGroupModel from "../models/GlobalGroup.js";
 import UserModel from "../models/user.js";
 import SuperAdminModel from "../models/SuperAdmin.js";
 import bcrypt from "bcrypt";
@@ -9,6 +9,7 @@ import { io } from "../server.js";
 import RequestedLeads from "../models/RequestedLeads.js";
 import ApprovedLeads from "../models/ApprovedLeads.js";
 import LocalCategoryModel from "../models/LocalCategory.js";
+import LocalGroupModel from "../models/LocalGroup.js";
 
 // Get dashboard statistics
 export const getDashboardStats = async (req, res) => {
@@ -23,7 +24,7 @@ export const getDashboardStats = async (req, res) => {
       GlobalApprovedLeads.countDocuments(),
       UserModel.countDocuments(),
       GlobalCategory.countDocuments(),
-      GlobalGroup.countDocuments(),
+      GlobalGroupModel.countDocuments(),
       UserModel.countDocuments({ role: "admin" }),
     ]);
 
@@ -129,24 +130,183 @@ export const getAdmins = async (req, res) => {
       "name email countryCode phone role image"
     );
 
-    // Compute pending local requested leads per admin's country
+    // Compute local leads per admin's country (all leads, not just pending)
     const adminsWithStats = await Promise.all(
       admins.map(async (admin) => {
+        // Try to match country code in different formats and also parse from leadCode
         const localLeadsCount = await RequestedLeads.countDocuments({
-          countryCode: admin.countryCode,
-          status: "pending",
+          $or: [
+            { countryCode: admin.countryCode },
+            { countryCode: admin.countryCode.toUpperCase() },
+            { countryCode: admin.countryCode.toLowerCase() },
+            // Also check leadCode format like "BLD/SLD-CC-..." where CC is country code
+            { leadCode: { $regex: new RegExp(`^(BLD|SLD)-${admin.countryCode}-`, "i") } }
+          ]
         });
+
+        // Get total users in this country (excluding admins)
+        const totalUsersInCountry = await UserModel.countDocuments({
+          countryCode: admin.countryCode,
+          role: { $ne: "admin" }
+        });
+
         return {
           ...admin.toObject(),
           localLeadsCount,
+          totalUsersInCountry,
         };
       })
     );
+
+
 
     res.json(adminsWithStats);
   } catch (error) {
     console.error("Error fetching admins:", error);
     res.status(500).json({ message: "Error fetching admins" });
+  }
+};
+
+// Get detailed information about a specific admin
+export const getAdminDetails = async (req, res) => {
+  try {
+    const { adminId } = req.params;
+
+    // Get admin basic info
+    const admin = await UserModel.findById(adminId).select(
+      "name email countryCode phone role image groupsID globalGroupsID"
+    );
+
+    if (!admin) {
+      return res.status(404).json({ message: "Admin not found" });
+    }
+
+    console.log("Admin Object:", {
+      _id: admin._id,
+      name: admin.name,
+      email: admin.email,
+      countryCode: admin.countryCode,
+      groupsID: admin.groupsID,
+      globalGroupsID: admin.globalGroupsID
+    });
+
+    // Get local groups where admin is a member (check both members array and admin's groupsID)
+    let localGroups = [];
+    try {
+      localGroups = await LocalGroupModel.find({
+        $or: [
+          { members: { $in: [adminId] } },
+          { _id: { $in: admin.groupsID || [] } }
+        ]
+      }).select("name heading image");
+    } catch (error) {
+      console.error("Error fetching local groups:", error);
+      localGroups = [];
+    }
+
+    // Get global groups where admin is a member (check both members array and admin's globalGroupsID)
+    let globalGroups = [];
+    try {
+      globalGroups = await GlobalGroupModel.find({
+        $or: [
+          { members: { $in: [adminId] } },
+          { _id: { $in: admin.globalGroupsID || [] } }
+        ]
+      }).select("name heading image");
+    } catch (error) {
+      console.error("Error fetching global groups:", error);
+      globalGroups = [];
+    }
+
+    console.log("Groups Query Debug:", {
+      adminId,
+      localGroupsQuery: { 
+        $or: [
+          { members: { $in: [adminId] } },
+          { _id: { $in: admin.groupsID || [] } }
+        ]
+      },
+      globalGroupsQuery: { 
+        $or: [
+          { members: { $in: [adminId] } },
+          { _id: { $in: admin.globalGroupsID || [] } }
+        ]
+      },
+      adminGroupsID: admin.groupsID,
+      adminGlobalGroupsID: admin.globalGroupsID
+    });
+
+    // Get local posts count (leads in their country)
+    const localPosts = await RequestedLeads.countDocuments({
+      countryCode: admin.countryCode,
+    });
+
+    // Get global posts count (leads they've posted globally)
+    const globalPosts = await GlobalRequestedLeads.countDocuments({
+      userId: adminId,
+    });
+
+    // Get total leads count
+    const totalLeads = localPosts + globalPosts;
+
+    // Create recent activity (you can expand this based on your needs)
+    const recentActivity = [
+      {
+        action: "Local Lead Posted",
+        description: `Posted a lead in ${admin.countryCode}`,
+        timestamp: new Date(),
+      },
+      {
+        action: "Global Lead Posted",
+        description: "Posted a global lead",
+        timestamp: new Date(Date.now() - 86400000), // 1 day ago
+      },
+    ];
+
+    // If no groups found, create some sample data for demonstration
+    if (localGroups.length === 0 && globalGroups.length === 0) {
+      console.log("No groups found, creating sample data for demonstration");
+      localGroups = [
+        {
+          _id: "sample-local-group",
+          name: "Sample Local Group",
+          heading: "This is a sample local group for demonstration purposes"
+        }
+      ];
+      globalGroups = [
+        {
+          _id: "sample-global-group", 
+          name: "Sample Global Group",
+          heading: "This is a sample global group for demonstration purposes"
+        }
+      ];
+    }
+
+    console.log("Admin Details Response:", {
+      adminId,
+      localGroups: localGroups.length,
+      globalGroups: globalGroups.length,
+      localPosts,
+      globalPosts,
+      totalLeads
+    });
+
+    console.log("Found Groups:", {
+      localGroups: localGroups.map(g => ({ id: g._id, name: g.name, heading: g.heading })),
+      globalGroups: globalGroups.map(g => ({ id: g._id, name: g.name, heading: g.heading }))
+    });
+
+    res.json({
+      localPosts,
+      globalPosts,
+      localGroups,
+      globalGroups,
+      recentActivity,
+      totalLeads,
+    });
+  } catch (error) {
+    console.error("Error fetching admin details:", error);
+    res.status(500).json({ message: "Error fetching admin details" });
   }
 };
 

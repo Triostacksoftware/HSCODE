@@ -6,6 +6,7 @@ import {
 import {
   getDashboardStats,
   getAdmins,
+  getAdminDetails,
   createAdmin,
   updateAdmin,
   deleteAdmin,
@@ -31,6 +32,7 @@ router.get("/dashboard-stats", superadminMiddleware, getDashboardStats);
 
 // Admin management routes
 router.get("/admins", superadminMiddleware, getAdmins);
+router.get("/admin-details/:adminId", superadminMiddleware, getAdminDetails);
 router.post("/admins", superadminMiddleware, createAdmin);
 router.patch("/admins/:adminId", superadminMiddleware, updateAdmin);
 router.delete("/admins/:adminId", superadminMiddleware, deleteAdmin);

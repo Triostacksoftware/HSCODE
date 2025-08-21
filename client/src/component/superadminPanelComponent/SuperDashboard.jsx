@@ -7,6 +7,7 @@ import {
   MdOutlineCategory,
   MdOutlineAdminPanelSettings,
 } from "react-icons/md";
+import AdminDetails from "./AdminDetails";
 
 const SuperDashboard = () => {
   const [stats, setStats] = useState({
@@ -21,13 +22,31 @@ const SuperDashboard = () => {
   const [expandedCountry, setExpandedCountry] = useState(null);
   const [countriesWithAdmins, setCountriesWithAdmins] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedAdmin, setSelectedAdmin] = useState(null);
+  const [isAdminDetailsOpen, setIsAdminDetailsOpen] = useState(false);
 
   useEffect(() => {
     fetchDashboardData();
   }, []);
 
   useEffect(() => {
-    // Group admins by country and calculate total leads per country
+    const handleEscape = (event) => {
+      if (event.key === "Escape" && isAdminDetailsOpen) {
+        handleCloseAdminDetails();
+      }
+    };
+
+    if (isAdminDetailsOpen) {
+      document.addEventListener("keydown", handleEscape);
+    }
+
+    return () => {
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [isAdminDetailsOpen]);
+
+  useEffect(() => {
+    // Group admins by country and calculate total leads and users per country
     const countryMap = new Map();
 
     admins.forEach((admin) => {
@@ -36,12 +55,15 @@ const SuperDashboard = () => {
           countryCode: admin.countryCode,
           admins: [],
           totalLeads: 0,
+          totalUsers: 0,
         });
       }
 
       const country = countryMap.get(admin.countryCode);
       country.admins.push(admin);
       country.totalLeads += admin.localLeadsCount || 0;
+      // Use the totalUsersInCountry from the first admin (they should all have the same value for the same country)
+      country.totalUsers = admin.totalUsersInCountry || 0;
     });
 
     setCountriesWithAdmins(Array.from(countryMap.values()));
@@ -73,6 +95,16 @@ const SuperDashboard = () => {
 
   const handleCountryClick = (countryCode) => {
     setExpandedCountry(expandedCountry === countryCode ? null : countryCode);
+  };
+
+  const handleAdminClick = (admin) => {
+    setSelectedAdmin(admin);
+    setIsAdminDetailsOpen(true);
+  };
+
+  const handleCloseAdminDetails = () => {
+    setIsAdminDetailsOpen(false);
+    setSelectedAdmin(null);
   };
 
   const getFlagUrl = (countryCode) => {
@@ -263,7 +295,8 @@ const SuperDashboard = () => {
                           <p className="text-sm text-gray-600">
                             {country.admins.length} Admin
                             {country.admins.length > 1 ? "s" : ""} •{" "}
-                            {country.totalLeads} Total Leads
+                            {country.totalLeads || 0} Total Leads •{" "}
+                            {country.totalUsers || 0} Users
                           </p>
                         </div>
                       </div>
@@ -284,17 +317,28 @@ const SuperDashboard = () => {
                   {/* Expanded Details */}
                   {expandedCountry === country.countryCode && (
                     <div className="border-t border-gray-200 bg-gray-50 p-3">
-                      {/* Country Total Leads */}
-                      <div className="bg-blue-50 border border-blue-200 rounded p-3 mb-3">
-                        <div className="flex items-center justify-between">
-                          <div>
+                      {/* Country Statistics */}
+                      <div className="grid grid-cols-2 gap-3 mb-3">
+                        {/* Total Leads */}
+                        <div className="bg-blue-50 border border-blue-200 rounded p-3">
+                          <div className="text-center">
                             <h4 className="font-medium text-blue-900 text-sm">
-                              Total Leads Posted in {country.countryCode}
+                              Total Leads
                             </h4>
-                          </div>
-                          <div className="text-right">
                             <p className="text-xl font-bold text-blue-900">
-                              {country.totalLeads}
+                              {country.totalLeads || 0}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        {/* Total Users */}
+                        <div className="bg-green-50 border border-green-200 rounded p-3">
+                          <div className="text-center">
+                            <h4 className="font-medium text-green-900 text-sm">
+                              Total Users
+                            </h4>
+                            <p className="text-xl font-bold text-green-900">
+                              {country.totalUsers || 0}
                             </p>
                           </div>
                         </div>
@@ -308,7 +352,8 @@ const SuperDashboard = () => {
                         {country.admins.map((admin, index) => (
                           <div
                             key={admin._id}
-                            className="bg-white rounded p-3 border border-gray-200"
+                            className="bg-white rounded p-3 border border-gray-200 cursor-pointer hover:bg-gray-50 hover:shadow-md transition-all duration-200 group transform hover:-translate-y-1"
+                            onClick={() => handleAdminClick(admin)}
                           >
                             <div className="flex items-center justify-between">
                               <div>
@@ -318,10 +363,16 @@ const SuperDashboard = () => {
                                 <p className="text-xs text-gray-600">
                                   {admin.email}
                                 </p>
+                                <p className="text-xs text-amber-600 mt-1 opacity-0 group-hover:opacity-100 transition-opacity flex items-center">
+                                  <MdOutlineAdminPanelSettings className="w-3 h-3 mr-1" />
+                                  Click to view details →
+                                </p>
                               </div>
-                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                Active
-                              </span>
+                              <div className="flex flex-col items-end space-y-1">
+                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                  Active
+                                </span>
+                              </div>
                             </div>
                           </div>
                         ))}
@@ -334,6 +385,21 @@ const SuperDashboard = () => {
           )}
         </div>
       </div>
+
+      {/* Admin Details Sidebar */}
+      <AdminDetails
+        admin={selectedAdmin}
+        isOpen={isAdminDetailsOpen}
+        onClose={handleCloseAdminDetails}
+      />
+
+      {/* Backdrop Overlay */}
+      {isAdminDetailsOpen && (
+        <div
+          className="fixed inset-0 bg-[#00000066] bg-opacity-50 z-40 transition-opacity duration-300"
+          onClick={handleCloseAdminDetails}
+        />
+      )}
     </div>
   );
 };
