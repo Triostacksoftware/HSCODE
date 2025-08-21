@@ -14,6 +14,8 @@ import useCountryCode from "../../utilities/useCountryCode";
 import {
   validatePhoneCountryCode,
   getCountryInfo,
+  getCleanPhoneNumber,
+  formatPhoneForDisplay,
 } from "../../utilities/countryCodeToPhonePrefix";
 
 export default function Signup() {
@@ -91,11 +93,12 @@ export default function Signup() {
     }
 
     try {
-      // First check if user already exists
+      // First check if user already exists - use clean phone number
+      const cleanPhoneNumber = getCleanPhoneNumber(formData.phoneNumber, countryCode);
       const checkResponse = await axios.post(
         `${process.env.NEXT_PUBLIC_BASE_URL}/auth/check-user-before-otp`,
         {
-          phoneNumber: fullPhoneNumber,
+          phoneNumber: cleanPhoneNumber,
           password: formData.password,
         }
       );
@@ -167,15 +170,8 @@ export default function Signup() {
       const result = await confirmationResult.confirm(otp);
 
       if (result.user) {
-        // Prepare phone number with country code for backend
-        let fullPhoneNumber = formData.phoneNumber;
-        if (countryCode && !countryLoading) {
-          const countryInfo = getCountryInfo(countryCode);
-          if (countryInfo?.phonePrefix) {
-            const cleanNumber = formData.phoneNumber.replace(/^\+/, "");
-            fullPhoneNumber = countryInfo.phonePrefix + cleanNumber;
-          }
-        }
+        // Store clean phone number (without country prefix) and country code separately
+        const cleanPhoneNumber = getCleanPhoneNumber(formData.phoneNumber, countryCode);
 
         // OTP verified, now complete signup with backend
         const response = await axios.post(
@@ -183,9 +179,9 @@ export default function Signup() {
           {
             name: formData.name,
             email: formData.email,
-            phoneNumber: fullPhoneNumber,
+            phoneNumber: cleanPhoneNumber, // Store clean number without prefix
             password: formData.password,
-            countryCode: countryCode,
+            countryCode: countryCode, // Store country code like "IN", "US"
           },
           {
             withCredentials: true,
@@ -394,6 +390,9 @@ export default function Signup() {
                 }
                 return displayPhone;
               })()}
+            </p>
+            <p className="text-xs text-gray-500 mt-1">
+              Country: {countryCode} • Phone: {getCleanPhoneNumber(formData.phoneNumber, countryCode)}
             </p>
           </div>
 

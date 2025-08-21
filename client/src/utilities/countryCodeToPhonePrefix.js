@@ -484,4 +484,32 @@ export const getCountryInfo = (countryCode) => {
   };
 };
 
+// Function to format phone number for display (with country prefix)
+export const formatPhoneForDisplay = (phoneNumber, countryCode) => {
+  if (!phoneNumber || !countryCode) return phoneNumber;
+  
+  const prefix = countryCodeToPhonePrefix[countryCode];
+  if (!prefix) return phoneNumber;
+  
+  // Remove any existing + or country prefix
+  const cleanNumber = phoneNumber.replace(/^(\+?\d{1,4})?/, "");
+  return `${prefix}${cleanNumber}`;
+};
+
+// Function to get clean phone number (without country prefix)
+export const getCleanPhoneNumber = (phoneNumber, countryCode) => {
+  if (!phoneNumber || !countryCode) return phoneNumber;
+  
+  const prefix = countryCodeToPhonePrefix[countryCode];
+  if (!prefix) return phoneNumber;
+  
+  // Remove country prefix if present
+  if (phoneNumber.startsWith(prefix)) {
+    return phoneNumber.substring(prefix.length);
+  }
+  
+  // Remove + if present
+  return phoneNumber.replace(/^\+/, "");
+};
+
 export default countryCodeToPhonePrefix;
