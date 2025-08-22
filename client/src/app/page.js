@@ -16,12 +16,11 @@ import useHomeData from "@/utilities/useHomeData";
 
 function HomeContent() {
   const { countryCode, loading: countryLoading } = useCountryCode();
-  console.log("home page", countryCode);
   const {
     homeData,
     loading: dataLoading,
     isFallback,
-  } = useHomeData(countryCode);
+  } = useHomeData(countryCode?.code);
   console.log("home data", homeData);
 
   // Handle hash-based navigation when coming from other pages

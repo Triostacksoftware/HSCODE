@@ -271,6 +271,7 @@ export const getCountryCodeFromPhone = (phoneNumber) => {
 
 // Function to get user-friendly country info
 export const getCountryInfo = (countryCode) => {
+  console.log("countryCode", countryCode);  
   if (!countryCode) return null;
 
   const prefix = countryCodeToPhonePrefix[countryCode];

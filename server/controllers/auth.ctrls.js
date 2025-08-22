@@ -9,6 +9,17 @@ import {
   verifyTOTP,
 } from "../utilities/totp.util.js";
 import bcrypt from "bcrypt";
+import { verifyFirebaseToken } from "../utilities/firebase.util.js";
+
+const setCookie = (res, tokenName, token, maxAge) => {
+  res.cookie(tokenName, token, {
+    httpOnly: true,
+    secure: process.env.ENV === "PRODUCTION",
+    sameSite: process.env.ENV === "PRODUCTION" ? "none" : "lax",
+    maxAge: maxAge || 7 * 24 * 60 * 60 * 1000, // 7d for user
+  });
+};
+
 // Get current user profile (for settings)
 export const getMe = async (req, res) => {
   try {
@@ -72,31 +83,59 @@ export const updateProfile = async (req, res) => {
   }
 };
 
+export const userExists = async (req, res) => {
+  try {
+    const { email, phoneNumber } = req.body;
+    const user = await UserModel.findOne({$or: [{email}, {phone: phoneNumber}]});
+    if (user) {
+      return res.status(200).json({ message: "User exists" });
+    }
+    return res.status(200).json({ message: "User does not exist" });
+  } catch (error) {
+    console.error("User exists error:", error);
+    return res.status(500).json({ message: "Failed to check user existence" });
+  }
+};
+
 // User Controllers
 export const signup = async (req, res) => {
-  const { name, email, phoneNumber, password, countryCode } = req.body;
-
-  if (!name || !email || !phoneNumber || !password) {
-    return res.status(400).json({
-      message: "Name, email, phone number, and password are required",
-    });
-  }
+  const { name, email, phoneNumber, password, countryCode, country } = req.body;
 
   try {
     // Check if user already exists
-    const existingUser = await UserModel.findOne({
-      $or: [{ email }, { phone: phoneNumber }],
-    });
+    const existingUser = await UserModel.findOne({$or: [{email}, {phone: phoneNumber}]});
 
     if (existingUser) {
-      if (existingUser.email === email) {
-        return res.status(409).json({ message: "Email already registered" });
-      } else {
-        return res
-          .status(409)
-          .json({ message: "Phone number already registered" });
-      }
+      return res.status(409).json({ message: "User already registered" });
     }
+    // Get Firebase ID token from Authorization header
+    const idToken = req.headers.authorization?.split(' ')[1];
+
+    if (!idToken) {
+      return res.status(401).json({
+        success: false,
+        message: "Firebase ID token required in Authorization header",
+      });
+    }
+
+    // Verify Firebase ID token
+    const firebaseResult = await verifyFirebaseToken(idToken);
+    
+    if (!firebaseResult.success) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid Firebase token",
+      });
+    }
+
+    // Check if phone is verified in Firebase
+    if (!firebaseResult.phoneVerified || !firebaseResult.phoneNumber) {
+      return res.status(400).json({
+        success: false,
+        message: "Phone number not verified in Firebase",
+      });
+    }
+
 
     // Create new user directly (phone verification already done by Firebase)
     const newUser = new UserModel({
@@ -104,21 +143,17 @@ export const signup = async (req, res) => {
       email,
       phone: phoneNumber,
       password,
-      countryCode: countryCode || "IN", // Use provided country code or default to IN
+      countryCode: countryCode || "IN",
+      country: country || "India",
     });
 
     await newUser.save();
 
     // Generate JWT with user._id
-    const authToken = generateToken({ id: newUser._id, role: "user" }, "24h");
+    const authToken = generateToken({ id: newUser._id, role: "user" }, "7d");
 
     // Set JWT in HTTP-only cookie
-    res.cookie("auth_token", authToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    });
+    setCookie(res, "auth_token", authToken); // 7d
 
     // Respond with success
     return res.status(201).json({
@@ -129,6 +164,7 @@ export const signup = async (req, res) => {
         email: newUser.email,
         phone: newUser.phone,
         countryCode: newUser.countryCode,
+        country: newUser.country,
       },
     });
   } catch (error) {

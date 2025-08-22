@@ -19,7 +19,7 @@ import {
 } from "../../utilities/countryCodeToPhonePrefix";
 
 export default function Signup() {
-  const { countryCode, loading: countryLoading } = useCountryCode();
+  const { countryInfo, loading: countryLoading } = useCountryCode();
   const [step, setStep] = useState(1); // 1: form, 2: OTP verification
   const [formData, setFormData] = useState({
     name: "",
@@ -73,18 +73,19 @@ export default function Signup() {
 
     // Prepare phone number with country code
     let fullPhoneNumber = formData.phoneNumber;
-    if (countryCode && !countryLoading) {
-      const countryInfo = getCountryInfo(countryCode);
-      if (countryInfo?.phonePrefix) {
+    console.log(fullPhoneNumber)
+    if (countryInfo?.code && !countryLoading) {
+      const all = getCountryInfo(countryInfo.code);
+      if (all?.phonePrefix) {
         // Remove any existing + if user typed it
         const cleanNumber = formData.phoneNumber.replace(/^\+/, "");
-        fullPhoneNumber = countryInfo.phonePrefix + cleanNumber;
+        fullPhoneNumber = all.phonePrefix + cleanNumber;
       }
-    }
+    } 
 
     // Validate country code before proceeding
-    if (countryCode && !countryLoading) {
-      const validation = validatePhoneCountryCode(fullPhoneNumber, countryCode);
+    if (countryInfo.code && !countryLoading) {
+      const validation = validatePhoneCountryCode(fullPhoneNumber, countryInfo.code);
       if (!validation.isValid) {
         setMessage(validation.message);
         setIsLoading(false);
@@ -94,7 +95,7 @@ export default function Signup() {
 
     try {
       // First check if user already exists - use clean phone number
-      const cleanPhoneNumber = getCleanPhoneNumber(formData.phoneNumber, countryCode);
+      const cleanPhoneNumber = getCleanPhoneNumber(formData.phoneNumber, countryInfo.code);
       const checkResponse = await axios.post(
         `${process.env.NEXT_PUBLIC_BASE_URL}/auth/check-user-before-otp`,
         {
@@ -171,7 +172,7 @@ export default function Signup() {
 
       if (result.user) {
         // Store clean phone number (without country prefix) and country code separately
-        const cleanPhoneNumber = getCleanPhoneNumber(formData.phoneNumber, countryCode);
+        const cleanPhoneNumber = getCleanPhoneNumber(formData.phoneNumber, countryInfo?.code);
 
         // OTP verified, now complete signup with backend
         const response = await axios.post(
@@ -181,7 +182,7 @@ export default function Signup() {
             email: formData.email,
             phoneNumber: cleanPhoneNumber, // Store clean number without prefix
             password: formData.password,
-            countryCode: countryCode, // Store country code like "IN", "US"
+            countryCode: countryInfo.code, // Store country code like "IN", "US"
           },
           {
             withCredentials: true,
@@ -284,9 +285,10 @@ export default function Signup() {
             </legend>
             <div className="flex items-center">
               {/* Static Country Code Prefix */}
-              {countryCode && !countryLoading && (
+              {countryInfo && !countryLoading && (
                 <span className="px-3 py-3 sm:py-4 text-sm sm:text-base text-gray-700 font-medium bg-gray-50 border-r border-gray-300">
-                  {getCountryInfo(countryCode)?.phonePrefix || "+"}
+                  {console.log(countryInfo.code)}
+                  {getCountryInfo(countryInfo.code)?.phonePrefix || "+"}
                 </span>
               )}
               {/* Phone Number Input */}
@@ -297,7 +299,7 @@ export default function Signup() {
                 value={formData.phoneNumber}
                 onChange={handleInputChange}
                 placeholder={
-                  countryCode && !countryLoading ? "1234567890" : "+1234567890"
+                  countryInfo?.code && !countryLoading ? "1234567890" : "+1234567890"
                 }
                 className="flex-1 border-none outline-none px-3 py-3 sm:py-4 text-sm sm:text-base bg-transparent"
                 required
@@ -381,18 +383,18 @@ export default function Signup() {
             <p className="text-sm font-medium text-gray-900">
               {(() => {
                 let displayPhone = formData.phoneNumber;
-                if (countryCode && !countryLoading) {
-                  const countryInfo = getCountryInfo(countryCode);
-                  if (countryInfo?.phonePrefix) {
+                if (countryInfo.code && !countryLoading) {
+                  const all = getCountryInfo(countryInfo.code);
+                  if (all?.phonePrefix) {
                     const cleanNumber = formData.phoneNumber.replace(/^\+/, "");
-                    displayPhone = countryInfo.phonePrefix + cleanNumber;
+                    displayPhone = all.phonePrefix + cleanNumber;
                   }
                 }
                 return displayPhone;
               })()}
             </p>
             <p className="text-xs text-gray-500 mt-1">
-              Country: {countryCode} • Phone: {getCleanPhoneNumber(formData.phoneNumber, countryCode)}
+              Country: {countryInfo.code} • Phone: {getCleanPhoneNumber(formData.phoneNumber, countryInfo.code)}
             </p>
           </div>
 

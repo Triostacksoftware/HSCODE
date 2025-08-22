@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
+import getCountry from "./utilities/location.util.js";
 
 dotenv.config();
 
@@ -20,7 +21,6 @@ import globalLeadsRoutes from "./routes/globalLeads.routes.js";
 import superadminRoutes from "./routes/superadmin.routes.js";
 import homeDataRoutes from "./routes/homeData.routes.js";
 import notificationRoutes from "./routes/notification.routes.js";
-import { getLocationInfo } from "./utilities/location.util.js";
 
 // middlewares
 app.use(express.json());
@@ -57,13 +57,9 @@ app.get("/api/v1", (req, res) => {
 // Unified country detection endpoint
 app.get("/api/v1/location", async (req, res) => {
   try {
-    const result = await getLocationInfo(req);
-
-    if (result.success) {
-      res.status(200).json(result);
-    } else {
-      res.status(500).json(result);
-    }
+    const ip = req.ip;
+    const result = await getCountry(ip);
+    res.status(200).json(result);
   } catch (error) {
     console.error("Location endpoint error:", error);
     res.status(500).json({

@@ -46,6 +46,11 @@ const userSchema = new mongoose.Schema(
       required: true,
     },
 
+    country: {
+      type: String,
+      required: true,
+    },
+
     membership: {
       type: String,
       enum: ["free", "premium"],

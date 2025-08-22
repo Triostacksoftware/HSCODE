@@ -1,82 +1,25 @@
-import { getIpLocation } from "./ip.util.js";
+import maxmind from 'maxmind';
 
-/**
- * Unified location detection utility
- * Can be used by any controller or route that needs location information
- */
-export const getLocationInfo = async (req) => {
-  try {
-    const location = await getIpLocation(req);
+async function getCountry(ip) {
+ try {
+    // Load the database (only once)
+    const lookup = await maxmind.open('./db/GeoLite2-Country.mmdb');
+  
+    // Get country info
+    const result = lookup.get(ip);
+  
+    if (result && result.country) {
+      return {
+        code: result.country.iso_code,  // e.g. "US"
+        name: result.country.names.en   // e.g. "United States"
+      };
+    } else {
+      return { code: "IN", name: "India" };
+    }
+ } catch (error) {
+  return { code: "IN", name: "India" };
+ }
+}
 
-    return {
-      success: true,
-      data: {
-        ip: location.ip,
-        country: location.country,
-        countryCode: location.countryCode,
-        location: {
-          ip: location.ip,
-          country: location.country,
-          countryCode: location.countryCode,
-        },
-      },
-    };
-  } catch (error) {
-    console.error("Location detection failed:", error);
-    return {
-      success: false,
-      error: error.message,
-      data: {
-        ip: "unknown",
-        country: "Unknown",
-        countryCode: "XX",
-      },
-    };
-  }
-};
-
-/**
- * Get only country code (lightweight version)
- */
-export const getCountryCode = async (req) => {
-  try {
-    const location = await getIpLocation(req);
-    return {
-      success: true,
-      countryCode: location.countryCode,
-    };
-  } catch (error) {
-    console.error("Country code detection failed:", error);
-    return {
-      success: false,
-      countryCode: "XX",
-    };
-  }
-};
-
-/**
- * Get full location details
- */
-export const getFullLocation = async (req) => {
-  try {
-    const location = await getIpLocation(req);
-    return {
-      success: true,
-      location: {
-        ip: location.ip,
-        country: location.country,
-        countryCode: location.countryCode,
-      },
-    };
-  } catch (error) {
-    console.error("Full location detection failed:", error);
-    return {
-      success: false,
-      location: {
-        ip: "unknown",
-        country: "Unknown",
-        countryCode: "XX",
-      },
-    };
-  }
-};
+// Example
+export default getCountry;
