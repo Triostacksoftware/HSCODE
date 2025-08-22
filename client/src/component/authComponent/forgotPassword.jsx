@@ -16,7 +16,7 @@ import {
 } from "../../utilities/countryCodeToPhonePrefix";
 
 export default function ForgotPassword({ onBack }) {
-  const { countryCode, loading: countryLoading } = useCountryCode();
+  const { countryInfo, loading: countryLoading } = useCountryCode();
   const [step, setStep] = useState(1); // 1: phone, 2: OTP, 3: new password
   const [phoneNumber, setPhoneNumber] = useState("");
   const [otp, setOtp] = useState("");
@@ -54,18 +54,18 @@ export default function ForgotPassword({ onBack }) {
 
     // Prepare phone number with country code
     let fullPhoneNumber = phoneNumber;
-    if (countryCode && !countryLoading) {
-      const countryInfo = getCountryInfo(countryCode);
-      if (countryInfo?.phonePrefix) {
+    if (countryInfo?.code && !countryLoading) {
+      const countryData = getCountryInfo(countryInfo.code);
+      if (countryData?.phonePrefix) {
         // Remove any existing + if user typed it
         const cleanNumber = phoneNumber.replace(/^\+/, "");
-        fullPhoneNumber = countryInfo.phonePrefix + cleanNumber;
+        fullPhoneNumber = countryData.phonePrefix + cleanNumber;
       }
     }
 
     // Validate country code before proceeding
-    if (countryCode && !countryLoading) {
-      const validation = validatePhoneCountryCode(fullPhoneNumber, countryCode);
+    if (countryInfo?.code && !countryLoading) {
+      const validation = validatePhoneCountryCode(fullPhoneNumber, countryInfo.code);
       if (!validation.isValid) {
         setMessage(validation.message);
         setIsLoading(false);
@@ -78,7 +78,7 @@ export default function ForgotPassword({ onBack }) {
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_BASE_URL}/auth/forgot-password`,
         {
-          phoneNumber: fullPhoneNumber,
+          phoneNumber,
         },
         {
           withCredentials: true,
@@ -177,18 +177,18 @@ export default function ForgotPassword({ onBack }) {
     try {
       // Prepare phone number with country code for backend
       let fullPhoneNumber = phoneNumber;
-      if (countryCode && !countryLoading) {
-        const countryInfo = getCountryInfo(countryCode);
-        if (countryInfo?.phonePrefix) {
+      if (countryInfo?.code && !countryLoading) {
+        const countryData = getCountryInfo(countryInfo.code);
+        if (countryData?.phonePrefix) {
           const cleanNumber = phoneNumber.replace(/^\+/, "");
-          fullPhoneNumber = countryInfo.phonePrefix + cleanNumber;
+          fullPhoneNumber = countryData.phonePrefix + cleanNumber;
         }
       }
 
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_BASE_URL}/auth/reset-password`,
         {
-          phoneNumber: fullPhoneNumber,
+          phoneNumber,
           newPassword,
         },
         {
@@ -218,9 +218,9 @@ export default function ForgotPassword({ onBack }) {
         </legend>
         <div className="flex items-center">
           {/* Static Country Code Prefix */}
-          {countryCode && !countryLoading && (
+          {countryInfo?.code && !countryLoading && (
             <span className="px-3 py-3 sm:py-4 text-sm sm:text-base text-gray-700 font-medium bg-gray-50 border-r border-gray-300">
-              {getCountryInfo(countryCode)?.phonePrefix || "+"}
+              {getCountryInfo(countryInfo.code)?.phonePrefix || "+"}
             </span>
           )}
           {/* Phone Number Input */}
@@ -229,7 +229,7 @@ export default function ForgotPassword({ onBack }) {
             value={phoneNumber}
             onChange={(e) => setPhoneNumber(e.target.value)}
             placeholder={
-              countryCode && !countryLoading ? "1234567890" : "+1234567890"
+              countryInfo?.code && !countryLoading ? "1234567890" : "+1234567890"
             }
             className="flex-1 border-none outline-none px-3 py-3 sm:py-4 text-sm sm:text-base bg-transparent"
             required
@@ -257,11 +257,11 @@ export default function ForgotPassword({ onBack }) {
         <p className="text-sm font-medium text-gray-900">
           {(() => {
             let displayPhone = phoneNumber;
-            if (countryCode && !countryLoading) {
-              const countryInfo = getCountryInfo(countryCode);
-              if (countryInfo?.phonePrefix) {
+            if (countryInfo?.code && !countryLoading) {
+              const countryData = getCountryInfo(countryInfo.code);
+              if (countryData?.phonePrefix) {
                 const cleanNumber = phoneNumber.replace(/^\+/, "");
-                displayPhone = countryInfo.phonePrefix + cleanNumber;
+                displayPhone = countryData.phonePrefix + cleanNumber;
               }
             }
             return displayPhone;

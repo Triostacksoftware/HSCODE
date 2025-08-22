@@ -38,8 +38,10 @@ app.use((req, res, next) => {
 
 app.use(
   cors({
-    origin: process.env.ORIGIN,
+    origin: process.env.ORIGIN || "http://localhost:3000",
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   })
 );
 app.use("/api/v1/upload", express.static("public/uploads"));
@@ -52,6 +54,17 @@ app.get("/", (req, res) => {
 
 app.get("/api/v1", (req, res) => {
   res.send("You have to login first");
+});
+
+// Test cookie endpoint
+app.get("/api/v1/test-cookie", (req, res) => {
+  res.cookie("test_cookie", "test_value", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    path: "/",
+  });
+  res.json({ message: "Test cookie set", cookies: req.cookies });
 });
 
 // Unified country detection endpoint

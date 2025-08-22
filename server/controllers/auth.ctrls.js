@@ -90,10 +90,43 @@ export const userExists = async (req, res) => {
     if (user) {
       return res.status(200).json({ message: "User exists" });
     }
-    return res.status(200).json({ message: "User does not exist" });
+    const otp = generateOTP();
+    await emailVerificatonMail(email, otp, "signup");
+    const otpToken = generateToken({ email, otp }, "5m");
+    res.cookie("otp_token", otpToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 5 * 60 * 1000,
+      path: "/",
+    });
+    return res.status(200).json({ message: "OTP sent to email" });
   } catch (error) {
     console.error("User exists error:", error);
     return res.status(500).json({ message: "Failed to check user existence" });
+  }
+};
+
+export const verifyOTP = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    console.log("Cookies received:", req.cookies);
+    console.log("otp_token cookie:", req.cookies.otp_token);
+    const otpToken = req.cookies.otp_token;
+    
+    if (!otpToken) {
+      return res.status(401).json({ message: "OTP token not found in cookies" });
+    }
+    
+    const decoded = verifyToken(otpToken);
+    if (decoded.email !== email || decoded.otp !== otp) {
+      return res.status(401).json({ message: "Invalid or expired OTP" });
+    }
+    
+    return res.status(200).json({ message: "OTP verified" });
+  } catch (error) {
+    console.error("OTP verification error:", error);
+    return res.status(500).json({ message: "Failed to verify OTP" });
   }
 };
 
@@ -106,11 +139,37 @@ export const signup = async (req, res) => {
     const existingUser = await UserModel.findOne({$or: [{email}, {phone: phoneNumber}]});
 
     if (existingUser) {
+      console.log("existingUser", existingUser);
       return res.status(409).json({ message: "User already registered" });
     }
+
+    // Verify that email OTP was verified
+    const otpToken = req.cookies.otp_token;
+    if (!otpToken) {
+      return res.status(401).json({
+        success: false,
+        message: "Email OTP verification required",
+      });
+    }
+
+    try {
+      const decoded = verifyToken(otpToken);
+      if (decoded.email !== email) {
+        return res.status(401).json({
+          success: false,
+          message: "Email OTP verification failed",
+        });
+      }
+    } catch (error) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid or expired email OTP token",
+      });
+    }
+
     // Get Firebase ID token from Authorization header
     const idToken = req.headers.authorization?.split(' ')[1];
-
+    console.log("idToken", idToken);
     if (!idToken) {
       return res.status(401).json({
         success: false,
@@ -155,6 +214,9 @@ export const signup = async (req, res) => {
     // Set JWT in HTTP-only cookie
     setCookie(res, "auth_token", authToken); // 7d
 
+    // Clear the OTP token cookie after successful signup
+    res.clearCookie("otp_token");
+
     // Respond with success
     return res.status(201).json({
       message: "User registered successfully",
@@ -170,6 +232,36 @@ export const signup = async (req, res) => {
   } catch (error) {
     console.error("Signup error:", error);
     return res.status(500).json({ message: "Failed to create user account" });
+  }
+};
+
+export const verifyFirebaseTokenAndLogin = async (req, res) => {
+  try {
+    const phoneNumber = req.body.phoneNumber;
+    const idToken = req.headers.authorization?.split(" ")[1];
+    console.log("idToken", idToken);
+    if (!idToken) {
+      return res.status(401).json({ message: "Firebase ID token required in Authorization header" });
+    }
+    console.log("hello")
+
+    const firebaseResult = await verifyFirebaseToken(idToken);
+    console.log("firebaseResult", firebaseResult);
+    if (!firebaseResult.success) {
+      return res.status(401).json({ message: "Invalid Firebase token" }); 
+    }
+    const user = await UserModel.findOne({ phone: phoneNumber });
+    console.log("user", user);
+    if (!user) {
+      return res.status(401).json({ message: "User not found" });
+    }
+    const authToken = generateToken({ id: user._id, role: "user" }, "7d");
+    setCookie(res, "auth_token", authToken);
+
+    return res.status(200).json({ message: "Firebase token verified" });
+  } catch (error) {
+    console.error("Firebase token verification error:", error);
+    return res.status(500).json({ message: "Failed to verify Firebase token" });
   }
 };
 
@@ -237,66 +329,6 @@ export const emailVerification = async (req, res) => {
   } catch (err) {
     console.error("Verification error:", err);
     return res.status(500).json({ message: "Server Error" });
-  }
-};
-
-export const login = async (req, res) => {
-  const { phoneNumber, password } = req.body;
-
-  if (!phoneNumber || !password) {
-    return res
-      .status(400)
-      .json({ message: "Phone number and password are required" });
-  }
-
-  try {
-    // Find user by phone number
-    const user = await UserModel.findOne({ phone: phoneNumber });
-    if (!user) return res.status(401).json({ message: "Invalid credentials" });
-
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch)
-      return res.status(401).json({ message: "Invalid credentials" });
-
-    const reset = req.cookies.reset_confirmed;
-    if (reset) {
-      // Auth success: issue final token
-      const authToken = generateToken(
-        { id: user._id, role: "user", countryCode: user.countryCode },
-        "24h"
-      );
-
-      // Set final auth cookie
-      res.cookie("auth_token", authToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-        maxAge: 24 * 60 * 60 * 1000, // 24 hours
-      });
-
-      res.clearCookie("reset_confirmed");
-
-      return res.status(200).json({ message: "LoggedIn" });
-    }
-
-    // Phone verification already done by Firebase, proceed with login
-    const authToken = generateToken(
-      { id: user._id, role: "user", countryCode: user.countryCode },
-      "24h"
-    );
-
-    // Set auth cookie
-    res.cookie("auth_token", authToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    });
-
-    return res.status(200).json({ message: "LoggedIn" });
-  } catch (err) {
-    console.error("Login error:", err);
-    return res.status(500).json({ message: "Login failed" });
   }
 };
 
@@ -389,6 +421,10 @@ export const otpVerification = (req, res) => {
 
 export const resetPassword = async (req, res) => {
   const { phoneNumber, newPassword } = req.body;
+  
+  console.log("Reset password request body:", req.body);
+  console.log("Phone number received:", phoneNumber);
+  console.log("New password received:", newPassword ? "***" : "undefined");
 
   if (!phoneNumber || !newPassword) {
     return res
@@ -399,6 +435,8 @@ export const resetPassword = async (req, res) => {
   try {
     // Phone verification already done by Firebase, proceed with password reset
     const user = await UserModel.findOne({ phone: phoneNumber });
+    console.log("User found:", user ? "Yes" : "No");
+    
     if (!user) return res.status(404).json({ message: "User not found" });
 
     user.password = newPassword;
@@ -863,47 +901,87 @@ export const verifyUserAuth = async (req, res) => {
 
 // New function to check user existence before sending OTP
 export const checkUserBeforeOTP = async (req, res) => {
-  const { phoneNumber, password } = req.body;
+  const { phoneNumber, email, password } = req.body;
 
-  if (!phoneNumber || !password) {
+  if (!phoneNumber || !email || !password) {
     return res.status(400).json({
-      message: "Phone number and password are required",
+      message: "Phone number, email and password are required",
     });
   }
 
   try {
-    // Find user by phone number
-    const user = await UserModel.findOne({ phone: phoneNumber });
-    if (!user) {
-      return res.status(401).json({
-        message: "Invalid credentials",
-        userExists: false,
+    // Check if user already exists with this email or phone
+    const existingUser = await UserModel.findOne({
+      $or: [{ email }, { phone: phoneNumber }]
+    });
+    
+    if (existingUser) {
+      return res.status(200).json({
+        message: "User exists",
+        userExists: true,
       });
     }
 
-    // Verify password
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(401).json({
-        message: "Invalid credentials",
-        userExists: false,
-      });
-    }
-
-    // User exists and password is correct, proceed with OTP
+    // User doesn't exist, send email OTP for verification
+    const otp = generateOTP();
+    await emailVerificatonMail(email, otp, "signup");
+    const otpToken = generateToken({ email, otp }, "5m");
+    
+    console.log("Setting otp_token cookie:", otpToken);
+    
+    res.cookie("otp_token", otpToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 5 * 60 * 1000,
+      path: "/",
+    });
+    
+    console.log("Cookie set successfully");
+    
     return res.status(200).json({
-      message: "User verified, proceed with OTP",
-      userExists: true,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-        countryCode: user.countryCode,
-      },
+      message: "OTP sent to email",
+      userExists: false,
     });
   } catch (err) {
-    console.error("User verification error:", err);
-    return res.status(500).json({ message: "Verification failed" });
+    console.error("User check error:", err);
+    return res.status(500).json({ message: "Failed to check user existence" });
   }
 };
+
+// Function to check if user exists for login
+export const checkUserExists = async (req, res) => {
+  const { phoneNumber } = req.body;
+
+  if (!phoneNumber) {
+    return res.status(400).json({
+      message: "Phone number is required",
+    });
+  }
+
+  try {
+    // Check if user exists with this phone number (plain number)
+    // We need to search for users whose phone number ends with the plain number
+    // since database stores full numbers like "+919999999995"
+    const existingUser = await UserModel.findOne({
+      phone: phoneNumber
+    });
+    
+    if (existingUser) {
+      return res.status(200).json({
+        message: "User found",
+        userExists: true,
+      });
+    } else {
+      return res.status(404).json({
+        message: "User not found",
+        userExists: false,
+      });
+    }
+  } catch (err) {
+    console.error("User check error:", err);
+    return res.status(500).json({ message: "Failed to check user existence" });
+  }
+};
+
+

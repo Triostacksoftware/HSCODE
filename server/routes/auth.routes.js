@@ -4,7 +4,6 @@ import {
   adminVerification,
   emailVerification,
   forgotPassword,
-  login,
   otpVerification,
   resetPassword,
   signup,
@@ -19,6 +18,9 @@ import {
   getMe,
   updateProfile,
   checkUserBeforeOTP,
+  verifyOTP,
+  checkUserExists,
+  verifyFirebaseTokenAndLogin,
 } from "../controllers/auth.ctrls.js";
 import upload from "../configurations/multer.js";
 
@@ -27,8 +29,10 @@ const router = express.Router();
 // user auth
 router.post("/signup", signup);
 router.post("/email-verification", emailVerification);
-router.post("/login", login);
+router.post("/login", verifyFirebaseTokenAndLogin);
 router.post("/check-user-before-otp", checkUserBeforeOTP);
+router.post("/check-user-exists", checkUserExists);
+router.post("/verify-otp", verifyOTP);
 router.post("/user-verification", userVerification);
 router.post("/forgot-password", forgotPassword);
 router.post("/otp-verification", otpVerification);

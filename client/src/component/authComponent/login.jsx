@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { MdPhone, MdVisibility, MdVisibilityOff } from "react-icons/md";
+import { MdPhone } from "react-icons/md";
 import ForgotPassword from "./forgotPassword";
 import { useRouter } from "next/navigation";
 import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
@@ -15,12 +15,9 @@ import {
 export default function Login() {
   const router = useRouter();
   const { countryInfo, loading: countryLoading } = useCountryCode();
-  const countryCode = countryInfo?.code;
   const [formData, setFormData] = useState({
     phoneNumber: "",
-    password: "",
   });
-  const [showPassword, setShowPassword] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [showOTP, setShowOTP] = useState(false);
   const [otp, setOtp] = useState("");
@@ -28,7 +25,6 @@ export default function Login() {
   const [message, setMessage] = useState("");
   const [recaptchaVerifier, setRecaptchaVerifier] = useState(null);
   const [confirmationResult, setConfirmationResult] = useState(null);
-  const [userVerified, setUserVerified] = useState(false);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -55,7 +51,7 @@ export default function Login() {
     }
   }, [recaptchaVerifier]);
 
-  // Step 1: Check user existence with backend
+  // Step 1: Check user existence and send OTP
   const handleCheckUser = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -63,18 +59,17 @@ export default function Login() {
 
     // Prepare phone number with country code
     let fullPhoneNumber = formData.phoneNumber;
-    if (countryCode && !countryLoading) {
-      const countryInfo = getCountryInfo(countryCode);
-      if (countryInfo?.phonePrefix) {
-        // Remove any existing + if user typed it
+    if (countryInfo?.code && !countryLoading) {
+      const countryData = getCountryInfo(countryInfo.code);
+      if (countryData?.phonePrefix) {
         const cleanNumber = formData.phoneNumber.replace(/^\+/, "");
-        fullPhoneNumber = countryInfo.phonePrefix + cleanNumber;
+        fullPhoneNumber = countryData.phonePrefix + cleanNumber;
       }
     }
 
     // Validate country code before proceeding
-    if (countryCode && !countryLoading) {
-      const validation = validatePhoneCountryCode(fullPhoneNumber, countryCode);
+    if (countryInfo?.code && !countryLoading) {
+      const validation = validatePhoneCountryCode(fullPhoneNumber, countryInfo.code);
       if (!validation.isValid) {
         setMessage(validation.message);
         setIsLoading(false);
@@ -83,24 +78,25 @@ export default function Login() {
     }
 
     try {
+      // Check if user exists - send plain number without prefix
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/auth/check-user-before-otp`,
+        `${process.env.NEXT_PUBLIC_BASE_URL}/auth/check-user-exists`,
         {
-          phoneNumber: fullPhoneNumber,
-          password: formData.password,
+          phoneNumber: formData.phoneNumber, // Plain number like "9999999995"
         }
       );
 
       if (response.status === 200 && response.data?.userExists) {
-        setUserVerified(true);
-        setMessage("User verified! Sending OTP...");
-        // Now send OTP with Firebase
+        setMessage("User found! Sending OTP...");
+        // User exists, send OTP with Firebase
         await handleSendOTP(fullPhoneNumber);
+      } else {
+        setMessage("No user found with this phone number");
       }
     } catch (error) {
-      console.error("User verification failed:", error);
-      if (error.response?.status === 401) {
-        setMessage("Invalid phone number or password");
+      console.error("User check failed:", error);
+      if (error.response?.status === 404) {
+        setMessage("No user found with this phone number");
       } else {
         setMessage(
           error.response?.data?.message ||
@@ -151,30 +147,36 @@ export default function Login() {
       const result = await confirmationResult.confirm(otp);
 
       if (result.user) {
+        // Get Firebase ID token
+        const idToken = await result.user.getIdToken();
+        
         // Prepare phone number with country code for backend
         let fullPhoneNumber = formData.phoneNumber;
-        if (countryCode && !countryLoading) {
-          const countryInfo = getCountryInfo(countryCode);
-          if (countryInfo?.phonePrefix) {
+        if (countryInfo?.code && !countryLoading) {
+          const countryData = getCountryInfo(countryInfo.code);
+          if (countryData?.phonePrefix) {
             const cleanNumber = formData.phoneNumber.replace(/^\+/, "");
-            fullPhoneNumber = countryInfo.phonePrefix + cleanNumber;
+            fullPhoneNumber = countryData.phonePrefix + cleanNumber;
           }
         }
 
-        // OTP verified, now complete login with backend
+        // Login with backend using Firebase ID token in header
         const response = await axios.post(
           `${process.env.NEXT_PUBLIC_BASE_URL}/auth/login`,
-          {
-            phoneNumber: fullPhoneNumber,
-            password: formData.password,
-          },
+          { phoneNumber: formData.phoneNumber}, // Empty body - no need to send phone number
           {
             withCredentials: true,
+            headers: {
+              'Authorization': `Bearer ${idToken}`
+            }
           }
         );
 
-        if (response.status === 200 && response.data?.message === "LoggedIn") {
-          router.push("/userchat");
+        if (response.status === 200) {
+          setMessage("Login successful! Redirecting...");
+          setTimeout(() => {
+            router.push("/userchat");
+          }, 1000);
         }
       }
     } catch (error) {
@@ -213,7 +215,8 @@ export default function Login() {
               className={`p-3 rounded-lg text-sm ${
                 message.includes("successfully") ||
                 message.includes("sent") ||
-                message.includes("verified")
+                message.includes("found") ||
+                message.includes("successful")
                   ? "bg-green-50 text-green-700 border border-green-200"
                   : "bg-red-50 text-red-700 border border-red-200"
               }`}
@@ -229,9 +232,9 @@ export default function Login() {
             </legend>
             <div className="flex items-center">
               {/* Static Country Code Prefix */}
-              {countryCode && !countryLoading && (
+              {countryInfo?.code && !countryLoading && (
                 <span className="px-3 py-3 sm:py-4 text-sm sm:text-base text-gray-700 font-medium bg-gray-50 border-r border-gray-300">
-                  {getCountryInfo(countryCode)?.phonePrefix || "+"}
+                  {getCountryInfo(countryInfo.code)?.phonePrefix || "+"}
                 </span>
               )}
               {/* Phone Number Input */}
@@ -242,7 +245,7 @@ export default function Login() {
                 value={formData.phoneNumber}
                 onChange={handleInputChange}
                 placeholder={
-                  countryCode && !countryLoading ? "1234567890" : "+1234567890"
+                  countryInfo?.code && !countryLoading ? "1234567890" : "+1234567890"
                 }
                 className="flex-1 border-none outline-none px-3 py-3 sm:py-4 text-sm sm:text-base bg-transparent"
                 required
@@ -251,34 +254,6 @@ export default function Login() {
             <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
               <MdPhone className="w-4 h-4 sm:w-5 text-gray-400" />
             </div>
-          </fieldset>
-
-          {/* Password Field */}
-          <fieldset className="relative border border-gray-300 rounded-lg p-0 m-0 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-opacity-50">
-            <legend className="absolute -top-2.5 left-3 bg-white px-2 text-gray-800 text-xs sm:text-sm font-medium focus-within:text-blue-500">
-              Password
-            </legend>
-            <input
-              type={showPassword ? "text" : "password"}
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleInputChange}
-              placeholder="••••••••"
-              className="w-full border-none outline-none px-3 py-3 sm:py-4 text-sm sm:text-base bg-transparent"
-              required
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2"
-            >
-              {showPassword ? (
-                <MdVisibility className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
-              ) : (
-                <MdVisibilityOff className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
-              )}
-            </button>
           </fieldset>
 
           {/* Forgot Password Link */}
@@ -300,7 +275,7 @@ export default function Login() {
             className="w-full bg-blue-600 text-white cursor-pointer font-semibold py-3 sm:py-4 px-4 sm:px-6 rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
           >
             {isLoading
-              ? "Verifying..."
+              ? "Checking..."
               : countryLoading
               ? "Loading..."
               : "Sign In"}
@@ -324,11 +299,11 @@ export default function Login() {
             Enter the 6-digit code sent to{" "}
             {(() => {
               let displayPhone = formData.phoneNumber;
-              if (countryCode && !countryLoading) {
-                const countryInfo = getCountryInfo(countryCode);
-                if (countryInfo?.phonePrefix) {
+              if (countryInfo?.code && !countryLoading) {
+                const countryData = getCountryInfo(countryInfo.code);
+                if (countryData?.phonePrefix) {
                   const cleanNumber = formData.phoneNumber.replace(/^\+/, "");
-                  displayPhone = countryInfo.phonePrefix + cleanNumber;
+                  displayPhone = countryData.phonePrefix + cleanNumber;
                 }
               }
               return displayPhone;

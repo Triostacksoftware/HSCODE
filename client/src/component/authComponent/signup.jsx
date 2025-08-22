@@ -20,14 +20,15 @@ import {
 
 export default function Signup() {
   const { countryInfo, loading: countryLoading } = useCountryCode();
-  const [step, setStep] = useState(1); // 1: form, 2: OTP verification
+  const [step, setStep] = useState(1); // 1: form, 2: email OTP, 3: phone OTP
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phoneNumber: "",
     password: "",
   });
-  const [otp, setOtp] = useState("");
+  const [emailOtp, setEmailOtp] = useState("");
+  const [phoneOtp, setPhoneOtp] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -59,8 +60,8 @@ export default function Signup() {
     }
   }, [recaptchaVerifier]);
 
-  // Step 1: Check if user exists and send OTP
-  const handleCheckUserAndSendOTP = async (e) => {
+  // Step 1: Check if user exists and send email OTP
+  const handleCheckUserAndSendEmailOTP = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setMessage("");
@@ -71,20 +72,9 @@ export default function Signup() {
       return;
     }
 
-    // Prepare phone number with country code
-    let fullPhoneNumber = formData.phoneNumber;
-    console.log(fullPhoneNumber)
-    if (countryInfo?.code && !countryLoading) {
-      const all = getCountryInfo(countryInfo.code);
-      if (all?.phonePrefix) {
-        // Remove any existing + if user typed it
-        const cleanNumber = formData.phoneNumber.replace(/^\+/, "");
-        fullPhoneNumber = all.phonePrefix + cleanNumber;
-      }
-    } 
-
     // Validate country code before proceeding
     if (countryInfo.code && !countryLoading) {
+      const fullPhoneNumber = getCountryInfo(countryInfo.code)?.phonePrefix + formData.phoneNumber.replace(/^\+/, "");
       const validation = validatePhoneCountryCode(fullPhoneNumber, countryInfo.code);
       if (!validation.isValid) {
         setMessage(validation.message);
@@ -94,54 +84,96 @@ export default function Signup() {
     }
 
     try {
-      // First check if user already exists - use clean phone number
+      // First check if user already exists and send email OTP
       const cleanPhoneNumber = getCleanPhoneNumber(formData.phoneNumber, countryInfo.code);
       const checkResponse = await axios.post(
         `${process.env.NEXT_PUBLIC_BASE_URL}/auth/check-user-before-otp`,
         {
           phoneNumber: cleanPhoneNumber,
+          email: formData.email,
           password: formData.password,
+        },
+        {
+          withCredentials: true
         }
       );
 
       // If user exists, show error
-      if (checkResponse.status === 200 && checkResponse.data?.userExists) {
-        setMessage(
-          "User already exists with this phone number. Please login instead."
-        );
+      if (checkResponse.status === 200 && checkResponse.data?.message === "User exists") {
+        setMessage("User already exists with this email or phone number. Please login instead.");
         setIsLoading(false);
         return;
       }
 
-      // User doesn't exist, proceed with OTP
-      await handleSendOTP(fullPhoneNumber);
+      // User doesn't exist, email OTP sent successfully
+      setStep(2);
+      setMessage("Email OTP sent successfully! Check your email.");
+      setIsLoading(false);
     } catch (error) {
-      if (error.response?.status === 401) {
-        // User doesn't exist, proceed with OTP
-        await handleSendOTP(fullPhoneNumber);
-      } else {
-        console.error("User check failed:", error);
-        setMessage(
-          error.response?.data?.message ||
-            "Verification failed. Please try again."
-        );
-        setIsLoading(false);
-      }
+      console.error("User check failed:", error);
+      setMessage(
+        error.response?.data?.message ||
+          "Verification failed. Please try again."
+      );
+      setIsLoading(false);
     }
   };
 
-  // Step 2: Send OTP with Firebase
-  const handleSendOTP = async (phoneWithCountryCode) => {
+  // Step 2: Verify email OTP and send phone OTP
+  const handleEmailOTPSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setMessage("");
+
+    try {
+      // Verify email OTP
+      const verifyResponse = await axios.post(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/auth/verify-otp`,
+        {
+          email: formData.email,
+          otp: emailOtp,
+        },
+        {
+          withCredentials: true,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (verifyResponse.status === 200) {
+        // Email OTP verified, now send phone OTP
+        await handleSendPhoneOTP();
+      }
+    } catch (error) {
+      console.error("Email OTP verification failed:", error);
+      setMessage("Invalid email OTP. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Send phone OTP with Firebase
+  const handleSendPhoneOTP = async () => {
     try {
       if (!recaptchaVerifier) {
         throw new Error("reCAPTCHA not initialized");
       }
 
-      const phoneNumber = phoneWithCountryCode || formData.phoneNumber;
+      // Prepare phone number with country code
+      let fullPhoneNumber = formData.phoneNumber;
+      if (countryInfo?.code && !countryLoading) {
+        const all = getCountryInfo(countryInfo.code);
+        if (all?.phonePrefix) {
+          const cleanNumber = formData.phoneNumber.replace(/^\+/, "");
+          fullPhoneNumber = all.phonePrefix + cleanNumber;
+        }
+      }
+
       // Ensure phone number has + prefix
-      const normalizedPhone = phoneNumber.startsWith("+")
-        ? phoneNumber
-        : `+${phoneNumber}`;
+      const normalizedPhone = fullPhoneNumber.startsWith("+")
+        ? fullPhoneNumber
+        : `+${fullPhoneNumber}`;
 
       const result = await signInWithPhoneNumber(
         auth,
@@ -150,31 +182,33 @@ export default function Signup() {
       );
 
       setConfirmationResult(result);
-      setStep(2);
-      setMessage("OTP sent successfully! Check your phone.");
-    } catch (error) {
-      console.error("OTP sending failed:", error);
-      setMessage(error.message || "Failed to send OTP. Please try again.");
-    } finally {
+      setStep(3);
+      setMessage("Phone OTP sent successfully! Check your phone.");
       setIsLoading(false);
+    } catch (error) {
+      console.error("Phone OTP sending failed:", error);
+      setMessage(error.message || "Failed to send phone OTP. Please try again.");
     }
   };
 
-  // Step 3: Complete signup with OTP verification
-  const handleOTPSubmit = async (e) => {
+  // Step 3: Complete signup with phone OTP verification
+  const handlePhoneOTPSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setMessage("");
 
     try {
-      // Verify OTP with Firebase
-      const result = await confirmationResult.confirm(otp);
+      // Verify phone OTP with Firebase
+      const result = await confirmationResult.confirm(phoneOtp);
 
       if (result.user) {
+        // Get Firebase ID token for backend verification
+        const idToken = await result.user.getIdToken();
+        
         // Store clean phone number (without country prefix) and country code separately
         const cleanPhoneNumber = getCleanPhoneNumber(formData.phoneNumber, countryInfo?.code);
 
-        // OTP verified, now complete signup with backend
+        // Both email and phone verified, now complete signup with backend
         const response = await axios.post(
           `${process.env.NEXT_PUBLIC_BASE_URL}/auth/signup`,
           {
@@ -186,6 +220,9 @@ export default function Signup() {
           },
           {
             withCredentials: true,
+            headers: {
+              'Authorization': `Bearer ${idToken}`
+            }
           }
         );
 
@@ -197,11 +234,11 @@ export default function Signup() {
         }
       }
     } catch (error) {
-      console.error("OTP verification or signup failed:", error);
+      console.error("Phone OTP verification or signup failed:", error);
       if (error.response?.status === 409) {
         setMessage("User already exists with this email or phone number.");
       } else {
-        setMessage("Invalid OTP or signup failed. Please try again.");
+        setMessage("Invalid phone OTP or signup failed. Please try again.");
       }
     } finally {
       setIsLoading(false);
@@ -213,7 +250,7 @@ export default function Signup() {
       {step === 1 ? (
         /* Step 1: Signup Form */
         <form
-          onSubmit={handleCheckUserAndSendOTP}
+          onSubmit={handleCheckUserAndSendEmailOTP}
           className="flex flex-col gap-3 sm:gap-4"
         >
           {/* Header */}
@@ -287,7 +324,6 @@ export default function Signup() {
               {/* Static Country Code Prefix */}
               {countryInfo && !countryLoading && (
                 <span className="px-3 py-3 sm:py-4 text-sm sm:text-base text-gray-700 font-medium bg-gray-50 border-r border-gray-300">
-                  {console.log(countryInfo.code)}
                   {getCountryInfo(countryInfo.code)?.phonePrefix || "+"}
                 </span>
               )}
@@ -352,15 +388,102 @@ export default function Signup() {
               : "Create Account"}
           </button>
         </form>
+      ) : step === 2 ? (
+        /* Step 2: Email OTP Verification */
+        <div className="w-full">
+          <div className="text-center mb-6 sm:mb-8">
+            <p className="text-xs sm:text-sm text-gray-600 mb-2">
+              Verify Your Email
+            </p>
+            <h1 className="text-lg sm:text-xl font-bold text-gray-900">
+              Enter Email OTP Code
+            </h1>
+          </div>
+
+          {message && (
+            <div
+              className={`p-3 rounded-lg text-sm ${
+                message.includes("successfully") || message.includes("sent")
+                  ? "bg-green-50 text-green-700 border border-green-200"
+                  : "bg-red-50 text-red-700 border border-red-200"
+              }`}
+            >
+              {message}
+            </div>
+          )}
+
+          <div className="text-center mb-4">
+            <p className="text-sm text-gray-600">
+              We've sent a 6-digit code to
+            </p>
+            <p className="text-sm font-medium text-gray-900">
+              {formData.email}
+            </p>
+          </div>
+
+          <form onSubmit={handleEmailOTPSubmit} className="space-y-4">
+            <div className="flex justify-center space-x-2">
+              {[0, 1, 2, 3, 4, 5].map((index) => (
+                <input
+                  key={index}
+                  type="text"
+                  maxLength={1}
+                  value={emailOtp[index] || ""}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value.length <= 1) {
+                      const newOtp = emailOtp.split("");
+                      newOtp[index] = value;
+                      setEmailOtp(newOtp.join(""));
+
+                      // Auto-focus next input
+                      if (value && index < 5) {
+                        const nextInput =
+                          e.target.parentNode.children[index + 1];
+                        if (nextInput) nextInput.focus();
+                      }
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    // Handle backspace to go to previous input
+                    if (e.key === "Backspace" && !emailOtp[index] && index > 0) {
+                      const prevInput = e.target.parentNode.children[index - 1];
+                      if (prevInput) prevInput.focus();
+                    }
+                  }}
+                  className="w-10 h-10 text-center border border-gray-300 rounded-md focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none text-lg font-semibold"
+                  required
+                />
+              ))}
+            </div>
+
+            <button
+              suppressHydrationWarning={true}
+              type="submit"
+              disabled={isLoading || emailOtp.length !== 6}
+              className="w-full bg-blue-600 text-white cursor-pointer font-semibold py-3 sm:py-4 px-4 sm:px-6 rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
+            >
+              {isLoading ? "Verifying..." : "Verify Email & Continue"}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setStep(1)}
+              className="w-full text-blue-600 hover:text-blue-700 text-sm"
+            >
+              ← Back to form
+            </button>
+          </form>
+        </div>
       ) : (
-        /* Step 2: OTP Verification */
+        /* Step 3: Phone OTP Verification */
         <div className="w-full">
           <div className="text-center mb-6 sm:mb-8">
             <p className="text-xs sm:text-sm text-gray-600 mb-2">
               Verify Your Phone
             </p>
             <h1 className="text-lg sm:text-xl font-bold text-gray-900">
-              Enter OTP Code
+              Enter Phone OTP Code
             </h1>
           </div>
 
@@ -398,20 +521,20 @@ export default function Signup() {
             </p>
           </div>
 
-          <form onSubmit={handleOTPSubmit} className="space-y-4">
+          <form onSubmit={handlePhoneOTPSubmit} className="space-y-4">
             <div className="flex justify-center space-x-2">
               {[0, 1, 2, 3, 4, 5].map((index) => (
                 <input
                   key={index}
                   type="text"
                   maxLength={1}
-                  value={otp[index] || ""}
+                  value={phoneOtp[index] || ""}
                   onChange={(e) => {
                     const value = e.target.value;
                     if (value.length <= 1) {
-                      const newOtp = otp.split("");
+                      const newOtp = phoneOtp.split("");
                       newOtp[index] = value;
-                      setOtp(newOtp.join(""));
+                      setPhoneOtp(newOtp.join(""));
 
                       // Auto-focus next input
                       if (value && index < 5) {
@@ -423,7 +546,7 @@ export default function Signup() {
                   }}
                   onKeyDown={(e) => {
                     // Handle backspace to go to previous input
-                    if (e.key === "Backspace" && !otp[index] && index > 0) {
+                    if (e.key === "Backspace" && !phoneOtp[index] && index > 0) {
                       const prevInput = e.target.parentNode.children[index - 1];
                       if (prevInput) prevInput.focus();
                     }
@@ -437,7 +560,7 @@ export default function Signup() {
             <button
               suppressHydrationWarning={true}
               type="submit"
-              disabled={isLoading || otp.length !== 6}
+              disabled={isLoading || phoneOtp.length !== 6}
               className="w-full bg-blue-600 text-white cursor-pointer font-semibold py-3 sm:py-4 px-4 sm:px-6 rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
             >
               {isLoading ? "Creating Account..." : "Verify & Create Account"}
@@ -445,10 +568,10 @@ export default function Signup() {
 
             <button
               type="button"
-              onClick={() => setStep(1)}
+              onClick={() => setStep(2)}
               className="w-full text-blue-600 hover:text-blue-700 text-sm"
             >
-              ← Back to form
+              ← Back to email verification
             </button>
           </form>
         </div>
