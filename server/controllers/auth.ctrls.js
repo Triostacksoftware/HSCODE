@@ -9,7 +9,7 @@ import {
   verifyTOTP,
 } from "../utilities/totp.util.js";
 import bcrypt from "bcrypt";
-import { verifyFirebaseToken } from "../utilities/firebase.util.js";
+import { verifyFirebaseToken } from "../configurations/firebase.js";
 
 const setCookie = (res, tokenName, token, maxAge) => {
   res.cookie(tokenName, token, {

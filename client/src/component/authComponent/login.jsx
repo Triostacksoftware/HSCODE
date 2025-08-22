@@ -14,7 +14,8 @@ import {
 
 export default function Login() {
   const router = useRouter();
-  const { countryCode, loading: countryLoading } = useCountryCode();
+  const { countryInfo, loading: countryLoading } = useCountryCode();
+  const countryCode = countryInfo?.code;
   const [formData, setFormData] = useState({
     phoneNumber: "",
     password: "",
