@@ -1,7 +1,6 @@
 import express from "express";
 import {
   adminLogin,
-  adminVerification,
   emailVerification,
   forgotPassword,
   otpVerification,
@@ -21,6 +20,7 @@ import {
   verifyOTP,
   checkUserExists,
   verifyFirebaseTokenAndLogin,
+  verifyTOTPSetup,
 } from "../controllers/auth.ctrls.js";
 import upload from "../configurations/multer.js";
 
@@ -58,7 +58,6 @@ router.get("/verify-user", verifyUserAuth);
 
 // admin auth
 router.post("/admin-login", adminLogin);
-router.post("/admin-verification", adminVerification);
 
 // superadmin auth
 router.post("/superadmin-login", superadminLogin);
@@ -67,6 +66,7 @@ router.post("/superadmin-login", superadminLogin);
 router.post("/admin-setup-totp", setupAdminTOTP);
 router.post("/admin-verify-totp", verifyAndEnableTOTP);
 router.post("/admin-login-totp", adminLoginWithTOTP);
+router.post("/admin-verify-totp-setup", verifyTOTPSetup);
 
 router.post("/admin-signup", async (req, res) => {
   const { name, email, phone, password, countryCode } = req.body;

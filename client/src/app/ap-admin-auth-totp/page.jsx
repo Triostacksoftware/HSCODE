@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 
 export default function AdminLoginTOTP() {
   const router = useRouter();
-  const [authMethod, setAuthMethod] = useState("email"); // "email" or "totp"
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -14,11 +13,13 @@ export default function AdminLoginTOTP() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState("");
-  const [showOTP, setShowOTP] = useState(false);
-  const [otp, setOtp] = useState("");
   const [totpToken, setTotpToken] = useState("");
   const [countryCode, setCountryCode] = useState("");
   const [requiresTOTP, setRequiresTOTP] = useState(false);
+  const [showTOTPSetup, setShowTOTPSetup] = useState(false);
+  const [qrCode, setQrCode] = useState("");
+  const [totpSecret, setTotpSecret] = useState("");
+  const [totpCode, setTotpCode] = useState("");
 
   // Fetch country code based on IP
   useEffect(() => {
@@ -52,6 +53,16 @@ export default function AdminLoginTOTP() {
     return () => clearTimeout(timer);
   }, []);
 
+  // Debug state changes
+  useEffect(() => {
+    console.log("State changed:", {
+      requiresTOTP,
+      showTOTPSetup,
+      qrCode: qrCode ? "QR code exists" : "No QR code",
+      totpSecret: totpSecret ? "Secret exists" : "No secret"
+    });
+  }, [requiresTOTP, showTOTPSetup, qrCode, totpSecret]);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -66,38 +77,34 @@ export default function AdminLoginTOTP() {
     setMessage("");
 
     try {
-      if (authMethod === "email") {
-        // Email OTP flow
-        const response = await axios.post(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/auth/admin-login`,
-          {
-            ...formData,
-            countryCode: countryCode,
-          },
-          {
-            withCredentials: true,
-          }
-        );
-        setShowOTP(true);
-      } else {
-        // TOTP flow
-        const response = await axios.post(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/auth/admin-login-totp`,
-          {
-            ...formData,
-            totpToken: totpToken,
-            countryCode: countryCode,
-          },
-          {
-            withCredentials: true,
-          }
-        );
-
-        if (response.data.requiresTOTP) {
-          setRequiresTOTP(true);
-        } else {
-          router.push("/ap-admin-panel");
+      // Step 1: Check admin credentials
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/auth/admin-login`,
+        {
+          ...formData,
+          countryCode: countryCode,
+        },
+        {
+          withCredentials: true,
         }
+      );
+
+      console.log("Admin login response:", response.data); // Debug log
+
+      if (response.data.requiresTOTP) {
+        // Admin has TOTP configured - show TOTP input
+        console.log("Admin has TOTP - showing TOTP input"); // Debug log
+        setRequiresTOTP(true);
+        setShowTOTPSetup(false); // Ensure this is false
+        setMessage("Please enter your Google Authenticator code");
+      } else {
+        // Admin doesn't have TOTP - show TOTP setup
+        console.log("Admin doesn't have TOTP - showing TOTP setup"); // Debug log
+        setShowTOTPSetup(true);
+        setRequiresTOTP(false); // Ensure this is false
+        setQrCode(response.data.qrCode);
+        setTotpSecret(response.data.totpSecret.secret); // Extract just the secret string
+        setMessage("Please scan the QR code and enter the TOTP code to complete setup");
       }
     } catch (error) {
       console.error(
@@ -112,55 +119,31 @@ export default function AdminLoginTOTP() {
     }
   };
 
-  const handleOTPSubmit = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setMessage("");
-
-    try {
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/auth/admin-verification`,
-        {
-          OTP: otp,
-        },
-        {
-          withCredentials: true,
-        }
-      );
-
-      router.push("/ap-admin-panel");
-    } catch (error) {
-      console.error(
-        "OTP verification failed:",
-        error.response?.data?.message || error.message
-      );
-      setMessage(
-        error.response?.data?.message ||
-          "OTP verification failed. Please try again."
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleTOTPSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setMessage("");
 
     try {
+      // Step 2A: If admin has TOTP - verify and login
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_BASE_URL}/auth/admin-login-totp`,
         {
           ...formData,
           totpToken: totpToken,
+          countryCode: countryCode,
         },
         {
           withCredentials: true,
         }
       );
 
-      router.push("/ap-admin-panel");
+      if (response.status === 200) {
+        setMessage("Login successful! Redirecting...");
+        setTimeout(() => {
+          router.push("/ap-admin-panel");
+        }, 1000);
+      }
     } catch (error) {
       console.error(
         "TOTP verification failed:",
@@ -173,6 +156,51 @@ export default function AdminLoginTOTP() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleTOTPSetupSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setMessage("");
+
+    try {
+      // Step 2B: If admin doesn't have TOTP - verify setup and login
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/auth/admin-verify-totp-setup`,
+        {
+          totpCode: totpCode,
+        },
+        {
+          withCredentials: true,
+        }
+      );
+
+      if (response.status === 200) {
+        setMessage("TOTP setup complete! Login successful. Redirecting...");
+        setTimeout(() => {
+          router.push("/ap-admin-panel");
+        }, 1000);
+      }
+    } catch (error) {
+      console.error(
+        "TOTP setup verification failed:",
+        error.response?.data?.message || error.message
+      );
+      setMessage(
+        error.response?.data?.message ||
+          "TOTP setup verification failed. Please try again."
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const resetForm = () => {
+    setRequiresTOTP(false);
+    setShowTOTPSetup(false);
+    setTotpToken("");
+    setTotpCode("");
+    setMessage("");
   };
 
   return (
@@ -191,46 +219,21 @@ export default function AdminLoginTOTP() {
           <h1 className="text-lg sm:text-xl font-bold text-gray-800">HSCODE</h1>
         </div>
 
-        {/* Error Message Display */}
+        {/* Error/Success Message Display */}
         {message && (
-          <div className="p-3 rounded-lg text-sm mb-4 bg-red-50 text-red-700 border border-red-200">
+          <div className={`p-3 rounded-lg text-sm mb-4 border ${
+            message.includes("successful") || message.includes("complete")
+              ? "bg-green-50 text-green-700 border-green-200"
+              : "bg-red-50 text-red-700 border-red-200"
+          }`}>
             {message}
           </div>
         )}
 
-        {/* Auth Method Toggle */}
-        {!showOTP && !requiresTOTP && (
-          <div className="mb-6">
-            <div className="flex bg-gray-100 rounded-lg p-1">
-              <button
-                type="button"
-                onClick={() => setAuthMethod("email")}
-                className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                  authMethod === "email"
-                    ? "bg-white text-blue-600 shadow-sm"
-                    : "text-gray-600 hover:text-gray-800"
-                }`}
-              >
-                Email OTP
-              </button>
-              <button
-                type="button"
-                onClick={() => setAuthMethod("totp")}
-                className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                  authMethod === "totp"
-                    ? "bg-white text-blue-600 shadow-sm"
-                    : "text-gray-600 hover:text-gray-800"
-                }`}
-              >
-                <MdSecurity className="inline mr-1" />
-                Google Auth
-              </button>
-            </div>
-          </div>
-        )}
+
 
         {/* Conditional Rendering */}
-        {!showOTP && !requiresTOTP ? (
+        {!requiresTOTP && !showTOTPSetup ? (
           /* Login Form */
           <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
             <div className="text-center mb-6 sm:mb-8">
@@ -238,9 +241,7 @@ export default function AdminLoginTOTP() {
                 ADMIN LOGIN
               </h2>
               <p className="text-gray-600 text-sm sm:text-base">
-                {authMethod === "email"
-                  ? "Login with email OTP verification"
-                  : "Login with Google Authenticator"}
+                Enter your credentials to continue
               </p>
             </div>
 
@@ -281,99 +282,16 @@ export default function AdminLoginTOTP() {
               </button>
             </div>
 
-            {/* TOTP Token Field (only for TOTP method) */}
-            {authMethod === "totp" && (
-              <div>
-                <input
-                  type="text"
-                  name="totpToken"
-                  value={totpToken}
-                  onChange={(e) => setTotpToken(e.target.value)}
-                  placeholder="6-digit Google Auth code"
-                  maxLength={6}
-                  className="w-full px-3 sm:px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 text-gray-800 placeholder-gray-500 text-sm sm:text-base"
-                />
-              </div>
-            )}
-
             {/* Sign In Button */}
             <button
               type="submit"
               disabled={isLoading}
               className="w-full bg-blue-600 cursor-pointer text-white font-semibold py-3 px-4 sm:px-6 rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm sm:text-base"
             >
-              {isLoading ? "Logging in..." : "Log In"}
+              {isLoading ? "Verifying..." : "Continue"}
             </button>
-
-            {/* Setup TOTP Link */}
-            {authMethod === "totp" && (
-              <div className="text-center">
-                <a
-                  href="/ap-admin-totp-setup"
-                  className="text-blue-600 hover:text-blue-800 text-sm underline"
-                >
-                  Need to setup Google Authenticator?
-                </a>
-              </div>
-            )}
           </form>
-        ) : showOTP ? (
-          /* Email OTP Verification Form */
-          <div className="space-y-4 sm:space-y-6">
-            <div className="text-center">
-              <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-2">
-                Enter Email OTP
-              </h3>
-              <p className="text-xs sm:text-sm text-gray-600">
-                Please enter the 6-digit code sent to your email
-              </p>
-            </div>
-
-            <form onSubmit={handleOTPSubmit} className="space-y-4 sm:space-y-6">
-              <div className="flex justify-center space-x-1 sm:space-x-2">
-                {[0, 1, 2, 3, 4, 5].map((index) => (
-                  <input
-                    key={index}
-                    type="text"
-                    maxLength={1}
-                    value={otp[index] || ""}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      if (value.length <= 1) {
-                        const newOtp = otp.split("");
-                        newOtp[index] = value;
-                        setOtp(newOtp.join(""));
-
-                        if (value && index < 5) {
-                          const nextInput =
-                            e.target.parentNode.children[index + 1];
-                          if (nextInput) nextInput.focus();
-                        }
-                      }
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Backspace" && !otp[index] && index > 0) {
-                        const prevInput =
-                          e.target.parentNode.children[index - 1];
-                        if (prevInput) prevInput.focus();
-                      }
-                    }}
-                    className="w-10 h-10 sm:w-12 sm:h-12 text-center border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none text-base sm:text-lg font-semibold"
-                    required
-                  />
-                ))}
-              </div>
-
-              <button
-                type="submit"
-                disabled={isLoading || otp.length !== 6}
-                className="w-full bg-blue-600 cursor-pointer text-white font-semibold py-3 px-4 sm:px-6 rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
-              >
-                {isLoading ? "Verifying..." : "Verify OTP"}
-              </button>
-            </form>
-          </div>
-        ) : (
+        ) : requiresTOTP ? (
           /* TOTP Verification Form */
           <div className="space-y-4 sm:space-y-6">
             <div className="text-center">
@@ -432,7 +350,105 @@ export default function AdminLoginTOTP() {
                 disabled={isLoading || totpToken.length !== 6}
                 className="w-full bg-blue-600 cursor-pointer text-white font-semibold py-3 px-4 sm:px-6 rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
               >
-                {isLoading ? "Verifying..." : "Verify TOTP"}
+                {isLoading ? "Verifying..." : "Verify & Login"}
+              </button>
+
+              <button
+                type="button"
+                onClick={resetForm}
+                className="w-full text-blue-600 hover:text-blue-700 text-sm underline"
+              >
+                ← Back to login
+              </button>
+            </form>
+          </div>
+        ) : (
+          /* TOTP Setup Form */
+          <div className="space-y-4 sm:space-y-6">
+            <div className="text-center">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-2">
+                Setup Google Authenticator
+              </h3>
+              <p className="text-xs sm:text-sm text-gray-600">
+                Scan the QR code with Google Authenticator app
+              </p>
+            </div>
+
+            {/* QR Code Display */}
+            {qrCode && (
+              <div className="text-center">
+                <img 
+                  src={qrCode} 
+                  alt="TOTP QR Code" 
+                  className="mx-auto w-48 h-48 border border-gray-300 rounded-lg"
+                />
+                <p className="text-xs text-gray-500 mt-2">
+                  Secret: {totpSecret}
+                </p>
+              </div>
+            )}
+
+            <form
+              onSubmit={handleTOTPSetupSubmit}
+              className="space-y-4 sm:space-y-6"
+            >
+              <div className="text-center">
+                <p className="text-sm text-gray-600 mb-3">
+                  Enter the 6-digit code from Google Authenticator
+                </p>
+                <div className="flex justify-center space-x-1 sm:space-x-2">
+                  {[0, 1, 2, 3, 4, 5].map((index) => (
+                    <input
+                      key={index}
+                      type="text"
+                      maxLength={1}
+                      value={totpCode[index] || ""}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value.length <= 1) {
+                          const newCode = totpCode.split("");
+                          newCode[index] = value;
+                          setTotpCode(newCode.join(""));
+
+                          if (value && index < 5) {
+                            const nextInput =
+                              e.target.parentNode.children[index + 1];
+                            if (nextInput) nextInput.focus();
+                          }
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (
+                          e.key === "Backspace" &&
+                          !totpCode[index] &&
+                          index > 0
+                        ) {
+                          const prevInput =
+                            e.target.parentNode.children[index - 1];
+                          if (prevInput) prevInput.focus();
+                        }
+                      }}
+                      className="w-10 h-10 sm:w-12 sm:h-12 text-center border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none text-base sm:text-lg font-semibold"
+                      required
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isLoading || totpCode.length !== 6}
+                className="w-full bg-blue-600 cursor-pointer text-white font-semibold py-3 px-4 sm:px-6 rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
+              >
+                {isLoading ? "Setting up..." : "Complete Setup & Login"}
+              </button>
+
+              <button
+                type="button"
+                onClick={resetForm}
+                className="w-full text-blue-600 hover:text-blue-700 text-sm underline"
+              >
+                ← Back to login
               </button>
             </form>
           </div>

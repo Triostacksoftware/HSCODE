@@ -465,70 +465,46 @@ export const adminLogin = async (req, res) => {
     if (!isMatch)
       return res.status(401).json({ message: "Invalid credentials" });
 
-    const otp = generateOTP();
+    // Check if TOTP is already configured
+    if (admin.totpEnabled && admin.totpSecret) {
+      // Admin has TOTP configured - require TOTP verification
+      return res.status(200).json({ 
+        message: "TOTP verification required",
+        requiresTOTP: true,
+        adminId: admin._id
+      });
+    } else {
+      // Admin doesn't have TOTP - generate TOTP secret and QR code
+      const totpSecret = generateTOTPSecret(admin.email);
+      const qrCode = await generateQRCode(totpSecret.otpauth_url);
 
-    await emailVerificatonMail(email, otp, "login");
+      // Store TOTP secret temporarily in cookie for verification
+      const totpSetupToken = generateToken(
+        { email: admin.email, totpSecret, countryCode: admin.countryCode },
+        "10m"
+      );
 
-    const token = generateToken(
-      { email, otp, countryCode: admin.countryCode },
-      "5m"
-    );
+      res.cookie("totp_setup_token", totpSetupToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+        maxAge: 10 * 60 * 1000, // 10 minutes
+      });
 
-    res.cookie("auth_otp_token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      maxAge: 5 * 60 * 1000,
-    });
-
-    return res.status(200).json({ message: "OTP sent to email" });
+      return res.status(200).json({ 
+        message: "TOTP setup required",
+        requiresTOTP: false,
+        qrCode,
+        totpSecret
+      });
+    }
   } catch (err) {
     console.error("Login error:", err);
     return res.status(500).json({ message: "Login failed" });
   }
 };
 
-export const adminVerification = async (req, res) => {
-  try {
-    const { OTP } = req.body;
-    const tempToken = req.cookies.auth_otp_token;
 
-    if (!OTP || !tempToken) {
-      return res.status(400).json({ message: "OTP or token missing" });
-    }
-
-    const decoded = verifyToken(tempToken);
-    if (!decoded || decoded.otp !== OTP) {
-      return res.status(401).json({ message: "Invalid or expired OTP" });
-    }
-
-    const admin = await UserModel.findOne({
-      email: decoded.email,
-      role: "admin",
-    });
-    if (!admin) return res.status(404).json("Admin not found");
-
-    // Auth success: issue final token
-    const authToken = generateToken(
-      { id: admin._id, role: "admin", countryCode: admin.countryCode },
-      "24h"
-    );
-
-    // Set final auth cookie
-    res.cookie("auth_token", authToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    });
-
-    res.clearCookie("auth_otp_token");
-
-    return res.status(200).json({ message: "Login successful" });
-  } catch (error) {
-    res.status(500).json({ message: "Server Error" });
-  }
-};
 
 // Superadmin Login
 export const superadminLogin = async (req, res) => {
@@ -694,6 +670,81 @@ export const verifyAndEnableTOTP = async (req, res) => {
   } catch (error) {
     console.error("TOTP verification error:", error);
     return res.status(500).json({ message: "Failed to verify TOTP" });
+  }
+};
+
+// Verify TOTP setup and complete admin login
+export const verifyTOTPSetup = async (req, res) => {
+  try {
+    const { totpCode } = req.body;
+    const totpSetupToken = req.cookies.totp_setup_token;
+
+    if (!totpCode || !totpSetupToken) {
+      return res.status(400).json({ message: "TOTP code and setup token required" });
+    }
+
+    const decoded = verifyToken(totpSetupToken);
+    if (!decoded) {
+      return res.status(401).json({ message: "Invalid or expired TOTP setup token" });
+    }
+
+    // Verify the TOTP code
+    console.log("TOTP Verification Debug:", {
+      totpCode,
+      totpSecret: decoded.totpSecret.secret,
+      decodedTotpSecret: decoded.totpSecret
+    });
+    
+    // Generate current TOTP for debugging
+    const { generateCurrentTOTP } = await import("../utilities/totp.util.js");
+    const currentTOTP = generateCurrentTOTP(decoded.totpSecret.secret);
+    console.log("Current TOTP for comparison:", currentTOTP);
+    
+    const isValid = verifyTOTP(totpCode, decoded.totpSecret.secret);
+    console.log("TOTP Verification Result:", isValid);
+    
+    if (!isValid) {
+      return res.status(401).json({ message: "Invalid TOTP code" });
+    }
+
+    // Find admin and enable TOTP
+    const admin = await UserModel.findOne({ email: decoded.email, role: "admin" });
+    if (!admin) return res.status(404).json("Admin not found");
+
+    // Enable TOTP for this admin
+    admin.totpEnabled = true;
+    admin.totpSecret = decoded.totpSecret.secret;
+    await admin.save();
+
+    // Generate final auth token
+    const authToken = generateToken(
+      { id: admin._id, role: "admin", countryCode: admin.countryCode },
+      "24h"
+    );
+
+    // Set final auth cookie
+    res.cookie("auth_token", authToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    });
+
+    res.clearCookie("totp_setup_token");
+
+    return res.status(200).json({ 
+      message: "TOTP setup complete. Login successful.",
+      admin: {
+        id: admin._id,
+        name: admin.name,
+        email: admin.email,
+        countryCode: admin.countryCode,
+        role: "admin",
+      }
+    });
+  } catch (error) {
+    console.error("TOTP setup verification error:", error);
+    return res.status(500).json({ message: "TOTP setup verification failed" });
   }
 };
 
