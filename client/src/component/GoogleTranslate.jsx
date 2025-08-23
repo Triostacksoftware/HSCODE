@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 const GoogleTranslate = ({
   position = "fixed",
@@ -14,27 +14,86 @@ const GoogleTranslate = ({
 }) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const scriptRef = useRef(null);
+  const initRef = useRef(false);
 
   useEffect(() => {
-    // Load Google Translate script
-    const loadGoogleTranslate = () => {
-      // Check if script is already loaded
-      if (window.google && window.google.translate) {
-        setIsLoaded(true);
-        setIsLoading(false);
-        return;
-      }
+    // Prevent multiple initializations
+    if (initRef.current) {
+      return;
+    }
+    initRef.current = true;
 
-      // Create script element
-      const script = document.createElement("script");
-      script.src =
+    // Check if already loaded
+    if (window.google && window.google.translate) {
+      setIsLoaded(true);
+      setIsLoading(false);
+      return;
+    }
+
+    // Check if script is already in the DOM
+    const existingScript = document.querySelector(
+      'script[src*="translate.google.com"]'
+    );
+    if (existingScript) {
+      scriptRef.current = existingScript;
+    } else {
+      // Create new script element
+      scriptRef.current = document.createElement("script");
+      scriptRef.current.src =
         "//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
-      script.async = true;
-      script.defer = true;
+      scriptRef.current.async = true;
+      scriptRef.current.defer = true;
+      document.head.appendChild(scriptRef.current);
+    }
 
-      // Define the callback function
+    // Define the callback function only once
+    if (!window.googleTranslateElementInit) {
       window.googleTranslateElementInit = function () {
         try {
+          // Prevent multiple initializations
+          if (window.googleTranslateElement) {
+            return;
+          }
+
+          // Suppress Google Translate logging errors (common with ad blockers)
+          const originalFetch = window.fetch;
+          const originalXHROpen = window.XMLHttpRequest.prototype.open;
+
+          // Intercept fetch requests
+          window.fetch = function (...args) {
+            if (
+              args[0] &&
+              typeof args[0] === "string" &&
+              args[0].includes("translate.googleapis.com/element/log")
+            ) {
+              // Silently ignore logging requests that get blocked
+              return Promise.resolve(new Response("{}", { status: 200 }));
+            }
+            return originalFetch.apply(this, args);
+          };
+
+          // Intercept XMLHttpRequest (fallback for older browsers)
+          window.XMLHttpRequest.prototype.open = function (
+            method,
+            url,
+            ...args
+          ) {
+            if (
+              url &&
+              typeof url === "string" &&
+              url.includes("translate.googleapis.com/element/log")
+            ) {
+              // Silently ignore logging requests that get blocked
+              this.abort = () => {};
+              this.send = () => {};
+              this.setRequestHeader = () => {};
+              return;
+            }
+            return originalXHROpen.apply(this, [method, url, ...args]);
+          };
+
           const translateElement = new window.google.translate.TranslateElement(
             {
               pageLanguage: "en",
@@ -43,6 +102,7 @@ const GoogleTranslate = ({
               layout: window.google.translate.TranslateElement.InlineLayout,
               autoDisplay: false,
               multilanguagePage: true,
+              gaTrack: false, // Disable Google Analytics tracking
             },
             "google_translate_element"
           );
@@ -52,13 +112,17 @@ const GoogleTranslate = ({
 
           setIsLoaded(true);
           setIsLoading(false);
-        } catch (error) {
-          console.error("Error initializing Google Translate:", error);
+          setError(null);
+        } catch (err) {
+          console.error("Error initializing Google Translate:", err);
+          setError(err.message);
           setIsLoading(false);
         }
       };
+    }
 
-      // Function to change language programmatically
+    // Function to change language programmatically
+    if (!window.changeGoogleTranslateLanguage) {
       window.changeGoogleTranslateLanguage = function (languageCode) {
         try {
           if (window.google && window.google.translate) {
@@ -77,41 +141,28 @@ const GoogleTranslate = ({
               }
             }
           }
-        } catch (error) {
-          console.error("Error changing language:", error);
+        } catch (err) {
+          console.error("Error changing language:", err);
         }
       };
+    }
 
-      // Append script to head
-      document.head.appendChild(script);
-
-      // Set loading timeout
-      setTimeout(() => {
-        if (!isLoaded) {
-          setIsLoading(false);
-          console.warn("Google Translate failed to load within timeout");
-        }
-      }, 10000); // Increased timeout to 10 seconds
-    };
-
-    // Load the script
-    loadGoogleTranslate();
+    // Set loading timeout
+    const timeoutId = setTimeout(() => {
+      if (!isLoaded && !error) {
+        setError("Translation service timeout");
+        setIsLoading(false);
+      }
+    }, 15000); // 15 second timeout
 
     // Cleanup function
     return () => {
-      // Remove the script if component unmounts
-      const existingScript = document.querySelector(
-        'script[src*="translate.google.com"]'
-      );
-      if (existingScript) {
-        existingScript.remove();
-      }
-      // Clean up global callback
-      if (window.googleTranslateElementInit) {
-        delete window.googleTranslateElementInit;
-      }
+      clearTimeout(timeoutId);
+      // Don't remove the script on unmount as it might be used by other components
+      // Just clean up our state
+      initRef.current = false;
     };
-  }, []); // Remove isLoaded dependency to prevent infinite re-renders
+  }, []); // Empty dependency array
 
   const defaultStyle = {
     position,
@@ -137,13 +188,15 @@ const GoogleTranslate = ({
   }
 
   // Show error state if failed to load
-  if (!isLoaded) {
+  if (error || !isLoaded) {
     return (
       <div
         className={`google-translate-container ${className}`}
         style={defaultStyle}
       >
-        <div className="text-sm text-red-600">Translator unavailable</div>
+        <div className="text-sm text-red-600">
+          {error || "Translator unavailable"}
+        </div>
       </div>
     );
   }
