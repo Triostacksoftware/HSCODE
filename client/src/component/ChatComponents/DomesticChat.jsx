@@ -1,56 +1,55 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import SectionsList from "./SectionsList";
-import SectionChaptersList from "./SectionChaptersList";
+import axios from "axios";
+import UnifiedHSNavigator from "./UnifiedHSNavigator";
 import MyGroups from "./MyGroups";
 import GroupsList from "./GroupsList";
 import ChatWindow from "./ChatWindow";
 
 const DomesticChat = () => {
-  const [activeTab, setActiveTab] = useState("groups"); // "groups", "sections", or "chapters"
-  const [selectedSection, setSelectedSection] = useState(null);
-  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [activeTab, setActiveTab] = useState("groups");
+  const [selectedChapter, setSelectedChapter] = useState(null);
   const [selectedGroup, setSelectedGroup] = useState(null);
+  const [groups, setGroups] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  const handleSectionSelect = (section) => {
-    setSelectedSection(section);
-    setActiveTab("chapters");
-  };
-
-  const handleCategorySelect = (category) => {
-    setSelectedCategory(category);
-  };
-
-  const handleBackToSections = () => {
-    setSelectedSection(null);
-    setSelectedCategory(null);
-    setActiveTab("sections");
-  };
-
-  const handleBackToChapters = () => {
-    setSelectedCategory(null);
-    setActiveTab("chapters");
+  // Handle chapter selection and fetch groups
+  const handleChapterSelect = async (chapterData) => {
+    setSelectedChapter(chapterData);
+    setSelectedGroup(null);
+    setLoading(true);
+    
+    try {
+      // Fetch groups for this chapter
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/categories/${chapterData.chapter}/groups`,
+        { withCredentials: true }
+      );
+      setGroups(response.data || []);
+    } catch (error) {
+      console.error("Error fetching groups:", error);
+      setGroups([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleGroupSelect = (group) => {
     setSelectedGroup(group);
   };
 
-  const handleBackToGroups = () => {
-    setSelectedGroup(null);
-  };
-
   const handleTabChange = (tab) => {
-    if (tab === "sections") {
-      setSelectedSection(null);
-      setSelectedCategory(null);
+    if (tab === "navigator") {
+      setSelectedChapter(null);
+      setSelectedGroup(null);
+      setGroups([]);
     }
     setActiveTab(tab);
   };
 
   return (
     <div className="flex h-screen">
-      {/* Left Section - Sections/Chapters/Groups */}
+      {/* Left Section */}
       <div className="flex flex-col w-80 border-r-1 border-gray-200">
         {/* Header */}
         <div className="p-4 px-5 border-b border-gray-200">
@@ -73,18 +72,18 @@ const DomesticChat = () => {
                   : "bg-gray-200 hover:text-gray-900"
               }`}
             >
-              Groups
+              My Groups
             </button>
             <button
               suppressHydrationWarning={true}
-              onClick={() => handleTabChange("sections")}
+              onClick={() => handleTabChange("navigator")}
               className={`flex-1 py-3 md:py-[.6em] px-4 rounded-md text-sm md:text-xs font-medium transition-colors ${
-                activeTab === "sections"
+                activeTab === "navigator"
                   ? "bg-gray-800 text-white"
                   : "bg-gray-200 hover:text-gray-900"
               }`}
             >
-              Sections
+              HS Navigator
             </button>
           </div>
         </div>
@@ -96,70 +95,64 @@ const DomesticChat = () => {
               onGroupSelect={handleGroupSelect}
               selectedGroupId={selectedGroup?._id}
             />
-          ) : activeTab === "sections" ? (
-            <div>
-              <SectionsList
-                onSectionSelect={handleSectionSelect}
-                selectedSection={selectedSection}
-              />
-            </div>
-          ) : activeTab === "chapters" && selectedSection ? (
-            <SectionChaptersList
-              selectedSection={selectedSection}
-              onBack={handleBackToSections}
-              onCategorySelect={handleCategorySelect}
-              selectedCategory={selectedCategory}
+          ) : activeTab === "navigator" ? (
+            <UnifiedHSNavigator
+              scope="local"
+              onChapterSelect={handleChapterSelect}
+              selectedChapter={selectedChapter}
             />
-          ) : (
-            <div className="p-4 text-center text-gray-500">
-              No content for tab: {activeTab}
-            </div>
-          )}
+          ) : null}
         </div>
       </div>
 
-      {/* Middle Section - Groups (only show when chapters tab is active AND a category is selected) */}
-      {activeTab === "chapters" && selectedCategory && (
-        <div className="w-80 border-r border-gray-200 flex overflow-hidden flex-col animate-slide-in-groups ">
-          <GroupsList
-            categoryId={selectedCategory._id}
-            categoryName={selectedCategory.name}
-            onBack={handleBackToChapters}
-            onGroupSelect={handleGroupSelect}
-            selectedGroupId={selectedGroup?._id}
-          />
+      {/* Middle Section - Groups List */}
+      {activeTab === "navigator" && selectedChapter && (
+        <div className="w-80 border-r border-gray-200 flex flex-col animate-slide-in-groups">
+          <div className="p-4 border-b border-gray-200 bg-gray-50">
+            <h3 className="text-sm font-semibold text-gray-900 mb-1">
+              Local Groups
+            </h3>
+            <p className="text-xs text-gray-600">
+              Chapter {selectedChapter.chapter}: {selectedChapter.name}
+            </p>
+            <p className="text-xs text-gray-500 mt-1">
+              {loading ? "Loading..." : `${groups.length} group${groups.length !== 1 ? 's' : ''} available`}
+            </p>
+          </div>
+          
+          <div className="flex-1 overflow-hidden">
+            <GroupsList
+              categoryId={selectedChapter._id}
+              categoryName={selectedChapter.name}
+              onGroupSelect={handleGroupSelect}
+              selectedGroupId={selectedGroup?._id}
+              groups={groups}
+              scope="local"
+            />
+          </div>
         </div>
       )}
 
-      {/* Right Section - Chat Area */}
-      <div
-        className={`flex flex-col ${
-          (activeTab === "chapters" && selectedCategory) ||
-          activeTab === "groups"
-            ? "flex-1"
-            : "flex-1 ml-0"
-        }`}
-      >
-        {selectedGroup ? (
+      {/* Right Section - Chat Window */}
+      {selectedGroup ? (
+        <div className="flex-1 flex flex-col">
           <ChatWindow
-            chapterNo={selectedGroup.categoryId.chapter}
-            selectedGroupId={selectedGroup._id}
+            groupId={selectedGroup._id}
             groupName={selectedGroup.name}
-            groupImage={selectedGroup.image}
+            groupType="local"
           />
-        ) : (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center">
-              <div className="text-2xl font-handwriting text-gray-700 mb-2">
-                Leadsup for website
-              </div>
-              <div className="text-gray-500 text-sm">
-                lorem ipsum dolor sit amet consectetur adipiscing elit
-              </div>
-            </div>
+        </div>
+      ) : (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center text-gray-500">
+            <div className="text-6xl mb-4">💬</div>
+            <h3 className="text-lg font-medium mb-2">Select a Group</h3>
+            <p className="text-sm">
+              Choose a group from My Groups or browse HS Code chapters to find local trading groups
+            </p>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };
