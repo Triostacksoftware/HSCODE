@@ -1,12 +1,10 @@
 import GlobalGroup from "../models/GlobalGroup.js";
-import GlobalCategory from "../models/GlobalCategory.js";
 import { parseFile } from "../utilities/xlsx.util.js";
 
 // Get all global groups (for superadmin)
 export const getAllGlobalGroups = async (req, res) => {
   try {
     const groups = await GlobalGroup.find()
-      .populate("categoryId", "name chapter")
       .sort({ createdAt: -1 });
 
     res.json(groups);
@@ -16,13 +14,12 @@ export const getAllGlobalGroups = async (req, res) => {
   }
 };
 
-// Get global groups by categoryId
+// Get global groups by chapterNumber
 export const getGlobalGroups = async (req, res) => {
   try {
-    const { categoryId } = req.params;
+    const { chapterNumber } = req.params;
 
-    const groups = await GlobalGroup.find({ categoryId })
-      .populate("categoryId", "name chapter")
+    const groups = await GlobalGroup.find({ chapterNumber })
       .sort({ createdAt: -1 });
 
     res.json(groups);
@@ -35,31 +32,22 @@ export const getGlobalGroups = async (req, res) => {
 // Create global group
 export const createGlobalGroup = async (req, res) => {
   try {
-    const { categoryId } = req.params;
-  const { name, heading, hscode } = req.body;
+    const { name, heading, hscode, chapterNumber } = req.body;
     const image = req.file ? req.file.filename : null;
 
-    // Check if category exists
-    const category = await GlobalCategory.findById(categoryId);
-    if (!category) {
-      return res.status(404).json({ message: "Global category not found" });
-    }
-
-    // Validate that category has chapter field
-    if (!category.chapter) {
-      return res.status(400).json({ message: "Global category is missing chapter number" });
+    if (!chapterNumber) {
+      return res.status(400).json({ message: "Chapter number is required" });
     }
 
     const newGroup = new GlobalGroup({
       name,
       heading: heading || hscode,
       image,
-      chapterNumber: category.chapter || "00", // Save chapter number from category, fallback to "00"
-      categoryId,
+      chapterNumber,
+      categoryId: null, // No longer needed
     });
 
     await newGroup.save();
-    await newGroup.populate("categoryId", "name");
 
     res.status(201).json(newGroup);
   } catch (error) {
@@ -82,7 +70,7 @@ export const createGlobalGroup = async (req, res) => {
 export const updateGlobalGroup = async (req, res) => {
   try {
     const { groupId } = req.params;
-  const { name, heading, hscode, categoryId } = req.body;
+    const { name, heading, hscode, chapterNumber } = req.body;
     const image = req.file ? req.file.filename : null;
 
     const group = await GlobalGroup.findById(groupId);
@@ -92,12 +80,11 @@ export const updateGlobalGroup = async (req, res) => {
 
     // Update fields
     if (name) group.name = name;
-  if (heading || hscode) group.heading = heading || hscode;
-    if (categoryId) group.categoryId = categoryId;
+    if (heading || hscode) group.heading = heading || hscode;
+    if (chapterNumber) group.chapterNumber = chapterNumber;
     if (image) group.image = image;
 
     await group.save();
-    await group.populate("categoryId", "name");
 
     res.json(group);
   } catch (error) {
@@ -128,29 +115,20 @@ export const deleteGlobalGroup = async (req, res) => {
 // Bulk create global groups via CSV/Excel (superadmin)
 export const bulkCreateGlobalGroups = async (req, res) => {
   try {
-    const { categoryId } = req.params;
     const rows = parseFile(req.file);
-    // Get category to access chapter number
-    const category = await GlobalCategory.findById(categoryId);
-    if (!category) {
-      return res.status(404).json({ message: "Global category not found" });
-    }
-
-    // Validate that category has chapter field
-    if (!category.chapter) {
-      return res.status(400).json({ message: "Global category is missing chapter number" });
-    }
 
     const docs = rows
       .map((r) => ({
         name: r.name,
         heading: r.heading,
         image: r.image,
-        chapterNumber: r.chapter || category.chapter || "00", // Save chapter number from CSV or category, fallback to "00"
-        categoryId,
+        chapterNumber: r.chapter || "00", // Chapter number from CSV, fallback to "00"
+        categoryId: null, // No longer needed
       }))
       .filter((d) => d.name && d.heading);
+    
     if (!docs.length) return res.status(400).json({ message: "No valid rows found" });
+    
     const created = await GlobalGroup.insertMany(docs);
     res.status(201).json({ message: "Global groups imported successfully", count: created.length });
   } catch (error) {

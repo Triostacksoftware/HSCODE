@@ -4,7 +4,8 @@ import { parseFile } from "../utilities/xlsx.util.js";
 // GET groups (can filter by chapter number)
 export const getGroups = async (req, res) => {
   try {
-    const { chapterNumber, countryCode } = req.query;
+    const { chapterNumber } = req.query;
+    console.log(chapterNumber)
     const userCountryCode = req.user.countryCode;
 
     let query = {};
@@ -18,8 +19,9 @@ export const getGroups = async (req, res) => {
     if (userCountryCode) {
       query.countryCode = userCountryCode;
     }
+    console.log(query)
 
-    const groups = await LocalGroupModel.find(query).populate("categoryId", "name chapter");
+    const groups = await LocalGroupModel.find(query).select("name heading image chapterNumber countryCode members");
     res.json(groups);
   } catch (err) {
     console.error("Error fetching groups:", err);
@@ -28,7 +30,7 @@ export const getGroups = async (req, res) => {
 };
 
 // CREATE group directly (Admin only)
-export const createGroup = async (req, res) => {
+export const  createGroup = async (req, res) => {
   try {
     const { name, heading, chapterNumber } = req.body;
     const { countryCode } = req.user;

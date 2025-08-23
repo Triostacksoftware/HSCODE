@@ -11,11 +11,6 @@ const GlobalGroupSchema = mongoose.Schema({
       ref: "User",
     },
   ],
-  categoryId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "GlobalCategory",
-    required: true,
-  },
 });
 
 const GlobalGroupModel = mongoose.model("GlobalGroup", GlobalGroupSchema);

@@ -11,12 +11,10 @@ const app = express();
 
 // imports routes
 import authRoutes from "./routes/auth.routes.js";
-import categoryRoutes from "./routes/category.routes.js";
 import groupsRoutes from "./routes/groups.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import leadsRoutes from "./routes/approvedLeads.js";
 import requestedLeadsRoutes from "./routes/requestedLeads.routes.js";
-import globalCategoryRoutes from "./routes/globalCategory.routes.js";
 import globalGroupRoutes from "./routes/globalGroup.routes.js";
 import globalLeadsRoutes from "./routes/globalLeads.routes.js";
 import superadminRoutes from "./routes/superadmin.routes.js";
@@ -85,14 +83,12 @@ app.get("/api/v1/location", async (req, res) => {
 });
 
 app.use("/api/v1/auth", authRoutes);
-app.use("/api/v1/categories", categoryRoutes);
 app.use("/api/v1/groups", groupsRoutes);
 app.use("/api/v1/user", userRoutes);
 app.use("/api/v1/leads", leadsRoutes);
 app.use("/api/v1/requested-leads", requestedLeadsRoutes);
 
 // Global routes
-app.use("/api/v1/global-categories", globalCategoryRoutes);
 app.use("/api/v1/global-groups", globalGroupRoutes);
 app.use("/api/v1/global-leads", globalLeadsRoutes);
 app.use("/api/v1/superadmin", superadminRoutes);

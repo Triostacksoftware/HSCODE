@@ -14,7 +14,7 @@ import {
   approveRejectGlobalLead,
   postSuperadminMessage,
   postSuperadminLocalMessage,
-  getCategoriesByCountry,
+
   getLocalRequestedLeadsCountryCounts,
   getPendingLocalRequestedLeadsByCountry,
   getSuperadmins,
@@ -95,11 +95,6 @@ router.post(
   postSuperadminLocalMessage
 );
 
-// Superadmin get categories by country
-router.get(
-  "/categories/:countryCode",
-  superadminMiddleware,
-  getCategoriesByCountry
-);
+
 
 export default router;

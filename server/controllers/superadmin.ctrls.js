@@ -1,6 +1,5 @@
 import GlobalRequestedLeads from "../models/GlobalRequestedLeads.js";
 import GlobalApprovedLeads from "../models/GlobalApprovedLeads.js";
-import GlobalCategory from "../models/GlobalCategory.js";
 import GlobalGroupModel from "../models/GlobalGroup.js";
 import UserModel from "../models/user.js";
 import SuperAdminModel from "../models/SuperAdmin.js";
@@ -8,7 +7,6 @@ import bcrypt from "bcrypt";
 import { io } from "../server.js";
 import RequestedLeads from "../models/RequestedLeads.js";
 import ApprovedLeads from "../models/ApprovedLeads.js";
-import LocalCategoryModel from "../models/LocalCategory.js";
 import LocalGroupModel from "../models/LocalGroup.js";
 
 // Get dashboard statistics
@@ -17,13 +15,11 @@ export const getDashboardStats = async (req, res) => {
     const [
       totalGlobalLeads,
       totalGlobalUsers,
-      totalGlobalCategories,
       totalGlobalGroups,
       totalAdmins,
     ] = await Promise.all([
       GlobalApprovedLeads.countDocuments(),
       UserModel.countDocuments(),
-      GlobalCategory.countDocuments(),
       GlobalGroupModel.countDocuments(),
       UserModel.countDocuments({ role: "admin" }),
     ]);
@@ -31,7 +27,6 @@ export const getDashboardStats = async (req, res) => {
     res.json({
       totalGlobalLeads,
       totalGlobalUsers,
-      totalGlobalCategories,
       totalGlobalGroups,
       totalAdmins,
     });
@@ -735,18 +730,7 @@ export const postSuperadminLocalMessage = async (req, res) => {
   }
 };
 
-// Superadmin get categories by country
-export const getCategoriesByCountry = async (req, res) => {
-  try {
-    const { countryCode } = req.params;
 
-    const categories = await LocalCategoryModel.find({ countryCode });
-    res.json(categories);
-  } catch (error) {
-    console.error("Error fetching categories by country:", error);
-    res.status(500).json({ message: "Error fetching categories" });
-  }
-};
 
 // ===== SUPERADMIN MANAGEMENT FUNCTIONS =====
 
