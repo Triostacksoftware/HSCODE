@@ -34,40 +34,51 @@ const GoogleTranslate = ({
 
       // Define the callback function
       window.googleTranslateElementInit = function () {
-        const translateElement = new window.google.translate.TranslateElement(
-          {
-            pageLanguage: "en",
-            includedLanguages:
-              "en,hi,fr,es,de,it,pt,ru,ja,ko,zh-CN,zh-TW,ar,tr,nl,pl,sv,da,no,fi,cs,hu,ro,sk,sl,bg,hr,el,et,lv,lt,mt,th,vi,id,ms,tl,bn,ta,te,kn,ml,gu,pa,mr,or,as,ne,si,my,km,lo,ka,hy,az,kk,ky,uz,tg,fa,ur,he,yi,am,sw,zu,af,sq,be,bs,ca,cy,eu,fo,gl,is,ga,mk,mn,sr,uk,iw,jw,co,fy,gd,ht,lb,mi,ny,sm,sn,so,st,su,xh,yo",
-            layout: window.google.translate.TranslateElement.InlineLayout,
-            autoDisplay: false,
-            multilanguagePage: true,
-          },
-          "google_translate_element"
-        );
-        
-        // Store reference for external control
-        window.googleTranslateElement = translateElement;
-        
-        setIsLoaded(true);
-        setIsLoading(false);
+        try {
+          const translateElement = new window.google.translate.TranslateElement(
+            {
+              pageLanguage: "en",
+              includedLanguages:
+                "en,hi,fr,es,de,it,pt,ru,ja,ko,zh-CN,zh-TW,ar,tr,nl,pl,sv,da,no,fi,cs,hu,ro,sk,sl,bg,hr,el,et,lv,lt,mt,th,vi,id,ms,tl,bn,ta,te,kn,ml,gu,pa,mr,or,as,ne,si,my,km,lo,ka,hy,az,kk,ky,uz,tg,fa,ur,he,yi,am,sw,zu,af,sq,be,bs,ca,cy,eu,fo,gl,is,ga,mk,mn,sr,uk,iw,jw,co,fy,gd,ht,lb,mi,ny,sm,sn,so,st,su,xh,yo",
+              layout: window.google.translate.TranslateElement.InlineLayout,
+              autoDisplay: false,
+              multilanguagePage: true,
+            },
+            "google_translate_element"
+          );
+
+          // Store reference for external control
+          window.googleTranslateElement = translateElement;
+
+          setIsLoaded(true);
+          setIsLoading(false);
+        } catch (error) {
+          console.error("Error initializing Google Translate:", error);
+          setIsLoading(false);
+        }
       };
 
       // Function to change language programmatically
-      window.changeGoogleTranslateLanguage = function(languageCode) {
-        if (window.google && window.google.translate) {
-          const selectElement = document.querySelector('#google_translate_element select');
-          if (selectElement) {
-            // Find the option with the matching language code
-            const options = selectElement.options;
-            for (let i = 0; i < options.length; i++) {
-              if (options[i].value.includes(languageCode.toLowerCase())) {
-                selectElement.selectedIndex = i;
-                selectElement.dispatchEvent(new Event('change'));
-                break;
+      window.changeGoogleTranslateLanguage = function (languageCode) {
+        try {
+          if (window.google && window.google.translate) {
+            const selectElement = document.querySelector(
+              "#google_translate_element select"
+            );
+            if (selectElement) {
+              // Find the option with the matching language code
+              const options = selectElement.options;
+              for (let i = 0; i < options.length; i++) {
+                if (options[i].value.includes(languageCode.toLowerCase())) {
+                  selectElement.selectedIndex = i;
+                  selectElement.dispatchEvent(new Event("change"));
+                  break;
+                }
               }
             }
           }
+        } catch (error) {
+          console.error("Error changing language:", error);
         }
       };
 
@@ -78,8 +89,9 @@ const GoogleTranslate = ({
       setTimeout(() => {
         if (!isLoaded) {
           setIsLoading(false);
+          console.warn("Google Translate failed to load within timeout");
         }
-      }, 5000);
+      }, 10000); // Increased timeout to 10 seconds
     };
 
     // Load the script
@@ -99,7 +111,7 @@ const GoogleTranslate = ({
         delete window.googleTranslateElementInit;
       }
     };
-  }, [isLoaded]);
+  }, []); // Remove isLoaded dependency to prevent infinite re-renders
 
   const defaultStyle = {
     position,
@@ -111,6 +123,30 @@ const GoogleTranslate = ({
     zIndex: 1000,
     ...style,
   };
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div
+        className={`google-translate-container ${className}`}
+        style={defaultStyle}
+      >
+        <div className="text-sm text-gray-600">Loading translator...</div>
+      </div>
+    );
+  }
+
+  // Show error state if failed to load
+  if (!isLoaded) {
+    return (
+      <div
+        className={`google-translate-container ${className}`}
+        style={defaultStyle}
+      >
+        <div className="text-sm text-red-600">Translator unavailable</div>
+      </div>
+    );
+  }
 
   return (
     <div

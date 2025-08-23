@@ -23,6 +23,7 @@ function HomeContent() {
     isFallback,
   } = useHomeData(countryInfo?.code);
   console.log("home data", homeData);
+  console.log("heroSection data", homeData?.heroSection);
 
   // Handle hash-based navigation when coming from other pages
   useEffect(() => {
@@ -79,15 +80,15 @@ function HomeContent() {
       )}
 
       <Navbar />
-      <Herosection {...homeData.heroSection} />
-      <AboutSection {...homeData.aboutSection} />
+      <Herosection {...(homeData.heroSection || {})} />
+      <AboutSection {...(homeData.aboutSection || {})} />
       <CountriesSection />
-      <FeaturedCategories {...homeData.featuredCategories} />
-      <NewsSection {...homeData.newsSection} />
-      <TestimonialSection {...homeData.testimonialSection} />
-      <Stats {...homeData.stats} />
-      <FAQSection {...homeData.faqSection} />
-      <Footer {...homeData.footer} />
+      <FeaturedCategories {...(homeData.featuredCategories || {})} />
+      <NewsSection {...(homeData.newsSection || {})} />
+      <TestimonialSection {...(homeData.testimonialSection || {})} />
+      <Stats {...(homeData.stats || {})} />
+      <FAQSection {...(homeData.faqSection || {})} />
+      <Footer {...(homeData.footer || {})} />
     </div>
   );
 }
