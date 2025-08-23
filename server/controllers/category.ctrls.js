@@ -240,24 +240,44 @@ export const createGroup = async (req, res) => {
         .json({ message: "Cannot create group in another country's category" });
     }
 
+    // Validate that category has chapter field
+    if (!category.chapter) {
+      return res.status(400).json({ message: "Category is missing chapter number" });
+    }
+
     // Normalize to array
     if (!Array.isArray(groups)) {
       groups = [groups];
     }
 
+    // Debug logging
+    console.log("Category object:", category);
+    console.log("Category chapter:", category.chapter);
+    
     // Format group objects
     const formatted = groups.map((g) => ({
       name: g.name,
       heading: g.heading || g.hscode,
       image: req.file?.filename || null,
+      chapterNumber: category.chapter || "00", // Save chapter number from category, fallback to "00"
       categoryId,
     }));
 
     const newGroups = await LocalGroupModel.insertMany(formatted);
     res.status(201).json(newGroups);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Error creating groups" });
+    console.error("Error creating groups:", err);
+    console.error("Error stack:", err.stack);
+    
+    // Check if it's a mongoose validation error
+    if (err.name === 'ValidationError') {
+      return res.status(400).json({ 
+        message: "Validation error", 
+        details: Object.values(err.errors).map(e => e.message) 
+      });
+    }
+    
+    res.status(500).json({ message: "Error creating groups", error: err.message });
   }
 };
 
@@ -266,11 +286,23 @@ export const createManyGroup = async (req, res) => {
   try {
     const { id, countryCode } = req.user; // Admin ID & country
     const group = parseFile(req.file);
+    
+    // Get category to access chapter number
+    const category = await LocalCategoryModel.findById(req.params.id);
+    if (!category) {
+      return res.status(404).json({ message: "Category not found" });
+    }
+
+    // Validate that category has chapter field
+    if (!category.chapter) {
+      return res.status(400).json({ message: "Category is missing chapter number" });
+    }
 
     const formatted = group.map((g) => ({
       name: g.name,
       heading: g.heading || g.hscode,
       image: g.image,
+      chapterNumber: g.chapter || category.chapter || "00", // Save chapter number from CSV or category, fallback to "00"
       categoryId: req.params.id,
     }));
 
@@ -278,8 +310,18 @@ export const createManyGroup = async (req, res) => {
 
     res.status(201).json({ message: "Groups created successfully" });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Error creating categories" });
+    console.error("Error bulk creating groups:", err);
+    console.error("Error stack:", err.stack);
+    
+    // Check if it's a mongoose validation error
+    if (err.name === 'ValidationError') {
+      return res.status(400).json({ 
+        message: "Validation error", 
+        details: Object.values(err.errors).map(e => e.message) 
+      });
+    }
+    
+    res.status(500).json({ message: "Error creating groups", error: err.message });
   }
 };
 

@@ -15,6 +15,7 @@ const AddGroup = ({ categoryId, categoryName, onClose }) => {
   const [formData, setFormData] = useState({
     name: "",
     heading: "",
+    chapter: categoryId, // Store the chapter ID
   });
   const [selectedFile, setSelectedFile] = useState(null);
   const [selectedBulkFile, setSelectedBulkFile] = useState(null);
@@ -92,8 +93,12 @@ const AddGroup = ({ categoryId, categoryName, onClose }) => {
         formDataToSend.append("file", selectedFile);
       }
 
+      // Add chapter number to form data
+      formDataToSend.append("chapterNumber", categoryId); // categoryId is actually the chapter number
+      
+      // Use direct groups endpoint
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/categories/${categoryId}/group`,
+        `${process.env.NEXT_PUBLIC_BASE_URL}/groups`,
         formDataToSend,
         {
           withCredentials: true,
@@ -132,10 +137,12 @@ const AddGroup = ({ categoryId, categoryName, onClose }) => {
     try {
       const formDataToSend = new FormData();
       formDataToSend.append("file", selectedBulkFile);
-      formDataToSend.append("categoryId", categoryId);
+      formDataToSend.append("chapterId", categoryId);
+      formDataToSend.append("categoryId", categoryId); // Keep for backward compatibility
 
+      // Use direct groups endpoint for bulk upload
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/categories/${categoryId}/group/many`,
+        `${process.env.NEXT_PUBLIC_BASE_URL}/groups/many`,
         formDataToSend,
         {
           withCredentials: true,
@@ -180,7 +187,7 @@ const AddGroup = ({ categoryId, categoryName, onClose }) => {
               Add New Group
             </h2>
             <p className="text-[.7em] sm:text-[.8em] text-gray-500 truncate">
-              Category: {categoryName}
+              Chapter: {categoryName}
             </p>
           </div>
         </div>
@@ -268,7 +275,9 @@ const AddGroup = ({ categoryId, categoryName, onClose }) => {
                 >
                   <MdUpload className="w-5 h-5 mr-2 text-gray-500" />
                   <span className="text-sm text-gray-700">
-                    {selectedFile ? selectedFile.name : "Choose an image file"}
+                    {selectedFile
+                      ? selectedFile.name
+                      : "Choose an image file"}
                   </span>
                 </label>
               </div>
@@ -288,23 +297,18 @@ const AddGroup = ({ categoryId, categoryName, onClose }) => {
                   <button
                     type="button"
                     onClick={() => setSelectedFile(null)}
-                    className="text-red-500 hover:text-red-700"
+                    className="p-1 hover:bg-gray-200 rounded-full transition-colors"
                   >
-                    <MdClose className="w-4 h-4" />
+                    <MdClose className="w-4 h-4 text-gray-500" />
                   </button>
                 </div>
               )}
-
-              <p className="text-xs text-gray-500">
-                Upload an image for the group (optional, max 5MB)
-              </p>
             </div>
           </div>
 
           {/* Action Buttons */}
-          <div className="flex space-x-3 pt-4 sm:pt-6">
+          <div className="flex space-x-3 pt-4">
             <button
-              suppressHydrationWarning={true}
               type="button"
               onClick={onClose}
               disabled={isLoading}
@@ -313,7 +317,6 @@ const AddGroup = ({ categoryId, categoryName, onClose }) => {
               Cancel
             </button>
             <button
-              suppressHydrationWarning={true}
               type="submit"
               disabled={isLoading}
               className="flex-1 px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center text-sm sm:text-base"
@@ -364,10 +367,10 @@ const AddGroup = ({ categoryId, categoryName, onClose }) => {
                     className="hidden"
                   />
                   <label
-                    htmlFor="bulkFile"    
+                    htmlFor="bulkFile"
                     className="flex items-center justify-center w-full px-3 py-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
                   >
-                    <MdUpload className="w-5 h-5 mr-2 text-gray-500" />
+                    <MdFileUpload className="w-5 h-5 mr-2 text-gray-500" />
                     <span className="text-sm text-gray-700">
                       {selectedBulkFile
                         ? selectedBulkFile.name
@@ -391,40 +394,34 @@ const AddGroup = ({ categoryId, categoryName, onClose }) => {
                     <button
                       type="button"
                       onClick={() => setSelectedBulkFile(null)}
-                      className="text-red-500 hover:text-red-700"
+                      className="p-1 hover:bg-gray-200 rounded-full transition-colors"
                     >
-                      <MdClose className="w-4 h-4" />
+                      <MdClose className="w-4 h-4 text-gray-500" />
                     </button>
                   </div>
                 )}
 
-                <p className="text-xs text-gray-500">
-                  Upload a CSV or Excel file with group names and Heading (max
-                  10MB)
-                </p>
+                {/* Bulk Upload Button */}
+                <button
+                  type="button"
+                  onClick={handleBulkSubmit}
+                  disabled={!selectedBulkFile || isBulkLoading}
+                  className="w-full px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center justify-center text-sm"
+                >
+                  {isBulkLoading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <MdFileUpload className="w-4 h-4 mr-2" />
+                      Upload Bulk Groups
+                    </>
+                  )}
+                </button>
               </div>
             </div>
-
-            {/* Bulk Upload Button */}
-            <button
-              suppressHydrationWarning={true}
-              type="button"
-              onClick={handleBulkSubmit}
-              disabled={isBulkLoading || !selectedBulkFile}
-              className="w-full px-3 sm:px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center justify-center text-sm sm:text-base"
-            >
-              {isBulkLoading ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Uploading...
-                </>
-              ) : (
-                <>
-                  <MdFileUpload className="w-4 h-4 mr-2" />
-                  Upload Groups
-                </>
-              )}
-            </button>
           </div>
         </form>
       </div>
