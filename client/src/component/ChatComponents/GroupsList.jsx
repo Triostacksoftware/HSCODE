@@ -29,7 +29,7 @@ const GroupsList = ({
       setError("");
 
       const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/categories/${categoryId}/groups`,
+        `${process.env.NEXT_PUBLIC_BASE_URL}/groups?chapterNumber=${categoryId}`,
         {
           withCredentials: true,
         }

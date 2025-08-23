@@ -23,9 +23,9 @@ const GlobalChat = () => {
     setShowGroupsList(true);
     
     try {
-      // Fetch global groups for this chapter
+      // Fetch groups for this chapter
       const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/global-groups/${chapterData.chapter}`,
+        `${process.env.NEXT_PUBLIC_BASE_URL}/global-groups?chapterNumber=${chapterData.chapter}`,
         { withCredentials: true }
       );
       setGroups(response.data || []);

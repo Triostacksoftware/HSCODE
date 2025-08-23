@@ -52,7 +52,7 @@ const GlobalGroupsList = ({
       setError("");
 
       const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/global-groups/${categoryId}`,
+        `${process.env.NEXT_PUBLIC_BASE_URL}/global-groups?chapterNumber=${categoryId}`,
         {
           withCredentials: true,
         }

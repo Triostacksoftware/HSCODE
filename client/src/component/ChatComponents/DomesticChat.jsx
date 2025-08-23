@@ -22,7 +22,7 @@ const DomesticChat = () => {
     try {
       // Fetch groups for this chapter
       const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/categories/${chapterData.chapter}/groups`,
+        `${process.env.NEXT_PUBLIC_BASE_URL}/groups?chapterNumber=${chapterData.chapter}`,
         { withCredentials: true }
       );
       setGroups(response.data || []);

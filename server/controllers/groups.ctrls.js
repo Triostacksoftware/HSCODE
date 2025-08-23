@@ -21,7 +21,7 @@ export const getGroups = async (req, res) => {
     }
     console.log(query)
 
-    const groups = await LocalGroupModel.find(query).select("name heading image chapterNumber countryCode members");
+    const groups = await LocalGroupModel.find(query).select("_id name heading image chapterNumber countryCode members");
     res.json(groups);
   } catch (err) {
     console.error("Error fetching groups:", err);
@@ -180,7 +180,7 @@ export const getAllGroups = async (req, res) => {
   try {
     const groups = await LocalGroupModel.find({ 
       countryCode: req.user.countryCode 
-    }).populate("categoryId", "name chapter");
+    }).select("_id name heading image chapterNumber countryCode members");
     res.json(groups);
   } catch (err) {
     console.error("Error fetching all groups:", err);
