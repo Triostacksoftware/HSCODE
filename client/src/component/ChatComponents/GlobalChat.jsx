@@ -1,40 +1,40 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { IoArrowBack } from "react-icons/io5";
-import SectionsList from "./SectionsList";
-import GlobalSectionChaptersList from "./GlobalSectionChaptersList";
+import axios from "axios";
+import UnifiedHSNavigator from "./UnifiedHSNavigator";
 import GlobalMyGroups from "./GlobalMyGroups";
 import GlobalGroupsList from "./GlobalGroupsList";
 import GlobalChatWindow from "./GlobalChatWindow";
 
 const GlobalChat = () => {
-  const [activeTab, setActiveTab] = useState("groups"); // "groups", "sections", or "chapters"
-  const [selectedSection, setSelectedSection] = useState(null);
-  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [activeTab, setActiveTab] = useState("groups");
+  const [selectedChapter, setSelectedChapter] = useState(null);
   const [selectedGroup, setSelectedGroup] = useState(null);
+  const [groups, setGroups] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [showGroupsList, setShowGroupsList] = useState(false);
 
-  const handleSectionSelect = (section) => {
-    setSelectedSection(section);
-    setActiveTab("chapters");
-  };
-
-  const handleCategorySelect = (category) => {
-    setSelectedCategory(category);
+  // Handle chapter selection and fetch groups
+  const handleChapterSelect = async (chapterData) => {
+    setSelectedChapter(chapterData);
+    setSelectedGroup(null);
+    setLoading(true);
     setShowGroupsList(true);
-  };
-
-  const handleBackToSections = () => {
-    setSelectedSection(null);
-    setSelectedCategory(null);
-    setShowGroupsList(false);
-    setActiveTab("sections");
-  };
-
-  const handleBackToChapters = () => {
-    setSelectedCategory(null);
-    setShowGroupsList(false);
-    setActiveTab("chapters");
+    
+    try {
+      // Fetch global groups for this chapter
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/global-groups/${chapterData.chapter}`,
+        { withCredentials: true }
+      );
+      setGroups(response.data || []);
+    } catch (error) {
+      console.error("Error fetching global groups:", error);
+      setGroups([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleGroupSelect = (group) => {
@@ -46,9 +46,19 @@ const GlobalChat = () => {
     setShowGroupsList(false);
   };
 
+  const handleTabChange = (tab) => {
+    if (tab === "navigator") {
+      setSelectedChapter(null);
+      setSelectedGroup(null);
+      setGroups([]);
+      setShowGroupsList(false);
+    }
+    setActiveTab(tab);
+  };
+
   return (
     <div className="flex h-full relative">
-      {/* Left Section - Global Chat */}
+      {/* Left Section */}
       <div
         className={`
           flex flex-col border-r-1 border-gray-200 transition-all duration-300
@@ -77,25 +87,25 @@ const GlobalChat = () => {
           <div className="flex rounded-lg p-1 gap-1 md:gap-5">
             <button
               suppressHydrationWarning={true}
-              onClick={() => setActiveTab("groups")}
+              onClick={() => handleTabChange("groups")}
               className={`flex-1 py-3 md:py-[.6em] px-4 rounded-md text-sm md:text-xs font-medium transition-colors ${
                 activeTab === "groups"
                   ? "bg-gray-800 text-white"
                   : "bg-gray-200 hover:text-gray-900"
               }`}
             >
-              Groups
+              My Groups
             </button>
             <button
               suppressHydrationWarning={true}
-              onClick={() => setActiveTab("sections")}
+              onClick={() => handleTabChange("navigator")}
               className={`flex-1 py-3 md:py-[.6em] px-4 rounded-md text-sm md:text-xs font-medium transition-colors ${
-                activeTab === "sections"
+                activeTab === "navigator"
                   ? "bg-gray-800 text-white"
                   : "bg-gray-200 hover:text-gray-900"
               }`}
             >
-              Sections
+              HS Navigator
             </button>
           </div>
         </div>
@@ -107,68 +117,64 @@ const GlobalChat = () => {
               onGroupSelect={handleGroupSelect}
               selectedGroupId={selectedGroup?._id}
             />
-          ) : activeTab === "sections" && !selectedSection ? (
-            <SectionsList
-              onSectionSelect={handleSectionSelect}
-              selectedSection={selectedSection}
-            />
-          ) : activeTab === "chapters" && selectedSection ? (
-            <GlobalSectionChaptersList
-              selectedSection={selectedSection}
-              onBack={handleBackToSections}
-              onCategorySelect={handleCategorySelect}
-              selectedCategory={selectedCategory}
+          ) : activeTab === "navigator" ? (
+            <UnifiedHSNavigator
+              scope="global"
+              onChapterSelect={handleChapterSelect}
+              selectedChapter={selectedChapter}
             />
           ) : null}
         </div>
       </div>
 
-      {/* Middle Section - Groups (only show when chapters tab is active AND a category is selected) */}
-      {activeTab === "chapters" && selectedCategory && showGroupsList && (
-        <div
-          className={`
-            border-r border-gray-200 flex overflow-hidden flex-col animate-slide-in-groups
-            ${showGroupsList ? "w-full md:w-80" : "hidden"}
-          `}
-        >
-          <GlobalGroupsList
-            categoryId={selectedCategory._id}
-            categoryName={selectedCategory.name}
-            onBack={handleBackToChapters}
-            onGroupSelect={handleGroupSelect}
-            selectedGroupId={selectedGroup?._id}
-          />
+      {/* Middle Section - Groups List */}
+      {activeTab === "navigator" && selectedChapter && showGroupsList && (
+        <div className="w-80 border-r border-gray-200 flex flex-col animate-slide-in-groups">
+          <div className="p-4 border-b border-gray-200 bg-gray-50">
+            <h3 className="text-sm font-semibold text-gray-900 mb-1">
+              Global Groups
+            </h3>
+            <p className="text-xs text-gray-600">
+              Chapter {selectedChapter.chapter}: {selectedChapter.name}
+            </p>
+            <p className="text-xs text-gray-500 mt-1">
+              {loading ? "Loading..." : `${groups.length} group${groups.length !== 1 ? 's' : ''} available`}
+            </p>
+          </div>
+          
+          <div className="flex-1 overflow-hidden">
+            <GlobalGroupsList
+              categoryId={selectedChapter._id}
+              categoryName={selectedChapter.name}
+              onGroupSelect={handleGroupSelect}
+              selectedGroupId={selectedGroup?._id}
+              groups={groups}
+              scope="global"
+            />
+          </div>
         </div>
       )}
 
-      {/* Right Section - Chat Area */}
-      <div
-        className={`
-          flex flex-col flex-1
-          ${selectedGroup ? "block" : "hidden md:block"}
-        `}
-      >
-        {selectedGroup ? (
+      {/* Right Section - Chat Window */}
+      {selectedGroup ? (
+        <div className="flex-1 flex flex-col">
           <GlobalChatWindow
-            chapterNo={selectedGroup.categoryId.chapter}
-            selectedGroupId={selectedGroup._id}
+            groupId={selectedGroup._id}
             groupName={selectedGroup.name}
-            groupImage={selectedGroup.image}
-            onBack={handleBackToGroups}
+            groupType="global"
           />
-        ) : (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center">
-              <div className="text-2xl font-handwriting text-gray-700 mb-2">
-                Global Leadsup
-              </div>
-              <div className="text-gray-500 text-sm">
-                Connect with businesses worldwide
-              </div>
-            </div>
+        </div>
+      ) : (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center text-gray-500">
+            <div className="text-6xl mb-4">🌍</div>
+            <h3 className="text-lg font-medium mb-2">Select a Global Group</h3>
+            <p className="text-sm">
+              Choose a group from My Groups or browse HS Code chapters to find global trading groups
+            </p>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };
