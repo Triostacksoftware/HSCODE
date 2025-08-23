@@ -2,9 +2,6 @@ import express from "express";
 import {
   adminLogin,
   emailVerification,
-  forgotPassword,
-  otpVerification,
-  resetPassword,
   signup,
   userVerification,
   setupAdminTOTP,
@@ -34,9 +31,7 @@ router.post("/check-user-before-otp", checkUserBeforeOTP);
 router.post("/check-user-exists", checkUserExists);
 router.post("/verify-otp", verifyOTP);
 router.post("/user-verification", userVerification);
-router.post("/forgot-password", forgotPassword);
-router.post("/otp-verification", otpVerification);
-router.post("/reset-password", resetPassword);
+
 router.post("/logout", logout);
 router.get("/me", getMe);
 router.patch(

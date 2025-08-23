@@ -13,6 +13,7 @@ function useCountryCode() {
         const response = await axios.get(
           `${process.env.NEXT_PUBLIC_BASE_URL}/location`
         );
+        console.log("response", response);
         setCountryInfo(response.data);
         setError(null);
       } catch (err) {

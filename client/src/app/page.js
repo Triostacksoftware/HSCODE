@@ -15,19 +15,20 @@ import useCountryCode from "@/utilities/useCountryCode";
 import useHomeData from "@/utilities/useHomeData";
 
 function HomeContent() {
-  const { countryCode, loading: countryLoading } = useCountryCode();
+  const { countryInfo, loading: countryLoading } = useCountryCode();
+  console.log("country code", countryInfo);
   const {
     homeData,
     loading: dataLoading,
     isFallback,
-  } = useHomeData(countryCode?.code);
+  } = useHomeData(countryInfo?.code);
   console.log("home data", homeData);
 
   // Handle hash-based navigation when coming from other pages
   useEffect(() => {
     const handleHashScroll = () => {
       const hash = window.location.hash.replace("#", "");
-      if (hash && !countryLoading && !dataLoading && homeData) {
+      if (hash && !countryLoading && !dataLoading) {
         setTimeout(() => {
           const element = document.getElementById(hash);
           if (element) {

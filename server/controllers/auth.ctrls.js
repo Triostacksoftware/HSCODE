@@ -372,82 +372,11 @@ export const userVerification = async (req, res) => {
   }
 };
 
-export const forgotPassword = async (req, res) => {
-  const { phoneNumber } = req.body;
 
-  if (!phoneNumber)
-    return res.status(400).json({ message: "Phone number is required" });
 
-  const user = await UserModel.findOne({ phone: phoneNumber });
-  if (!user) return res.status(404).json({ message: "User not found" });
 
-  // Phone verification will be handled by Firebase on the frontend
-  // We just need to confirm the user exists
-  return res.status(200).json({
-    message: "User found. Please use phone OTP verification to reset password.",
-    userExists: true,
-  });
-};
 
-export const otpVerification = (req, res) => {
-  const { OTP } = req.body;
-  const token = req.cookies.reset_token;
 
-  if (!OTP || !token) {
-    return res.status(400).json({ message: "OTP or token missing" });
-  }
-
-  const decoded = verifyToken(token);
-  if (!decoded || decoded.otp !== OTP) {
-    return res.status(401).json({ message: "Invalid or expired OTP" });
-  }
-
-  // Create a short token to allow password reset
-  const newToken = generateToken({ email: decoded.email }, "5m");
-
-  res.cookie("reset_confirmed", newToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-    maxAge: 5 * 60 * 1000,
-  });
-
-  res.clearCookie("reset_token");
-
-  return res
-    .status(200)
-    .json({ message: "OTP verified. You may reset your password now." });
-};
-
-export const resetPassword = async (req, res) => {
-  const { phoneNumber, newPassword } = req.body;
-  
-  console.log("Reset password request body:", req.body);
-  console.log("Phone number received:", phoneNumber);
-  console.log("New password received:", newPassword ? "***" : "undefined");
-
-  if (!phoneNumber || !newPassword) {
-    return res
-      .status(400)
-      .json({ message: "Phone number and new password are required" });
-  }
-
-  try {
-    // Phone verification already done by Firebase, proceed with password reset
-    const user = await UserModel.findOne({ phone: phoneNumber });
-    console.log("User found:", user ? "Yes" : "No");
-    
-    if (!user) return res.status(404).json({ message: "User not found" });
-
-    user.password = newPassword;
-    await user.save(); // this triggers pre('save') hook
-
-    return res.status(200).json({ message: "Password reset successful" });
-  } catch (err) {
-    console.error("Reset password error:", err);
-    return res.status(500).json({ message: "Could not reset password" });
-  }
-};
 
 // Admin Controllers
 export const adminLogin = async (req, res) => {
