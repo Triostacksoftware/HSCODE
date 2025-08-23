@@ -13,8 +13,10 @@ import FAQSection from "@/component/HomeComponent/FAQSection";
 import Footer from "@/component/HomeComponent/Footer";
 import useCountryCode from "@/utilities/useCountryCode";
 import useHomeData from "@/utilities/useHomeData";
+import ErrorBoundary from "@/component/ErrorBoundary";
 
 function HomeContent() {
+  console.log("HomeContent render", Date.now());
   const { countryInfo, loading: countryLoading } = useCountryCode();
   console.log("country code", countryInfo);
   const {
@@ -23,6 +25,7 @@ function HomeContent() {
     isFallback,
   } = useHomeData(countryInfo?.code);
   console.log("home data", homeData);
+  console.log("heroSection data", homeData?.heroSection);
 
   // Handle hash-based navigation when coming from other pages
   useEffect(() => {
@@ -41,7 +44,7 @@ function HomeContent() {
     handleHashScroll();
     window.addEventListener("hashchange", handleHashScroll);
     return () => window.removeEventListener("hashchange", handleHashScroll);
-  }, [countryLoading, dataLoading, homeData]);
+  }, [countryLoading, dataLoading]); // Removed homeData dependency to prevent infinite re-renders
 
   if (countryLoading || dataLoading) {
     return (
@@ -79,32 +82,34 @@ function HomeContent() {
       )}
 
       <Navbar />
-      <Herosection {...homeData.heroSection} />
-      <AboutSection {...homeData.aboutSection} />
+      <Herosection {...(homeData.heroSection || {})} />
+      <AboutSection {...(homeData.aboutSection || {})} />
       <CountriesSection />
-      <FeaturedCategories {...homeData.featuredCategories} />
-      <NewsSection {...homeData.newsSection} />
-      <TestimonialSection {...homeData.testimonialSection} />
-      <Stats {...homeData.stats} />
-      <FAQSection {...homeData.faqSection} />
-      <Footer {...homeData.footer} />
+      <FeaturedCategories {...(homeData.featuredCategories || {})} />
+      <NewsSection {...(homeData.newsSection || {})} />
+      <TestimonialSection {...(homeData.testimonialSection || {})} />
+      <Stats {...(homeData.stats || {})} />
+      <FAQSection {...(homeData.faqSection || {})} />
+      <Footer {...(homeData.footer || {})} />
     </div>
   );
 }
 
 export default function Home() {
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading...</p>
+    <ErrorBoundary>
+      <Suspense
+        fallback={
+          <div className="min-h-screen flex items-center justify-center">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="mt-4 text-gray-600">Loading...</p>
+            </div>
           </div>
-        </div>
-      }
-    >
-      <HomeContent />
-    </Suspense>
+        }
+      >
+        <HomeContent />
+      </Suspense>
+    </ErrorBoundary>
   );
 }

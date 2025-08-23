@@ -2,15 +2,24 @@
 import React, { useState, useEffect } from "react";
 
 const Herosection = ({
-  description = "Connect with verified buyers and sellers in our exclusive groups. Post leads, find opportunities, and grow your business in the most trusted B2B marketplace platform.",
-  youtubeVideoId = "YHadvEgNruU", // Desktop video ID
-  mobileVideoId = "39HqTUNw8MU", // Mobile/Shorts video ID
-  ctaButtonText = "Start Trading",
-  ctaButtonLink = "/auth",
-  mainHeading = "Connect Buyers & Sellers in the Ultimate B2B Marketplace Platform",
-  subHeading= "",
-  thirdHeading = "",
+  description,
+  ctaButtonText,
+  ctaButtonLink,
+  mainHeading,
+  subHeading,
+  thirdHeading,
 }) => {
+  // Set default values with null coalescing
+  const finalDescription =
+    description ??
+    "Connect with verified buyers and sellers in our exclusive groups. Post leads, find opportunities, and grow your business in the most trusted B2B marketplace platform.";
+  const finalCtaButtonText = ctaButtonText ?? "Start Trading";
+  const finalCtaButtonLink = ctaButtonLink ?? "/auth";
+  const finalMainHeading =
+    mainHeading ??
+    "Connect Buyers & Sellers in the Ultimate B2B Marketplace Platform";
+  const finalSubHeading = subHeading ?? "";
+  const finalThirdHeading = thirdHeading ?? "";
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
@@ -26,9 +35,9 @@ const Herosection = ({
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
             <div className="text-white text-center">
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6">
-                <span className="block">{mainHeading}</span>
-                <span className="block">{subHeading}</span>
-                <span className="block">{thirdHeading}</span>
+                <span className="block">{finalMainHeading}</span>
+                <span className="block">{finalSubHeading}</span>
+                <span className="block">{finalThirdHeading}</span>
               </h1>
             </div>
           </div>
@@ -39,51 +48,43 @@ const Herosection = ({
 
   return (
     <div className="relative min-h-screen">
-      {/* Desktop Video (md and larger) */}
-      <div className="absolute hidden md:block">
-        <iframe
-          src={`https://www.youtube.com/embed/${youtubeVideoId}?autoplay=1&mute=1&loop=1&playlist=${youtubeVideoId}&t=36s&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1&enablejsapi=1`}
-          title="Desktop Background Video"
-          frameBorder="0"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
+      {/* Desktop Background Image (md and larger) */}
+      <div className="absolute hidden md:block inset-0">
+        <img
+          src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/MAERSK_MC_KINNEY_M%C3%96LLER_%26_MARSEILLE_MAERSK_%2848694054418%29.jpg/1200px-MAERSK_MC_KINNEY_M%C3%96LLER_%26_MARSEILLE_MAERSK_%2848694054418%29.jpg"
+          alt="Shipping Background"
           style={{
             position: "fixed",
-            top: "-5vh",
-            left: 0,
             width: "100vw",
-            height: "120vh",
-            border: "none",
-            margin: 0,
-            padding: 0,
+            height: "100vh",
+            objectFit: "cover",
             zIndex: -1,
             pointerEvents: "none",
           }}
-        ></iframe>
+        />
       </div>
 
-      {/* Mobile Video (smaller than md) */}
-      <div className="absolute inset-0  overflow-hidden md:hidden">
-        <iframe
-          className="absolute inset-0 w-full h-full"
-          src={`https://www.youtube.com/embed/${mobileVideoId}?autoplay=1&mute=1&loop=1&playlist=${mobileVideoId}&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1&enablejsapi=1`}
-          title="Mobile Background Video"
-          frameBorder="0"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
+      {/* Mobile Background Image (smaller than md) */}
+      <div className="absolute inset-0 overflow-hidden md:hidden">
+        <img
+          src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/MAERSK_MC_KINNEY_M%C3%96LLER_%26_MARSEILLE_MAERSK_%2848694054418%29.jpg/1200px-MAERSK_MC_KINNEY_M%C3%96LLER_%26_MARSEILLE_MAERSK_%2848694054418%29.jpg"
+          alt="Shipping Background"
           style={{
             position: "fixed",
             top: 0,
             left: 0,
-            width: "120%",
-            height: "110%",
-            border: "none",
-            margin: 0,
-            padding: 0,
+            width: "100vw",
+            height: "100vh",
+            objectFit: "cover",
             zIndex: -1,
             pointerEvents: "none",
           }}
-        ></iframe>
+        />
+        {/* Dark overlay for better text readability */}
+        <div
+          className="absolute inset-0 bg-black bg-opacity-50"
+          style={{ zIndex: -1 }}
+        />
       </div>
 
       {/* Main Content */}
@@ -93,38 +94,44 @@ const Herosection = ({
             {/* Left Side - Text Content */}
             <div className="text-white">
               <h1 className="text-xl md:text-3xl lg:text-5xl font-bold leading-tight mb-6">
-                <span className="block">{mainHeading}</span>
-                <span className="block">{subHeading}</span>
-                <span className="block">{thirdHeading}</span>
+                <span className="block">{finalMainHeading}</span>
+                <span className="block">{finalSubHeading}</span>
+                <span className="block">{finalThirdHeading}</span>
               </h1>
 
               <p className="text-lg md:text-xl text-gray-200 mb-8 max-w-2xl">
-                {description}
+                {finalDescription}
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4">
                 <a
-                  href={ctaButtonLink}
+                  href={finalCtaButtonLink}
                   className="inline-flex items-center justify-center px-8 py-4 text-white font-semibold rounded-lg transition-colors duration-200 text-lg"
-                  style={{ backgroundColor: 'var(--trade-orange)' }}
-                  onMouseEnter={(e) => e.target.style.backgroundColor = '#d45a1a'}
-                  onMouseLeave={(e) => e.target.style.backgroundColor = 'var(--trade-orange)'}
+                  style={{ backgroundColor: "var(--trade-orange)" }}
+                  onMouseEnter={(e) =>
+                    (e.target.style.backgroundColor = "#d45a1a")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.target.style.backgroundColor = "var(--trade-orange)")
+                  }
                 >
-                  {ctaButtonText}
+                  {finalCtaButtonText}
                 </a>
-                <button className="inline-flex items-center justify-center px-8 py-4 border-2 font-semibold rounded-lg transition-colors duration-200 text-lg"
-                        style={{ 
-                          borderColor: 'white',
-                          color: 'black'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.target.style.backgroundColor = 'var(--cobalt-blue)';
-                          e.target.style.color = 'var(--brand-white)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.target.style.backgroundColor = 'white';
-                          e.target.style.color = 'black';
-                        }}>
+                <button
+                  className="inline-flex items-center justify-center px-8 py-4 border-2 font-semibold rounded-lg transition-colors duration-200 text-lg"
+                  style={{
+                    borderColor: "white",
+                    color: "black",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.backgroundColor = "var(--cobalt-blue)";
+                    e.target.style.color = "var(--brand-white)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.backgroundColor = "white";
+                    e.target.style.color = "black";
+                  }}
+                >
                   Learn More
                 </button>
               </div>
@@ -135,26 +142,56 @@ const Herosection = ({
               <div className="relative">
                 {/* Central Icon */}
                 <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                                  <div className="w-32 h-32 border-2 rounded-lg relative" style={{ borderColor: 'var(--leaf-green)' }}>
-                  <div className="absolute inset-4 border border-dashed rounded flex items-center justify-center" style={{ borderColor: 'var(--leaf-green)' }}>
-                    <span className="text-2xl font-bold" style={{ color: 'var(--leaf-green)' }}>
-                      +
-                    </span>
+                  <div
+                    className="w-32 h-32 border-2 rounded-lg relative"
+                    style={{ borderColor: "var(--leaf-green)" }}
+                  >
+                    <div
+                      className="absolute inset-4 border border-dashed rounded flex items-center justify-center"
+                      style={{ borderColor: "var(--leaf-green)" }}
+                    >
+                      <span
+                        className="text-2xl font-bold"
+                        style={{ color: "var(--leaf-green)" }}
+                      >
+                        +
+                      </span>
+                    </div>
+                    <div
+                      className="absolute top-2 left-2 w-2 h-2 rounded-full"
+                      style={{ backgroundColor: "var(--leaf-green)" }}
+                    ></div>
+                    <div
+                      className="absolute top-2 right-2 w-2 h-2 rounded-full"
+                      style={{ backgroundColor: "var(--leaf-green)" }}
+                    ></div>
+                    <div
+                      className="absolute bottom-2 left-2 w-2 h-2 rounded-full"
+                      style={{ backgroundColor: "var(--leaf-green)" }}
+                    ></div>
+                    <div
+                      className="absolute bottom-2 right-2 w-2 h-2 rounded-full"
+                      style={{ backgroundColor: "var(--leaf-green)" }}
+                    ></div>
                   </div>
-                  <div className="absolute top-2 left-2 w-2 h-2 rounded-full" style={{ backgroundColor: 'var(--leaf-green)' }}></div>
-                  <div className="absolute top-2 right-2 w-2 h-2 rounded-full" style={{ backgroundColor: 'var(--leaf-green)' }}></div>
-                  <div className="absolute bottom-2 left-2 w-2 h-2 rounded-full" style={{ backgroundColor: 'var(--leaf-green)' }}></div>
-                  <div className="absolute bottom-2 right-2 w-2 h-2 rounded-full" style={{ backgroundColor: 'var(--leaf-green)' }}></div>
-                </div>
                 </div>
 
                 {/* Surrounding Icons */}
                 <div className="relative w-96 h-96 mx-auto">
                   {/* Top Icon */}
                   <div className="absolute top-0 left-1/2 transform -translate-x-1/2">
-                    <div className="w-16 h-16 border-2 border-dashed rounded-full flex items-center justify-center" style={{ borderColor: 'var(--cobalt-blue)' }}>
-                      <div className="w-8 h-6 border rounded flex items-center justify-center" style={{ borderColor: 'var(--cobalt-blue)' }}>
-                        <div className="w-4 h-2 rounded" style={{ backgroundColor: 'var(--cobalt-blue)' }}></div>
+                    <div
+                      className="w-16 h-16 border-2 border-dashed rounded-full flex items-center justify-center"
+                      style={{ borderColor: "var(--cobalt-blue)" }}
+                    >
+                      <div
+                        className="w-8 h-6 border rounded flex items-center justify-center"
+                        style={{ borderColor: "var(--cobalt-blue)" }}
+                      >
+                        <div
+                          className="w-4 h-2 rounded"
+                          style={{ backgroundColor: "var(--cobalt-blue)" }}
+                        ></div>
                       </div>
                     </div>
                   </div>

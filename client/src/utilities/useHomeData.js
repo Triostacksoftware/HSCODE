@@ -36,10 +36,23 @@ const useHomeData = (countryCode) => {
           // toast.info(`Showing content for India (IN) as ${response.data.originalCountry} content is not available`);
         }
 
-        setHomeData(response.data.data);
+        // Ensure we always have a valid data structure
+        const data = response.data.data || {};
+        setHomeData(data);
       } catch (err) {
         console.error("Error fetching home data:", err);
         setError(err.message);
+        // Set fallback data structure to prevent crashes
+        setHomeData({
+          heroSection: {},
+          aboutSection: {},
+          featuredCategories: {},
+          newsSection: {},
+          testimonialSection: {},
+          stats: {},
+          faqSection: {},
+          footer: {},
+        });
       } finally {
         setLoading(false);
       }
