@@ -5,6 +5,7 @@ import Navbar from "@/component/HomeComponent/Navbar";
 import Herosection from "@/component/HomeComponent/Herosection";
 import AboutSection from "@/component/HomeComponent/AboutSection";
 import CountriesSection from "@/component/HomeComponent/CountriesSection";
+import HSCodeSearch from "@/component/HomeComponent/HSCodeSearch";
 import FeaturedCategories from "@/component/HomeComponent/FeaturedCategories";
 import NewsSection from "@/component/HomeComponent/NewsSection";
 import TestimonialSection from "@/component/HomeComponent/TestimonialSection";
@@ -83,6 +84,7 @@ function HomeContent() {
 
       <Navbar />
       <Herosection {...(homeData.heroSection || {})} />
+      <HSCodeSearch />
       <AboutSection {...(homeData.aboutSection || {})} />
       <CountriesSection />
       <FeaturedCategories {...(homeData.featuredCategories || {})} />
