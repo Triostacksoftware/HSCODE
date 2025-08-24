@@ -57,6 +57,7 @@ const GlobalGroupsList = ({
           withCredentials: true,
         }
       );
+      console.log("response", response);
 
       setGroups(response.data || []);
     } catch (error) {
@@ -69,13 +70,11 @@ const GlobalGroupsList = ({
 
   const handleJoinGroup = async (group) => {
     try {
-
       const response = await axios.patch(
         `${process.env.NEXT_PUBLIC_BASE_URL}/user/join-global-group`,
         { groupId: group._id },
         { withCredentials: true }
       );
-
 
       // Refresh user data to update groupsID
       await refreshUser();
@@ -105,7 +104,9 @@ const GlobalGroupsList = ({
   const filteredGroups = groups.filter(
     (group) =>
       group.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (group.heading || group.hscode)?.toLowerCase().includes(searchTerm.toLowerCase())
+      (group.heading || group.hscode)
+        ?.toLowerCase()
+        .includes(searchTerm.toLowerCase())
   );
 
   return (

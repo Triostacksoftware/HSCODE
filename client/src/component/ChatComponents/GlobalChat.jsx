@@ -21,7 +21,7 @@ const GlobalChat = () => {
     setSelectedGroup(null);
     setLoading(true);
     setShowGroupsList(true);
-    
+
     try {
       // Fetch groups for this chapter
       const response = await axios.get(
@@ -138,10 +138,14 @@ const GlobalChat = () => {
               Chapter {selectedChapter.chapter}: {selectedChapter.name}
             </p>
             <p className="text-xs text-gray-500 mt-1">
-              {loading ? "Loading..." : `${groups.length} group${groups.length !== 1 ? 's' : ''} available`}
+              {loading
+                ? "Loading..."
+                : `${groups.length} group${
+                    groups.length !== 1 ? "s" : ""
+                  } available`}
             </p>
           </div>
-          
+
           <div className="flex-1 overflow-hidden">
             <GlobalGroupsList
               categoryId={selectedChapter._id}
@@ -159,9 +163,12 @@ const GlobalChat = () => {
       {selectedGroup ? (
         <div className="flex-1 flex flex-col">
           <GlobalChatWindow
-            groupId={selectedGroup._id}
+            chapterNo={selectedGroup.chapterNumber}
+            selectedGroupId={selectedGroup._id}
             groupName={selectedGroup.name}
-            groupType="global"
+            groupImage={selectedGroup.image}
+            groupData={selectedGroup}
+            onBack={handleBackToGroups}
           />
         </div>
       ) : (
@@ -170,7 +177,8 @@ const GlobalChat = () => {
             <div className="text-6xl mb-4">🌍</div>
             <h3 className="text-lg font-medium mb-2">Select a Global Group</h3>
             <p className="text-sm">
-              Choose a group from My Groups or browse HS Code chapters to find global trading groups
+              Choose a group from My Groups or browse HS Code chapters to find
+              global trading groups
             </p>
           </div>
         </div>

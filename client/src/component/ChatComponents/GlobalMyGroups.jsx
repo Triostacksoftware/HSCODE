@@ -75,7 +75,9 @@ const GlobalMyGroups = ({ onGroupSelect, selectedGroupId }) => {
   const filteredGroups = groups.filter(
     (group) =>
       group.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (group.heading || group.hscode)?.toLowerCase().includes(searchTerm.toLowerCase())
+      (group.heading || group.hscode)
+        ?.toLowerCase()
+        .includes(searchTerm.toLowerCase())
   );
 
   return (

@@ -19,6 +19,7 @@ const ChatWindow = ({
   selectedGroupId,
   groupName,
   groupImage,
+  groupData,
   onBack,
 }) => {
   const { user } = useUserAuth();
@@ -116,6 +117,7 @@ const ChatWindow = ({
   };
 
   useEffect(() => {
+    console.log("selectedGroupId useffect", selectedGroupId);
     if (selectedGroupId && user) {
       fetchLeads();
       fetchBroadcastLeads();
@@ -131,8 +133,8 @@ const ChatWindow = ({
     if (!user || !selectedGroupId) return;
     const handler = (lead) => {
       if (
-        lead.groupId === selectedGroupId ||
-        (lead.groupId && lead.groupId._id === selectedGroupId)
+        lead.selectedGroupId === selectedGroupId ||
+        (lead.selectedGroupId && lead.selectedGroupId._id === selectedGroupId)
       ) {
         setLeads((prev) => {
           if (prev.some((l) => l._id === lead._id)) return prev;
@@ -148,6 +150,7 @@ const ChatWindow = ({
 
   const fetchLeads = async () => {
     try {
+      console.log("selectedGroupId", selectedGroupId);
       setLoading(true);
       setError("");
       const response = await axios.get(
@@ -224,7 +227,7 @@ const ChatWindow = ({
       setSending(true);
       setError("");
       const form = new FormData();
-      form.append("groupId", selectedGroupId);
+      form.append("selectedGroupId", selectedGroupId);
       form.append("type", leadType);
       form.append("hscode", hscode.trim());
       form.append("description", description.trim());
@@ -398,9 +401,10 @@ const ChatWindow = ({
                 src={
                   groupImage.includes("https")
                     ? groupImage
-                    : `${process.env.NEXT_PUBLIC_BASE_URL}/upload/${groupImage}`
+                    : `${process.env.NEXT_PUBLIC_BASE_URL}/uploads/${groupImage}`
                 }
                 className="w-full h-full object-cover rounded-full"
+                alt={groupName}
               />
             ) : (
               <span>{groupName?.charAt(0)?.toUpperCase() || "G"}</span>
@@ -739,7 +743,7 @@ const ChatWindow = ({
             setSending(true);
             setError("");
             const form = new FormData();
-            form.append("groupId", selectedGroupId);
+            form.append("selectedGroupId", selectedGroupId);
             form.append("type", vals.leadType);
             form.append("hscode", vals.hscode.trim());
             form.append("description", vals.description.trim());

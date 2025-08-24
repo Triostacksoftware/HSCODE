@@ -4,8 +4,7 @@ import { parseFile } from "../utilities/xlsx.util.js";
 // Get all global groups (for superadmin)
 export const getAllGlobalGroups = async (req, res) => {
   try {
-    const groups = await GlobalGroup.find()
-      .sort({ createdAt: -1 });
+    const groups = await GlobalGroup.find().sort({ createdAt: -1 });
 
     res.json(groups);
   } catch (error) {
@@ -17,10 +16,16 @@ export const getAllGlobalGroups = async (req, res) => {
 // Get global groups by chapterNumber
 export const getGlobalGroups = async (req, res) => {
   try {
-    const { chapterNumber } = req.params;
+    const { chapterNumber } = req.query;
 
-    const groups = await GlobalGroup.find({ chapterNumber })
-      .sort({ createdAt: -1 });
+    let query = {};
+
+    // If chapter number provided, filter by it
+    if (chapterNumber) {
+      query.chapterNumber = chapterNumber;
+    }
+
+    const groups = await GlobalGroup.find(query).sort({ createdAt: -1 });
 
     res.json(groups);
   } catch (error) {
@@ -53,16 +58,18 @@ export const createGlobalGroup = async (req, res) => {
   } catch (error) {
     console.error("Error creating global group:", error);
     console.error("Error stack:", error.stack);
-    
+
     // Check if it's a mongoose validation error
-    if (error.name === 'ValidationError') {
-      return res.status(400).json({ 
-        message: "Validation error", 
-        details: Object.values(error.errors).map(e => e.message) 
+    if (error.name === "ValidationError") {
+      return res.status(400).json({
+        message: "Validation error",
+        details: Object.values(error.errors).map((e) => e.message),
       });
     }
-    
-    res.status(500).json({ message: "Error creating global group", error: error.message });
+
+    res
+      .status(500)
+      .json({ message: "Error creating global group", error: error.message });
   }
 };
 
@@ -126,23 +133,31 @@ export const bulkCreateGlobalGroups = async (req, res) => {
         categoryId: null, // No longer needed
       }))
       .filter((d) => d.name && d.heading);
-    
-    if (!docs.length) return res.status(400).json({ message: "No valid rows found" });
-    
+
+    if (!docs.length)
+      return res.status(400).json({ message: "No valid rows found" });
+
     const created = await GlobalGroup.insertMany(docs);
-    res.status(201).json({ message: "Global groups imported successfully", count: created.length });
+    res
+      .status(201)
+      .json({
+        message: "Global groups imported successfully",
+        count: created.length,
+      });
   } catch (error) {
     console.error("Error bulk creating global groups:", error);
     console.error("Error stack:", error.stack);
-    
+
     // Check if it's a mongoose validation error
-    if (error.name === 'ValidationError') {
-      return res.status(400).json({ 
-        message: "Validation error", 
-        details: Object.values(error.errors).map(e => e.message) 
+    if (error.name === "ValidationError") {
+      return res.status(400).json({
+        message: "Validation error",
+        details: Object.values(error.errors).map((e) => e.message),
       });
     }
-    
-    res.status(500).json({ message: "Error importing global groups", error: error.message });
+
+    res
+      .status(500)
+      .json({ message: "Error importing global groups", error: error.message });
   }
 };

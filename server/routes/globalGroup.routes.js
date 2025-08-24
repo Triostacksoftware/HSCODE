@@ -17,10 +17,10 @@ import upload from "../configurations/multer.js";
 const router = express.Router();
 
 // Global Group routes
-router.get("/:categoryId", authMiddleware, getGlobalGroups); // Anyone can fetch
+router.get("/", authMiddleware, getGlobalGroups); // Anyone can fetch
 router.get("/all", superadminMiddleware, getAllGlobalGroups); // Get all groups for superadmin
 router.post(
-  "/:categoryId",
+  "/",
   superadminMiddleware,
   upload.single("file"),
   createGlobalGroup
@@ -28,9 +28,9 @@ router.post(
 router.patch("/:groupId", superadminMiddleware, updateGlobalGroup); // Admin only
 router.delete("/:groupId", superadminMiddleware, deleteGlobalGroup); // Admin only
 
-// Bulk create groups under a category
+// Bulk create groups
 router.post(
-  "/:categoryId/bulk",
+  "/bulk",
   superadminMiddleware,
   upload.single("file"),
   bulkCreateGlobalGroups

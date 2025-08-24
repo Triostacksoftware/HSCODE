@@ -17,8 +17,16 @@ const GlobalChatWindow = ({
   selectedGroupId,
   groupName,
   groupImage,
+  groupData,
   onBack,
 }) => {
+  console.log("GlobalChatWindow props:", {
+    chapterNo,
+    selectedGroupId,
+    groupName,
+    groupImage,
+    groupData,
+  });
   const { user } = useUserAuth();
   const { onlineCounts, onlineUsers } = useContext(OnlineUsersContext);
   const [messages, setMessages] = useState([]);
@@ -292,7 +300,7 @@ const GlobalChatWindow = ({
                 src={
                   groupImage.includes("https")
                     ? groupImage
-                    : `${process.env.NEXT_PUBLIC_BASE_URL}/upload/${groupImage}`
+                    : `${process.env.NEXT_PUBLIC_BASE_URL}/uploads/${groupImage}`
                 }
                 className="w-full h-full object-cover rounded-full"
                 alt={groupName}
@@ -868,14 +876,18 @@ const GlobalChatWindow = ({
               >
                 <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs font-medium text-gray-700 overflow-hidden relative">
                   <span>{user.name?.charAt(0)?.toUpperCase()}</span>
-                  <span className={`absolute -top-1 -right-1 w-3 h-3 rounded-full ${
-                    user.role === "admin" ? "bg-violet-500" : "bg-green-500"
-                  }`}></span>
+                  <span
+                    className={`absolute -top-1 -right-1 w-3 h-3 rounded-full ${
+                      user.role === "admin" ? "bg-violet-500" : "bg-green-500"
+                    }`}
+                  ></span>
                 </div>
                 <span className="text-xs text-gray-800 truncate">
                   {user.name}
                   {user.role === "admin" && (
-                    <span className="ml-1 text-violet-600 font-medium">(Admin)</span>
+                    <span className="ml-1 text-violet-600 font-medium">
+                      (Admin)
+                    </span>
                   )}
                 </span>
               </div>

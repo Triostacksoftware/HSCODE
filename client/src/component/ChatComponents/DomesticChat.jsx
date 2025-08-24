@@ -18,7 +18,7 @@ const DomesticChat = () => {
     setSelectedChapter(chapterData);
     setSelectedGroup(null);
     setLoading(true);
-    
+
     try {
       // Fetch groups for this chapter
       const response = await axios.get(
@@ -116,10 +116,14 @@ const DomesticChat = () => {
               Chapter {selectedChapter.chapter}: {selectedChapter.name}
             </p>
             <p className="text-xs text-gray-500 mt-1">
-              {loading ? "Loading..." : `${groups.length} group${groups.length !== 1 ? 's' : ''} available`}
+              {loading
+                ? "Loading..."
+                : `${groups.length} group${
+                    groups.length !== 1 ? "s" : ""
+                  } available`}
             </p>
           </div>
-          
+
           <div className="flex-1 overflow-hidden">
             <GroupsList
               categoryId={selectedChapter._id}
@@ -137,9 +141,12 @@ const DomesticChat = () => {
       {selectedGroup ? (
         <div className="flex-1 flex flex-col">
           <ChatWindow
-            groupId={selectedGroup._id}
+            chapterNo={selectedGroup.chapterNumber}
+            selectedGroupId={selectedGroup._id}
             groupName={selectedGroup.name}
-            groupType="local"
+            groupImage={selectedGroup.image}
+            groupData={selectedGroup}
+            onBack={() => setSelectedGroup(null)}
           />
         </div>
       ) : (
@@ -148,7 +155,8 @@ const DomesticChat = () => {
             <div className="text-6xl mb-4">💬</div>
             <h3 className="text-lg font-medium mb-2">Select a Group</h3>
             <p className="text-sm">
-              Choose a group from My Groups or browse HS Code chapters to find local trading groups
+              Choose a group from My Groups or browse HS Code chapters to find
+              local trading groups
             </p>
           </div>
         </div>

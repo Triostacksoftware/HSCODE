@@ -41,6 +41,7 @@ const MyGroups = ({ onGroupSelect, selectedGroupId }) => {
     // Call the onGroupSelect callback with the group object
     if (onGroupSelect) {
       onGroupSelect(group);
+      console.log("group", group);
     }
     // mark as read
     try {
@@ -50,14 +51,18 @@ const MyGroups = ({ onGroupSelect, selectedGroupId }) => {
         { withCredentials: true }
       );
       // update local badge
-      setGroups((prev) => prev.map((g) => g._id === group._id ? { ...g, unreadCount: 0 } : g));
+      setGroups((prev) =>
+        prev.map((g) => (g._id === group._id ? { ...g, unreadCount: 0 } : g))
+      );
     } catch (_) {}
   };
 
   const filteredGroups = groups.filter(
     (group) =>
       group.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (group.heading || group.hscode)?.toLowerCase().includes(searchTerm.toLowerCase())
+      (group.heading || group.hscode)
+        ?.toLowerCase()
+        .includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -158,12 +163,18 @@ const MyGroups = ({ onGroupSelect, selectedGroupId }) => {
                   {(group.unreadBuyCount > 0 || group.unreadSellCount > 0) && (
                     <div className="ml-auto flex items-center gap-1">
                       {group.unreadBuyCount > 0 && (
-                        <span title="New buy leads" className="inline-flex items-center justify-center min-w-[22px] h-5 px-1 rounded-full text-white text-[11px] bg-blue-600">
+                        <span
+                          title="New buy leads"
+                          className="inline-flex items-center justify-center min-w-[22px] h-5 px-1 rounded-full text-white text-[11px] bg-blue-600"
+                        >
                           {group.unreadBuyCount}
                         </span>
                       )}
                       {group.unreadSellCount > 0 && (
-                        <span title="New sell leads" className="inline-flex items-center justify-center min-w-[22px] h-5 px-1 rounded-full text-white text-[11px] bg-green-600">
+                        <span
+                          title="New sell leads"
+                          className="inline-flex items-center justify-center min-w-[22px] h-5 px-1 rounded-full text-white text-[11px] bg-green-600"
+                        >
                           {group.unreadSellCount}
                         </span>
                       )}
