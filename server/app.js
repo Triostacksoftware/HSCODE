@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import getCountry from "./utilities/location.util.js";
+import fs from "fs";
 
 dotenv.config();
 
@@ -20,6 +21,22 @@ import globalLeadsRoutes from "./routes/globalLeads.routes.js";
 import superadminRoutes from "./routes/superadmin.routes.js";
 import homeDataRoutes from "./routes/homeData.routes.js";
 import notificationRoutes from "./routes/notification.routes.js";
+
+
+// Read country-wise file mapping
+const hscodes = fs.readFileSync("db/country-wise-file.csv", "utf8");
+const mapHscodes = new Map();
+
+const lines = hscodes.split("\n");
+lines.forEach((line, index) => {
+  // Skip header row and empty lines
+  if (index === 0 || !line.trim()) return;
+  
+  const [filename, countryCode] = line.split(",");
+  if (filename && countryCode) {
+    mapHscodes.set(countryCode.trim(), filename.trim());
+  }
+});
 
 // middlewares
 app.use(express.json());
@@ -78,6 +95,40 @@ app.get("/api/v1/location", async (req, res) => {
       success: false,
       message: "Internal server error",
       error: error.message,
+    });
+  }
+});
+
+// Direct file access by filename
+app.get("/api/v1/hscodes", (req, res) => {
+  try {
+    const { countryCode } = req.query;
+    const filename = mapHscodes.get(countryCode);
+    console.log(filename);
+    const filePath = `public/CSVs/${filename}.csv`;
+    console.log(filePath);
+    
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({
+        success: false,
+        message: `File not found: ${filename}.csv`
+      });
+    }
+    console.log(filePath);
+    // Set proper headers for CSV download
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}.csv"`);
+
+    // Stream the file directly
+    const fileStream = fs.createReadStream(filePath);
+    fileStream.pipe(res);
+    
+  } catch (error) {
+    console.error("Error serving HS code file:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message
     });
   }
 });

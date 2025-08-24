@@ -3,6 +3,7 @@ import "./globals.css";
 import "leaflet/dist/leaflet.css";
 import { Toaster } from "react-hot-toast";
 import GoogleTranslate from "../component/GoogleTranslate";
+import { HSCodeProvider } from "../contexts/HSCodeContext";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -28,7 +29,9 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body className={`${inter.variable} antialiased`}>
-        {children}
+        <HSCodeProvider>
+          {children}
+        </HSCodeProvider>
         <Toaster position="top-right" />
         <GoogleTranslate />
       </body>
