@@ -11,7 +11,6 @@ import { MdOutlineGroup } from "react-icons/md";
 import { IoArrowBack } from "react-icons/io5";
 import { HiMegaphone } from "react-icons/hi2";
 import UserInfoSidebar from "./UserInfoSidebar";
-import MapPicker from "./MapPicker";
 import LeadFormModal from "./LeadFormModal";
 
 const ChatWindow = ({
@@ -19,87 +18,15 @@ const ChatWindow = ({
   selectedGroupId,
   groupName,
   groupImage,
-  groupData,
   onBack,
 }) => {
   const { user } = useUserAuth();
-  const { onlineCounts, onlineUsers, socket } = useContext(OnlineUsersContext);
+  const { onlineUsers, socket } = useContext(OnlineUsersContext);
   const [leads, setLeads] = useState([]);
   const [broadcastLeads, setBroadcastLeads] = useState([]);
   const [processingBroadcast, setProcessingBroadcast] = useState({});
-  // Lead form state
-  const [leadType, setLeadType] = useState("buy");
-  const [hscode, setHscode] = useState("");
-  const [description, setDescription] = useState("");
-  const [quantity, setQuantity] = useState("");
-  const [packing, setPacking] = useState("");
-  const [targetPrice, setTargetPrice] = useState("");
-  const [negotiable, setNegotiable] = useState(false);
-  const [buyerDeliveryAddress, setBuyerDeliveryAddress] = useState("");
-  const [buyerLat, setBuyerLat] = useState("");
-  const [buyerLng, setBuyerLng] = useState("");
-  const [sellerPickupAddress, setSellerPickupAddress] = useState("");
-  const [sellerLat, setSellerLat] = useState("");
-  const [sellerLng, setSellerLng] = useState("");
-  const [specialRequest, setSpecialRequest] = useState("");
-  const [remarks, setRemarks] = useState("");
-  const [documents, setDocuments] = useState([]);
-  const [docPreviews, setDocPreviews] = useState([]);
-  const [mapPicker, setMapPicker] = useState({ open: false, role: "buyer" });
   const [leadModalOpen, setLeadModalOpen] = useState(false);
 
-  const useCurrentLocation = (type) => {
-    if (!navigator?.geolocation) {
-      toast.error("Geolocation not supported in this browser");
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const { latitude, longitude } = pos.coords;
-        if (type === "buyer") {
-          setBuyerLat(String(latitude));
-          setBuyerLng(String(longitude));
-        } else {
-          setSellerLat(String(latitude));
-          setSellerLng(String(longitude));
-        }
-      },
-      () => toast.error("Unable to fetch current location")
-    );
-  };
-
-  // Build previews for selected documents and cleanup object URLs
-  useEffect(() => {
-    const previews = (documents || []).map((file) => ({
-      name: file.name,
-      type: file.type,
-      url: file.type?.startsWith("image/") ? URL.createObjectURL(file) : null,
-    }));
-    setDocPreviews((old) => {
-      old?.forEach((p) => p.url && URL.revokeObjectURL(p.url));
-      return previews;
-    });
-    return () => {
-      previews.forEach((p) => p.url && URL.revokeObjectURL(p.url));
-    };
-  }, [documents]);
-
-  const appendDocuments = (fileList) => {
-    const incoming = Array.from(fileList || []);
-    setDocuments((prev) => {
-      const dedupeMap = new Map(
-        (prev || []).map((f) => [`${f.name}-${f.size}-${f.lastModified}`, f])
-      );
-      incoming.forEach((f) => {
-        dedupeMap.set(`${f.name}-${f.size}-${f.lastModified}`, f);
-      });
-      return Array.from(dedupeMap.values());
-    });
-  };
-
-  const removeDocumentAt = (indexToRemove) => {
-    setDocuments((prev) => prev.filter((_, idx) => idx !== indexToRemove));
-  };
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
@@ -117,7 +44,6 @@ const ChatWindow = ({
   };
 
   useEffect(() => {
-    console.log("selectedGroupId useffect", selectedGroupId);
     if (selectedGroupId && user) {
       fetchLeads();
       fetchBroadcastLeads();
@@ -150,7 +76,6 @@ const ChatWindow = ({
 
   const fetchLeads = async () => {
     try {
-      console.log("selectedGroupId", selectedGroupId);
       setLoading(true);
       setError("");
       const response = await axios.get(
@@ -214,74 +139,6 @@ const ChatWindow = ({
       );
     } finally {
       setProcessingBroadcast((prev) => ({ ...prev, [leadId]: false }));
-    }
-  };
-
-  const handleSendMessage = async (e) => {
-    e.preventDefault();
-    if (!hscode.trim() || !description.trim()) {
-      toast.error("Please enter HS code and description");
-      return;
-    }
-    try {
-      setSending(true);
-      setError("");
-      const form = new FormData();
-      form.append("selectedGroupId", selectedGroupId);
-      form.append("type", leadType);
-      form.append("hscode", hscode.trim());
-      form.append("description", description.trim());
-      form.append("quantity", quantity);
-      form.append("packing", packing);
-      form.append("targetPrice", targetPrice);
-      form.append("negotiable", negotiable);
-      form.append("buyerDeliveryAddress", buyerDeliveryAddress);
-      if (buyerLat && buyerLng) {
-        form.append("buyerLat", buyerLat);
-        form.append("buyerLng", buyerLng);
-      }
-      form.append("sellerPickupAddress", sellerPickupAddress);
-      if (sellerLat && sellerLng) {
-        form.append("sellerLat", sellerLat);
-        form.append("sellerLng", sellerLng);
-      }
-      form.append("specialRequest", specialRequest);
-      form.append("remarks", remarks);
-      form.append("chapterNo", chapterNo);
-      if (documents && documents.length > 0) {
-        documents.forEach((file) => form.append("documents", file));
-      }
-      await axios.post(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/requested-leads`,
-        form,
-        {
-          withCredentials: true,
-          headers: { "Content-Type": "multipart/form-data" },
-        }
-      );
-      // reset
-      setLeadType("buy");
-      setHscode("");
-      setDescription("");
-      setQuantity("");
-      setPacking("");
-      setTargetPrice("");
-      setNegotiable(false);
-      setBuyerDeliveryAddress("");
-      setBuyerLat("");
-      setBuyerLng("");
-      setSellerPickupAddress("");
-      setSellerLat("");
-      setSellerLng("");
-      setSpecialRequest("");
-      setRemarks("");
-      setDocuments([]);
-      toast.success("Your lead has been submitted for approval!");
-    } catch (error) {
-      console.error("Error sending message:", error);
-      setError("Failed to send lead");
-    } finally {
-      setSending(false);
     }
   };
 
@@ -740,7 +597,6 @@ const ChatWindow = ({
         onSubmit={async (vals) => {
           // reuse existing submit logic with vals
           try {
-            console.log("vals", vals);
             setSending(true);
             setError("");
             const form = new FormData();
@@ -793,26 +649,6 @@ const ChatWindow = ({
         userId={userInfoSidebar.userId}
         isOpen={userInfoSidebar.isOpen}
         onClose={closeUserInfoSidebar}
-      />
-
-      {/* Map Picker Modal */}
-      <MapPicker
-        isOpen={mapPicker.open}
-        onClose={() => setMapPicker({ open: false, role: "buyer" })}
-        onPick={({ lat, lng }) => {
-          if (mapPicker.role === "buyer") {
-            setBuyerLat(String(lat));
-            setBuyerLng(String(lng));
-          } else {
-            setSellerLat(String(lat));
-            setSellerLng(String(lng));
-          }
-        }}
-        initial={
-          mapPicker.role === "buyer"
-            ? { lat: Number(buyerLat) || 20, lng: Number(buyerLng) || 78 }
-            : { lat: Number(sellerLat) || 20, lng: Number(sellerLng) || 78 }
-        }
       />
     </div>
   );
