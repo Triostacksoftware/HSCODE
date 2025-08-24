@@ -53,19 +53,10 @@ const HSCodeSearch = () => {
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto px-4 py-8 bg-white">
-      <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold text-gray-900 mb-4">
-          Search HS Codes
-        </h2>
-        <p className="text-lg text-gray-600">
-          Find Harmonized System codes and descriptions from your country and US
-        </p>
-      </div>
-
+    <div className="w-full mx-auto px-4 py-8 bg-white">
       {/* Search Input */}
-      <div className="relative mb-6">
-        <div className="relative">
+      <div className="relative mb-6 flex flex-col items-center">
+        <div className="relative min-w-3xl">
           <input
             type="text"
             placeholder="Search by HS code or description..."
@@ -118,17 +109,33 @@ const HSCodeSearch = () => {
               <div key={item.id} className="px-6 py-4 border-b border-gray-100 hover:bg-gray-50">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className="font-mono text-lg font-bold text-blue-600">
-                        {item.hscode}
-                      </span>
+                    <div className="flex items-center gap-3 mb-3">
                       <span className="px-2 py-1 text-xs bg-gray-200 text-gray-700 rounded">
                         {item.country}
                       </span>
                     </div>
-                    <p className="text-gray-700 leading-relaxed">
-                      {item.description}
-                    </p>
+                    
+                    {/* Chapter Information */}
+                    <div className="mb-2">
+                      <span className="text-sm font-medium text-gray-600">Chapter {item.product}: </span>
+                      <span className="text-gray-700">{item.productDescription}</span>
+                    </div>
+
+                    {/* Product Information */}
+                    {item.hs4 && (
+                      <div className="mb-2">
+                        <span className="text-sm font-medium text-gray-600">Group {item.hs4}: </span>
+                        <span className="text-gray-700">{item.hs4Description}</span>
+                      </div>
+                    )}
+                    
+                    {/* Product Information */}
+                    {item.hs6 && (
+                      <div className="mb-2">
+                        <span className="text-sm font-medium text-gray-600">Product {item.hs6}: </span>
+                        <span className="text-gray-700">{item.hs6Description}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -162,7 +169,7 @@ const HSCodeSearch = () => {
       {/* Stats */}
       {!loading && hasData && (
         <div className="mt-8 text-center text-sm text-gray-500">
-          <p>Loaded {totalCount.toLocaleString()} HS codes from {userCountry} and US</p>
+          <p>Loaded {totalCount.toLocaleString()} HS codes from {userCountry}</p>
         </div>
       )}
     </div>
