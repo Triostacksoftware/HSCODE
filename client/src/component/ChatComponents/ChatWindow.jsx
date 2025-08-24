@@ -740,10 +740,11 @@ const ChatWindow = ({
         onSubmit={async (vals) => {
           // reuse existing submit logic with vals
           try {
+            console.log("vals", vals);
             setSending(true);
             setError("");
             const form = new FormData();
-            form.append("selectedGroupId", selectedGroupId);
+            form.append("groupId", selectedGroupId);
             form.append("type", vals.leadType);
             form.append("hscode", vals.hscode.trim());
             form.append("description", vals.description.trim());
