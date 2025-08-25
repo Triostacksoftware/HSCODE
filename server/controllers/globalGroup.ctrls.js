@@ -4,7 +4,9 @@ import { parseFile } from "../utilities/xlsx.util.js";
 // Get all global groups (for superadmin)
 export const getAllGlobalGroups = async (req, res) => {
   try {
-    const groups = await GlobalGroup.find().sort({ createdAt: -1 });
+    const groups = await GlobalGroup.find()
+      .populate("members", "name email image")
+      .sort({ createdAt: -1 });
 
     res.json(groups);
   } catch (error) {
@@ -25,7 +27,9 @@ export const getGlobalGroups = async (req, res) => {
       query.chapterNumber = chapterNumber;
     }
 
-    const groups = await GlobalGroup.find(query).sort({ createdAt: -1 });
+    const groups = await GlobalGroup.find(query)
+      .populate("members", "name email image")
+      .sort({ createdAt: -1 });
 
     res.json(groups);
   } catch (error) {
@@ -138,12 +142,10 @@ export const bulkCreateGlobalGroups = async (req, res) => {
       return res.status(400).json({ message: "No valid rows found" });
 
     const created = await GlobalGroup.insertMany(docs);
-    res
-      .status(201)
-      .json({
-        message: "Global groups imported successfully",
-        count: created.length,
-      });
+    res.status(201).json({
+      message: "Global groups imported successfully",
+      count: created.length,
+    });
   } catch (error) {
     console.error("Error bulk creating global groups:", error);
     console.error("Error stack:", error.stack);

@@ -1,23 +1,23 @@
 "use client";
-import React, { useState, useEffect } from 'react';
-import { useHSCode } from '../../contexts/HSCodeContext';
-import useCountryCode from '../../utilities/useCountryCode';
+import React, { useState, useEffect } from "react";
+import { useHSCode } from "../../contexts/HSCodeContext";
+import useCountryCode from "../../utilities/useCountryCode";
 
 const HSCodeSearch = () => {
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
-  
-  const { 
-    hscodes, 
-    loading, 
-    error, 
-    userCountry, 
-    loadHSCodes, 
-    searchHSCodes, 
-    totalCount, 
-    hasData 
+
+  const {
+    hscodes,
+    loading,
+    error,
+    userCountry,
+    loadHSCodes,
+    searchHSCodes,
+    totalCount,
+    hasData,
   } = useHSCode();
-  
+
   const { countryInfo } = useCountryCode();
 
   // Load HS codes when component mounts and country is detected
@@ -30,7 +30,7 @@ const HSCodeSearch = () => {
   // Search HS codes
   const handleSearch = (term) => {
     setSearchTerm(term);
-    
+
     if (!term.trim()) {
       setSearchResults([]);
       return;
@@ -48,21 +48,12 @@ const HSCodeSearch = () => {
 
   // Clear search
   const clearSearch = () => {
-    setSearchTerm('');
+    setSearchTerm("");
     setSearchResults([]);
   };
 
   return (
     <div className="w-full max-w-4xl mx-auto px-4 py-8 bg-white">
-      <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold text-gray-900 mb-4">
-          Search HS Codes
-        </h2>
-        <p className="text-lg text-gray-600">
-          Find Harmonized System codes and descriptions from your country and US
-        </p>
-      </div>
-
       {/* Search Input */}
       <div className="relative mb-6">
         <div className="relative">
@@ -82,7 +73,7 @@ const HSCodeSearch = () => {
             </button>
           )}
         </div>
-        
+
         {/* Loading indicator */}
         {loading && (
           <div className="text-center mt-4">
@@ -108,19 +99,24 @@ const HSCodeSearch = () => {
             </h3>
             {searchResults.length === 20 && (
               <p className="text-sm text-gray-600 mt-1">
-                Showing first 20 results. Refine your search for more specific results.
+                Showing first 20 results. Refine your search for more specific
+                results.
               </p>
             )}
           </div>
-          
+
           <div className="max-h-96 overflow-y-auto">
             {searchResults.map((item) => (
-              <div key={item.id} className="px-6 py-4 border-b border-gray-100 hover:bg-gray-50">
+              <div
+                key={item.id}
+                className="px-6 py-4 border-5 border-gray-900 hover:bg-gray-50"
+              >
+                {console.log(item)}
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
                       <span className="font-mono text-lg font-bold text-blue-600">
-                        {item.hscode}
+                        {item.tl}
                       </span>
                       <span className="px-2 py-1 text-xs bg-gray-200 text-gray-700 rounded">
                         {item.country}
@@ -141,7 +137,9 @@ const HSCodeSearch = () => {
       {searchTerm && searchResults.length === 0 && !loading && (
         <div className="text-center py-8">
           <div className="text-6xl mb-4">🔍</div>
-          <h3 className="text-xl font-medium text-gray-900 mb-2">No results found</h3>
+          <h3 className="text-xl font-medium text-gray-900 mb-2">
+            No results found
+          </h3>
           <p className="text-gray-600">
             Try searching with different keywords or check your spelling
           </p>
@@ -152,7 +150,9 @@ const HSCodeSearch = () => {
       {!searchTerm && !loading && (
         <div className="text-center py-8">
           <div className="text-6xl mb-4">📋</div>
-          <h3 className="text-xl font-medium text-gray-900 mb-2">Ready to search</h3>
+          <h3 className="text-xl font-medium text-gray-900 mb-2">
+            Ready to search
+          </h3>
           <p className="text-gray-600">
             Enter an HS code or description to find matching items
           </p>
@@ -162,7 +162,10 @@ const HSCodeSearch = () => {
       {/* Stats */}
       {!loading && hasData && (
         <div className="mt-8 text-center text-sm text-gray-500">
-          <p>Loaded {totalCount.toLocaleString()} HS codes from {userCountry} and US</p>
+          <p>
+            Loaded {totalCount.toLocaleString()} HS codes from {userCountry} and
+            US
+          </p>
         </div>
       )}
     </div>

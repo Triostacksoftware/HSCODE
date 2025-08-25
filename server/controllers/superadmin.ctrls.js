@@ -12,17 +12,13 @@ import LocalGroupModel from "../models/LocalGroup.js";
 // Get dashboard statistics
 export const getDashboardStats = async (req, res) => {
   try {
-    const [
-      totalGlobalLeads,
-      totalGlobalUsers,
-      totalGlobalGroups,
-      totalAdmins,
-    ] = await Promise.all([
-      GlobalApprovedLeads.countDocuments(),
-      UserModel.countDocuments(),
-      GlobalGroupModel.countDocuments(),
-      UserModel.countDocuments({ role: "admin" }),
-    ]);
+    const [totalGlobalLeads, totalGlobalUsers, totalGlobalGroups, totalAdmins] =
+      await Promise.all([
+        GlobalApprovedLeads.countDocuments(),
+        UserModel.countDocuments(),
+        GlobalGroupModel.countDocuments(),
+        UserModel.countDocuments({ role: "admin" }),
+      ]);
 
     res.json({
       totalGlobalLeads,
@@ -135,14 +131,18 @@ export const getAdmins = async (req, res) => {
             { countryCode: admin.countryCode.toUpperCase() },
             { countryCode: admin.countryCode.toLowerCase() },
             // Also check leadCode format like "BLD/SLD-CC-..." where CC is country code
-            { leadCode: { $regex: new RegExp(`^(BLD|SLD)-${admin.countryCode}-`, "i") } }
-          ]
+            {
+              leadCode: {
+                $regex: new RegExp(`^(BLD|SLD)-${admin.countryCode}-`, "i"),
+              },
+            },
+          ],
         });
 
         // Get total users in this country (excluding admins)
         const totalUsersInCountry = await UserModel.countDocuments({
           countryCode: admin.countryCode,
-          role: { $ne: "admin" }
+          role: { $ne: "admin" },
         });
 
         return {
@@ -152,8 +152,6 @@ export const getAdmins = async (req, res) => {
         };
       })
     );
-
-
 
     res.json(adminsWithStats);
   } catch (error) {
@@ -182,7 +180,7 @@ export const getAdminDetails = async (req, res) => {
       email: admin.email,
       countryCode: admin.countryCode,
       groupsID: admin.groupsID,
-      globalGroupsID: admin.globalGroupsID
+      globalGroupsID: admin.globalGroupsID,
     });
 
     // Get local groups where admin is a member (check both members array and admin's groupsID)
@@ -191,8 +189,8 @@ export const getAdminDetails = async (req, res) => {
       localGroups = await LocalGroupModel.find({
         $or: [
           { members: { $in: [adminId] } },
-          { _id: { $in: admin.groupsID || [] } }
-        ]
+          { _id: { $in: admin.groupsID || [] } },
+        ],
       }).select("name heading image");
     } catch (error) {
       console.error("Error fetching local groups:", error);
@@ -205,8 +203,8 @@ export const getAdminDetails = async (req, res) => {
       globalGroups = await GlobalGroupModel.find({
         $or: [
           { members: { $in: [adminId] } },
-          { _id: { $in: admin.globalGroupsID || [] } }
-        ]
+          { _id: { $in: admin.globalGroupsID || [] } },
+        ],
       }).select("name heading image");
     } catch (error) {
       console.error("Error fetching global groups:", error);
@@ -215,20 +213,20 @@ export const getAdminDetails = async (req, res) => {
 
     console.log("Groups Query Debug:", {
       adminId,
-      localGroupsQuery: { 
+      localGroupsQuery: {
         $or: [
           { members: { $in: [adminId] } },
-          { _id: { $in: admin.groupsID || [] } }
-        ]
+          { _id: { $in: admin.groupsID || [] } },
+        ],
       },
-      globalGroupsQuery: { 
+      globalGroupsQuery: {
         $or: [
           { members: { $in: [adminId] } },
-          { _id: { $in: admin.globalGroupsID || [] } }
-        ]
+          { _id: { $in: admin.globalGroupsID || [] } },
+        ],
       },
       adminGroupsID: admin.groupsID,
-      adminGlobalGroupsID: admin.globalGroupsID
+      adminGlobalGroupsID: admin.globalGroupsID,
     });
 
     // Get local posts count (leads in their country)
@@ -265,15 +263,15 @@ export const getAdminDetails = async (req, res) => {
         {
           _id: "sample-local-group",
           name: "Sample Local Group",
-          heading: "This is a sample local group for demonstration purposes"
-        }
+          heading: "This is a sample local group for demonstration purposes",
+        },
       ];
       globalGroups = [
         {
-          _id: "sample-global-group", 
+          _id: "sample-global-group",
           name: "Sample Global Group",
-          heading: "This is a sample global group for demonstration purposes"
-        }
+          heading: "This is a sample global group for demonstration purposes",
+        },
       ];
     }
 
@@ -283,12 +281,20 @@ export const getAdminDetails = async (req, res) => {
       globalGroups: globalGroups.length,
       localPosts,
       globalPosts,
-      totalLeads
+      totalLeads,
     });
 
     console.log("Found Groups:", {
-      localGroups: localGroups.map(g => ({ id: g._id, name: g.name, heading: g.heading })),
-      globalGroups: globalGroups.map(g => ({ id: g._id, name: g.name, heading: g.heading }))
+      localGroups: localGroups.map((g) => ({
+        id: g._id,
+        name: g.name,
+        heading: g.heading,
+      })),
+      globalGroups: globalGroups.map((g) => ({
+        id: g._id,
+        name: g.name,
+        heading: g.heading,
+      })),
     });
 
     res.json({
@@ -730,7 +736,156 @@ export const postSuperadminLocalMessage = async (req, res) => {
   }
 };
 
+// Superadmin posts lead directly to approved leads (local)
+export const postLeadDirect = async (req, res) => {
+  try {
+    const {
+      groupId,
+      type,
+      hscode,
+      description,
+      quantity,
+      packing,
+      targetPrice,
+      negotiable,
+      buyerDeliveryAddress,
+      buyerLat,
+      buyerLng,
+      sellerPickupAddress,
+      sellerLat,
+      sellerLng,
+      specialRequest,
+      remarks,
+      chapterNo,
+    } = req.body;
 
+    const documents = req.files || [];
+
+    // Create the lead directly in approved leads
+    const newLead = new ApprovedLeads({
+      groupId,
+      type,
+      hscode,
+      description,
+      quantity,
+      packing,
+      targetPrice,
+      negotiable,
+      buyerDeliveryAddress,
+      buyerLat,
+      buyerLng,
+      sellerPickupAddress,
+      sellerLat,
+      sellerLng,
+      specialRequest,
+      remarks,
+      chapterNo,
+      documents: documents.map((file) => file.filename),
+      userId: req.user._id,
+      isAdminPost: true,
+      status: "approved",
+      approvedAt: new Date(),
+      approvedBy: req.user._id,
+    });
+
+    await newLead.save();
+
+    // Emit socket event for real-time updates
+    if (req.app.get("io")) {
+      req.app.get("io").to(groupId).emit("new-approved-lead", newLead);
+    }
+
+    res.status(201).json({
+      success: true,
+      message: "Lead posted successfully",
+      lead: newLead,
+    });
+  } catch (error) {
+    console.error("Error posting lead directly:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to post lead",
+      error: error.message,
+    });
+  }
+};
+
+// Superadmin posts global lead directly to approved global leads
+export const postGlobalLeadDirect = async (req, res) => {
+  try {
+    const {
+      groupId,
+      type,
+      hscode,
+      description,
+      quantity,
+      packing,
+      targetPrice,
+      negotiable,
+      buyerDeliveryAddress,
+      buyerLat,
+      buyerLng,
+      sellerPickupAddress,
+      sellerLat,
+      sellerLng,
+      specialRequest,
+      remarks,
+      chapterNo,
+    } = req.body;
+
+    const documents = req.files || [];
+
+    // Create the global lead directly in approved global leads
+    const newGlobalLead = new GlobalApprovedLeads({
+      groupId,
+      type,
+      hscode,
+      description,
+      quantity,
+      packing,
+      targetPrice,
+      negotiable,
+      buyerDeliveryAddress,
+      buyerLat,
+      buyerLng,
+      sellerPickupAddress,
+      sellerLat,
+      sellerLng,
+      specialRequest,
+      remarks,
+      chapterNo,
+      documents: documents.map((file) => file.filename),
+      userId: req.user._id,
+      isAdminPost: true,
+      status: "approved",
+      approvedAt: new Date(),
+      approvedBy: req.user._id,
+    });
+
+    await newGlobalLead.save();
+
+    // Emit socket event for real-time updates
+    if (req.app.get("io")) {
+      req.app
+        .get("io")
+        .to(groupId)
+        .emit("new-approved-global-lead", newGlobalLead);
+    }
+
+    res.status(201).json({
+      success: true,
+      message: "Global lead posted successfully",
+      lead: newGlobalLead,
+    });
+  } catch (error) {
+    console.error("Error posting global lead directly:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to post global lead",
+      error: error.message,
+    });
+  }
+};
 
 // ===== SUPERADMIN MANAGEMENT FUNCTIONS =====
 
