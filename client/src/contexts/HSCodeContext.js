@@ -129,6 +129,24 @@ export const HSCodeProvider = ({ children }) => {
     return hscodes.allCodes ? hscodes.allCodes.length : 0;
   }, [hscodes.allCodes]);
 
+  // Get detailed HS code information by ID
+  const getHSCodeById = useCallback((id) => {
+    if (!hscodes.allCodes) return null;
+    return hscodes.allCodes.find(item => item.id === id);
+  }, [hscodes.allCodes]);
+
+  // Get HS codes by chapter number
+  const getHSCodesByChapter = useCallback((chapterNumber) => {
+    if (!hscodes.allCodes) return [];
+    return hscodes.allCodes.filter(item => item.product === chapterNumber);
+  }, [hscodes.allCodes]);
+
+  // Get HS codes by group (hs4)
+  const getHSCodesByGroup = useCallback((groupCode) => {
+    if (!hscodes.allCodes) return [];
+    return hscodes.allCodes.filter(item => item.hs4 === groupCode);
+  }, [hscodes.allCodes]);
+
   const value = {
     // State
     hscodes: hscodes.allCodes || [],
@@ -140,7 +158,6 @@ export const HSCodeProvider = ({ children }) => {
     loadHSCodes,
     searchHSCodes,
     getAllHSCodes,
-
     // Computed values
     totalCount: getTotalCount(),
     hasData: hscodes.allCodes && hscodes.allCodes.length > 0,

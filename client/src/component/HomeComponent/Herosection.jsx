@@ -67,7 +67,7 @@ const Herosection = ({
       {/* Mobile Background Image (smaller than md) */}
       <div className="absolute inset-0 overflow-hidden md:hidden">
         <img
-          src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/MAERSK_MC_KINNEY_M%C3%96LLER_%26_MARSEILLE_MAERSK_%2848694054418%29.jpg/1200px-MAERSK_MC_KINNEY_M%C3%96LLER_%26_MARSEILLE_MAERSK_%2848694054418%29.jpg"
+          src="https://th.bing.com/th/id/OIP.UBljxSMRSm8q3v-g_DSxTgHaDP?w=346&h=152&c=7&r=0&o=7&dpr=1.3&pid=1.7&rm=3"
           alt="Shipping Background"
           style={{
             position: "fixed",

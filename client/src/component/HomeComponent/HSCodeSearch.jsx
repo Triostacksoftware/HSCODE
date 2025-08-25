@@ -55,8 +55,8 @@ const HSCodeSearch = () => {
   return (
     <div className="w-full max-w-4xl mx-auto px-4 py-8 bg-white">
       {/* Search Input */}
-      <div className="relative mb-6">
-        <div className="relative">
+      <div className="relative mb-6 flex flex-col items-center">
+        <div className="relative min-w-3xl">
           <input
             type="text"
             placeholder="Search by HS code or description..."
@@ -122,9 +122,28 @@ const HSCodeSearch = () => {
                         {item.country}
                       </span>
                     </div>
-                    <p className="text-gray-700 leading-relaxed">
-                      {item.description}
-                    </p>
+                    
+                    {/* Chapter Information */}
+                    <div className="mb-2">
+                      <span className="text-sm font-medium text-gray-600">Chapter {item.product}: </span>
+                      <span className="text-gray-700">{item.productDescription}</span>
+                    </div>
+
+                    {/* Product Information */}
+                    {item.hs4 && (
+                      <div className="mb-2">
+                        <span className="text-sm font-medium text-gray-600">Group {item.hs4}: </span>
+                        <span className="text-gray-700">{item.hs4Description}</span>
+                      </div>
+                    )}
+                    
+                    {/* Product Information */}
+                    {item.hs6 && (
+                      <div className="mb-2">
+                        <span className="text-sm font-medium text-gray-600">Product {item.hs6}: </span>
+                        <span className="text-gray-700">{item.hs6Description}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
