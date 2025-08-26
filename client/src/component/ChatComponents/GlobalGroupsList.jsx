@@ -4,6 +4,7 @@ import axios from "axios";
 import { useUserAuth } from "../../utilities/userAuthMiddleware";
 import { LiaSearchSolid } from "react-icons/lia";
 import socket from "../../utilities/socket";
+import SubscriptionUpgradeModal from "../SubscriptionUpgradeModal";
 
 const GlobalGroupsList = ({
   categoryId,
@@ -11,12 +12,15 @@ const GlobalGroupsList = ({
   onBack,
   onGroupSelect,
   selectedGroupId,
+  refreshUser,
+  user,
 }) => {
-  const { user, refreshUser } = useUserAuth();
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [error, setError] = useState("");
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [upgradeModalMessage, setUpgradeModalMessage] = useState("");
 
   useEffect(() => {
     if (categoryId) {
@@ -84,7 +88,17 @@ const GlobalGroupsList = ({
     } catch (error) {
       console.error("Error joining global group:", error);
       if (error.response?.data?.message) {
-        alert(error.response.data.message);
+        // Check if it's a group limit error
+        if (
+          error.response.data.message.includes(
+            "Free users can only join up to 3 global groups"
+          )
+        ) {
+          setUpgradeModalMessage(error.response.data.message);
+          setShowUpgradeModal(true);
+        } else {
+          alert(error.response.data.message);
+        }
       } else {
         alert("Error joining global group. Please try again.");
       }
@@ -233,6 +247,13 @@ const GlobalGroupsList = ({
           </div>
         )}
       </div>
+      {/* Subscription Upgrade Modal */}
+      <SubscriptionUpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        message={upgradeModalMessage}
+        groupType="global"
+      />
     </div>
   );
 };

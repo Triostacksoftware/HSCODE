@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useUserAuth } from "../../utilities/userAuthMiddleware";
 import { LiaSearchSolid } from "react-icons/lia";
+import SubscriptionUpgradeModal from "../SubscriptionUpgradeModal";
 
 const GroupsList = ({
   categoryId,
@@ -10,12 +11,15 @@ const GroupsList = ({
   onBack,
   onGroupSelect,
   selectedGroupId,
+  refreshUser,
+  user,
 }) => {
-  const { user, refreshUser } = useUserAuth();
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [error, setError] = useState("");
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [upgradeModalMessage, setUpgradeModalMessage] = useState("");
 
   useEffect(() => {
     if (categoryId) {
@@ -46,13 +50,11 @@ const GroupsList = ({
 
   const handleJoinGroup = async (group) => {
     try {
-
       const response = await axios.patch(
         `${process.env.NEXT_PUBLIC_BASE_URL}/user/join-group`,
         { groupId: group._id },
         { withCredentials: true }
       );
-
 
       // Refresh user data to update groupsID
       await refreshUser();
@@ -62,7 +64,17 @@ const GroupsList = ({
     } catch (error) {
       console.error("Error joining group:", error);
       if (error.response?.data?.message) {
-        alert(error.response.data.message);
+        // Check if it's a group limit error
+        if (
+          error.response.data.message.includes(
+            "Free users can only join up to 3 local groups"
+          )
+        ) {
+          setUpgradeModalMessage(error.response.data.message);
+          setShowUpgradeModal(true);
+        } else {
+          alert(error.response.data.message);
+        }
       } else {
         alert("Error joining group. Please try again.");
       }
@@ -81,7 +93,13 @@ const GroupsList = ({
           { groupId: group._id },
           { withCredentials: true }
         );
-        setGroups((prev) => prev.map((g) => g._id === group._id ? { ...g, unreadBuyCount: 0, unreadSellCount: 0 } : g));
+        setGroups((prev) =>
+          prev.map((g) =>
+            g._id === group._id
+              ? { ...g, unreadBuyCount: 0, unreadSellCount: 0 }
+              : g
+          )
+        );
       }
     } catch (_) {}
   };
@@ -93,7 +111,9 @@ const GroupsList = ({
   const filteredGroups = groups.filter(
     (group) =>
       group.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (group.heading || group.hscode)?.toLowerCase().includes(searchTerm.toLowerCase())
+      (group.heading || group.hscode)
+        ?.toLowerCase()
+        .includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -191,7 +211,7 @@ const GroupsList = ({
                     </div>
 
                     {/* Group Info */}
-                  <div className="min-w-0 flex-1 grid">
+                    <div className="min-w-0 flex-1 grid">
                       <div className="text-sm font-medium truncate">
                         {group.name ||
                           `Group ${String(index + 1).padStart(2, "0")}`}
@@ -200,20 +220,28 @@ const GroupsList = ({
                         heading: {group.heading || group.hscode}
                       </div>
                     </div>
-                  {isUserJoined(group._id) && (group.unreadBuyCount > 0 || group.unreadSellCount > 0) && (
-                    <div className="ml-auto flex items-center gap-1">
-                      {group.unreadBuyCount > 0 && (
-                        <span title="New buy leads" className="inline-flex items-center justify-center min-w-[20px] h-5 px-1 rounded-full text-white text-[10px] bg-blue-600">
-                          {group.unreadBuyCount}
-                        </span>
+                    {isUserJoined(group._id) &&
+                      (group.unreadBuyCount > 0 ||
+                        group.unreadSellCount > 0) && (
+                        <div className="ml-auto flex items-center gap-1">
+                          {group.unreadBuyCount > 0 && (
+                            <span
+                              title="New buy leads"
+                              className="inline-flex items-center justify-center min-w-[20px] h-5 px-1 rounded-full text-white text-[10px] bg-blue-600"
+                            >
+                              {group.unreadBuyCount}
+                            </span>
+                          )}
+                          {group.unreadSellCount > 0 && (
+                            <span
+                              title="New sell leads"
+                              className="inline-flex items-center justify-center min-w-[20px] h-5 px-1 rounded-full text-white text-[10px] bg-green-600"
+                            >
+                              {group.unreadSellCount}
+                            </span>
+                          )}
+                        </div>
                       )}
-                      {group.unreadSellCount > 0 && (
-                        <span title="New sell leads" className="inline-flex items-center justify-center min-w-[20px] h-5 px-1 rounded-full text-white text-[10px] bg-green-600">
-                          {group.unreadSellCount}
-                        </span>
-                      )}
-                    </div>
-                  )}
                     {/* Action Button for not joined */}
                     {!joined && (
                       <button
@@ -234,6 +262,13 @@ const GroupsList = ({
           </div>
         )}
       </div>
+      {/* Subscription Upgrade Modal */}
+      <SubscriptionUpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        message={upgradeModalMessage}
+        groupType="local"
+      />
     </div>
   );
 };

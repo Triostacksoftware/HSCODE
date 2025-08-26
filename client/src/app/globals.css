@@ -100,6 +100,22 @@
   }
 }
 
+/* Modal slide-up animation */
+@keyframes slideUpModal {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-up-modal {
+  animation: slideUpModal 0.3s ease-out forwards;
+}
+
 /* Line clamp utilities for text truncation */
 .line-clamp-1 {
   overflow: hidden;

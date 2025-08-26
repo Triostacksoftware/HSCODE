@@ -6,7 +6,7 @@ import MyGroups from "./MyGroups";
 import GroupsList from "./GroupsList";
 import ChatWindow from "./ChatWindow";
 
-const DomesticChat = () => {
+const DomesticChat = ({ user, refreshUser }) => {
   const [activeTab, setActiveTab] = useState("groups");
   const [selectedChapter, setSelectedChapter] = useState(null);
   const [selectedGroup, setSelectedGroup] = useState(null);
@@ -132,6 +132,8 @@ const DomesticChat = () => {
               selectedGroupId={selectedGroup?._id}
               groups={groups}
               scope="local"
+              user={user}
+              refreshUser={refreshUser}
             />
           </div>
         </div>

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { HiPencil, HiSave, HiX, HiRefresh, HiTrash } from "react-icons/hi";
 import axios from "axios";
+import CouponManager from "./CouponManager";
 
 const HomeContent = () => {
   const [homeData, setHomeData] = useState();
@@ -181,6 +182,7 @@ const HomeContent = () => {
     { id: "stats", label: "Statistics", icon: "📊" },
     { id: "faq", label: "FAQ Section", icon: "❓" },
     { id: "subscription", label: "Subscription Plans", icon: "💳" },
+    { id: "coupons", label: "Coupons", icon: "🎫" },
     { id: "footer", label: "Footer", icon: "🔗" },
   ];
 
@@ -502,6 +504,8 @@ const HomeContent = () => {
               }}
             />
           )}
+
+          {activeTab === "coupons" && <CouponManager />}
 
           {activeTab === "footer" && (
             <FooterEditor

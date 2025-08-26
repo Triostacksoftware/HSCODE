@@ -7,7 +7,7 @@ import GlobalMyGroups from "./GlobalMyGroups";
 import GlobalGroupsList from "./GlobalGroupsList";
 import GlobalChatWindow from "./GlobalChatWindow";
 
-const GlobalChat = () => {
+const GlobalChat = ({ user, refreshUser }) => {
   const [activeTab, setActiveTab] = useState("groups");
   const [selectedChapter, setSelectedChapter] = useState(null);
   const [selectedGroup, setSelectedGroup] = useState(null);
@@ -154,6 +154,8 @@ const GlobalChat = () => {
               selectedGroupId={selectedGroup?._id}
               groups={groups}
               scope="global"
+              user={user}
+              refreshUser={refreshUser}
             />
           </div>
         </div>

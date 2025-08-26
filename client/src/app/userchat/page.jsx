@@ -17,7 +17,7 @@ const ChatPage = () => {
   const [onlineUsers, setOnlineUsers] = useState({});
   const [socket, setSocket] = useState(null);
   const [notificationCount, setNotificationCount] = useState(0);
-  const { user } = useUserAuth();
+  const { user, refreshUser } = useUserAuth();
 
   // Fetch notification count
   const fetchNotificationCount = async () => {
@@ -119,9 +119,9 @@ const ChatPage = () => {
   const renderActiveComponent = () => {
     switch (activeTab) {
       case "local":
-        return <DomesticChat />;
+        return <DomesticChat user={user} refreshUser={refreshUser} />;
       case "global":
-        return <GlobalChat />;
+        return <GlobalChat user={user} refreshUser={refreshUser} />;
       case "leads":
         return <RequestedLeads />;
       case "notifications":
