@@ -35,6 +35,26 @@ export const getGroups = async (req, res) => {
   }
 };
 
+// GET single group by ID with members
+export const getGroupById = async (req, res) => {
+  try {
+    const { groupId } = req.params;
+
+    const group = await LocalGroupModel.findById(groupId)
+      .populate("members", "name email image")
+      .select("_id name heading image chapterNumber countryCode members");
+
+    if (!group) {
+      return res.status(404).json({ message: "Group not found" });
+    }
+
+    res.json(group);
+  } catch (err) {
+    console.error("Error fetching group by ID:", err);
+    res.status(500).json({ message: "Error fetching group" });
+  }
+};
+
 // CREATE group directly (Admin only)
 export const createGroup = async (req, res) => {
   try {

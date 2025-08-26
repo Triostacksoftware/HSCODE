@@ -48,7 +48,6 @@ const userSchema = new mongoose.Schema(
 
     country: {
       type: String,
-      required: true,
     },
 
     membership: {

@@ -38,6 +38,26 @@ export const getGlobalGroups = async (req, res) => {
   }
 };
 
+// GET single global group by ID with members
+export const getGlobalGroupById = async (req, res) => {
+  try {
+    const { groupId } = req.params;
+
+    const group = await GlobalGroup.findById(groupId)
+      .populate("members", "name email image")
+      .select("_id name heading image chapterNumber members");
+
+    if (!group) {
+      return res.status(404).json({ message: "Global group not found" });
+    }
+
+    res.json(group);
+  } catch (err) {
+    console.error("Error fetching global group by ID:", err);
+    res.status(500).json({ message: "Error fetching global group" });
+  }
+};
+
 // Create global group
 export const createGlobalGroup = async (req, res) => {
   try {

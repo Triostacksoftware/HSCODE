@@ -214,9 +214,20 @@ export const joinGroup = async (req, res) => {
       return res.status(400).json({ message: "User is already in this group" });
     }
 
+    // Check if user is already in the group's members array
+    if (group.members.includes(userId)) {
+      return res
+        .status(400)
+        .json({ message: "User is already a member of this group" });
+    }
+
     // Add group to user's groupsID array
     user.groupsID.push(groupId);
     await user.save();
+
+    // Add user to group's members array
+    group.members.push(userId);
+    await group.save();
 
     res.json({
       message: "Successfully joined group",
@@ -253,6 +264,13 @@ export const joinGlobalGroup = async (req, res) => {
         .json({ message: "User is already in this global group" });
     }
 
+    // Check if user is already in the group's members array
+    if (group.members.includes(userId)) {
+      return res
+        .status(400)
+        .json({ message: "User is already a member of this global group" });
+    }
+
     // Initialize globalGroupsID array if it doesn't exist
     if (!user.globalGroupsID) {
       user.globalGroupsID = [];
@@ -260,7 +278,13 @@ export const joinGlobalGroup = async (req, res) => {
 
     // Add group to user's globalGroupsID array
     user.globalGroupsID.push(groupId);
+    console.log("user", user);
     await user.save();
+    console.log("user", user);
+
+    // Add user to group's members array
+    group.members.push(userId);
+    await group.save();
 
     res.json({
       message: "Successfully joined global group",
@@ -278,6 +302,12 @@ export const leaveGroup = async (req, res) => {
     const { groupId } = req.body;
     const userId = req.user.id || req.userData._id;
 
+    // Check if group exists
+    const group = await LocalGroupModel.findById(groupId);
+    if (!group) {
+      return res.status(404).json({ message: "Group not found" });
+    }
+
     // Get user and check if in group
     const user = await UserModel.findById(userId);
     if (!user) {
@@ -292,6 +322,10 @@ export const leaveGroup = async (req, res) => {
     // Remove group from user's groupsID array
     user.groupsID = user.groupsID.filter((id) => id.toString() !== groupId);
     await user.save();
+
+    // Remove user from group's members array
+    group.members = group.members.filter((id) => id.toString() !== userId);
+    await group.save();
 
     res.json({
       message: "Successfully left group",
@@ -308,6 +342,12 @@ export const leaveGlobalGroup = async (req, res) => {
   try {
     const { groupId } = req.body;
     const userId = req.user.id || req.userData._id;
+
+    // Check if global group exists
+    const group = await GlobalGroupModel.findById(groupId);
+    if (!group) {
+      return res.status(404).json({ message: "Global group not found" });
+    }
 
     // Get user and check if in global group
     const user = await UserModel.findById(userId);
@@ -327,6 +367,10 @@ export const leaveGlobalGroup = async (req, res) => {
       (id) => id.toString() !== groupId
     );
     await user.save();
+
+    // Remove user from group's members array
+    group.members = group.members.filter((id) => id.toString() !== userId);
+    await group.save();
 
     res.json({
       message: "Successfully left global group",

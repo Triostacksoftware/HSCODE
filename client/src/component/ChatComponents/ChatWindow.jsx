@@ -26,6 +26,7 @@ const ChatWindow = ({
   const [broadcastLeads, setBroadcastLeads] = useState([]);
   const [processingBroadcast, setProcessingBroadcast] = useState({});
   const [leadModalOpen, setLeadModalOpen] = useState(false);
+  const [groupMembers, setGroupMembers] = useState([]);
 
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
@@ -47,6 +48,7 @@ const ChatWindow = ({
     if (selectedGroupId && user) {
       fetchLeads();
       fetchBroadcastLeads();
+      fetchGroupMembers();
     }
   }, [selectedGroupId, user]);
 
@@ -104,6 +106,18 @@ const ChatWindow = ({
       setBroadcastLeads(broadcasts);
     } catch (error) {
       console.error("Error fetching broadcast leads:", error);
+    }
+  };
+
+  const fetchGroupMembers = async () => {
+    try {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/groups/${selectedGroupId}`,
+        { withCredentials: true }
+      );
+      setGroupMembers(response.data.members || []);
+    } catch (error) {
+      console.error("Error fetching group members:", error);
     }
   };
 
@@ -326,35 +340,72 @@ const ChatWindow = ({
               <LiaSearchSolid className="w-5 h-5 text-gray-600" />
             </button>
           )}
-          {/* Members dropdown: show online first, then others if provided */}
+          {/* Members dropdown: show all members with online indicators */}
           {showMembers && (
             <div className="absolute right-4 top-14 bg-white border border-gray-200 rounded shadow-lg z-20 min-w-[220px] max-h-80 overflow-y-auto">
               <div className="p-2 text-gray-700 border-b border-gray-100 text-sm">
-                Members
+                Members ({groupMembers.length})
               </div>
               <div className="py-1">
-                {(onlineUsers[selectedGroupId] || []).map((m) => (
-                  <div
-                    key={`on-${m.id}`}
-                    className="flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50"
-                  >
-                    <span
-                      className={`w-2 h-2 rounded-full ${
-                        m.role === "admin" ? "bg-violet-500" : "bg-green-500"
-                      }`}
-                    ></span>
-                    <span className="text-xs text-gray-900 truncate">
-                      {m.name}
-                      {m.role === "admin" && (
-                        <span className="ml-1 text-violet-600 font-medium">
-                          (Admin)
-                        </span>
-                      )}
-                    </span>
+                {groupMembers.length > 0 ? (
+                  groupMembers.map((member) => {
+                    // Check if this member is online
+                    const isOnline = (onlineUsers[selectedGroupId] || []).some(
+                      (onlineUser) => onlineUser.id === member._id
+                    );
+                    const onlineUserData = (
+                      onlineUsers[selectedGroupId] || []
+                    ).find((onlineUser) => onlineUser.id === member._id);
+
+                    return (
+                      <div
+                        key={member._id}
+                        className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 cursor-pointer"
+                        onClick={() => handleUserAvatarClick(member._id)}
+                      >
+                        <div className="relative">
+                          <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center overflow-hidden">
+                            {member.image ? (
+                              <img
+                                src={`${process.env.NEXT_PUBLIC_BASE_URL}/uploads/${member.image}`}
+                                alt={member.name}
+                                className="w-8 h-8 rounded-full object-cover"
+                              />
+                            ) : (
+                              <span className="text-xs text-gray-600 font-medium">
+                                {member.name?.charAt(0)?.toUpperCase()}
+                              </span>
+                            )}
+                          </div>
+                          {/* Online indicator */}
+                          <span
+                            className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${
+                              isOnline ? "bg-green-500" : "bg-gray-400"
+                            }`}
+                          ></span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <span className="text-sm text-gray-900 truncate block">
+                            {member.name}
+                            {onlineUserData?.role === "admin" && (
+                              <span className="ml-1 text-violet-600 font-medium text-xs">
+                                (Admin)
+                              </span>
+                            )}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            {isOnline ? "Online" : "Offline"}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="px-3 py-2 text-xs text-gray-500">
+                    No members found
                   </div>
-                ))}
+                )}
               </div>
-              {/* If you maintain a full members list on client, append it here */}
             </div>
           )}
         </div>
