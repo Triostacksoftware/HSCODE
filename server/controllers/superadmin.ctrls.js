@@ -315,6 +315,8 @@ export const getAdminDetails = async (req, res) => {
 export const createAdmin = async (req, res) => {
   try {
     const { name, email, password, countryCode, phone } = req.body;
+    console.log(req.body);
+    
 
     // Check if admin already exists with this email
     const existingAdmin = await UserModel.findOne({ email, role: "admin" });

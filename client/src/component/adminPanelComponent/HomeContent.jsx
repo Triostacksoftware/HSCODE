@@ -84,8 +84,9 @@ const HomeContent = () => {
       try {
         setSaving(true);
 
-        const response = await axios.get(
+        const response = await axios.post(
           `${process.env.NEXT_PUBLIC_BASE_URL}/home-data/admin/reset`,
+          {},
           {
             withCredentials: true,
           }

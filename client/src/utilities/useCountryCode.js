@@ -10,6 +10,23 @@ function useCountryCode() {
     const fetchCountryCode = async () => {
       try {
         setLoading(true);
+        
+        // Check localStorage first for user's preferred home country
+        const savedHomeCountry = localStorage.getItem('homeCountry');
+        if (savedHomeCountry) {
+          try {
+            const parsedCountry = JSON.parse(savedHomeCountry);
+            setCountryInfo(parsedCountry);
+            setError(null);
+            setLoading(false);
+            return; // Exit early if we have a saved home country
+          } catch (error) {
+            console.error('Error parsing saved home country:', error);
+            localStorage.removeItem('homeCountry');
+          }
+        }
+
+        // Fallback to detected country if no saved preference
         const response = await axios.get(
           `${process.env.NEXT_PUBLIC_BASE_URL}/location`
         );

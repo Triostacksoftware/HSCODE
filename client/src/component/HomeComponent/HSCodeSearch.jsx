@@ -1,7 +1,8 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import { useHSCode } from "../../contexts/HSCodeContext";
-import useCountryCode from "../../utilities/useCountryCode";
+import React, { useState, useEffect } from 'react';
+import { useHSCode } from '../../contexts/HSCodeContext';
+import useCountryCode from '../../utilities/useCountryCode';
+import { useHomeCountry } from '../../contexts/HomeCountryContext';
 
 const HSCodeSearch = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -19,13 +20,17 @@ const HSCodeSearch = () => {
   } = useHSCode();
 
   const { countryInfo } = useCountryCode();
+  const { homeCountry } = useHomeCountry();
+
+  // Use home country if available, otherwise fall back to detected country
+  const effectiveCountry = homeCountry || countryInfo;
 
   // Load HS codes when component mounts and country is detected
   useEffect(() => {
-    if (countryInfo?.code && !hasData) {
-      loadHSCodes(countryInfo.code);
+    if (effectiveCountry?.code && !hasData) {
+      loadHSCodes(effectiveCountry.code);
     }
-  }, [countryInfo?.code, hasData, loadHSCodes]);
+  }, [effectiveCountry?.code, hasData, loadHSCodes]);
 
   // Search HS codes
   const handleSearch = (term) => {
@@ -53,7 +58,7 @@ const HSCodeSearch = () => {
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto px-4 py-8 bg-white">
+    <div className="w-full mx-auto px-4 py-8 bg-[#ffffffcf]">
       {/* Search Input */}
       <div className="relative mb-6 flex flex-col items-center">
         <div className="relative min-w-3xl">
@@ -92,11 +97,12 @@ const HSCodeSearch = () => {
 
       {/* Search Results */}
       {searchResults.length > 0 && (
-        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+        <div className="bg-white m-auto  max-w-5xl rounded-lg shadow-lg overflow-hidden">
           <div className="px-6 py-4 bg-gray-50 border-b">
             <h3 className="text-lg font-semibold text-gray-900">
-              Search Results ({searchResults.length} found)
+              Search Results ({searchResults.length} found for <span className="text-red-600">{effectiveCountry?.name || userCountry}</span>)
             </h3>
+            
             {searchResults.length === 20 && (
               <p className="text-sm text-gray-600 mt-1">
                 Showing first 20 results. Refine your search for more specific
@@ -104,8 +110,8 @@ const HSCodeSearch = () => {
               </p>
             )}
           </div>
-
-          <div className="max-h-96 overflow-y-auto">
+          
+          <div className="max-h-96 overflow-y-auto relative z-999">
             {searchResults.map((item) => (
               <div
                 key={item.id}
@@ -114,34 +120,45 @@ const HSCodeSearch = () => {
                 {console.log(item)}
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className="font-mono text-lg font-bold text-blue-600">
-                        {item.tl}
-                      </span>
-                      <span className="px-2 py-1 text-xs bg-gray-200 text-gray-700 rounded">
-                        {item.country}
-                      </span>
+                    {/* HS CODE - Large and Bold */}
+                    <div className="mb-3">
+                      <span className="text-xl font-bold text-gray-900">HS CODE: {item.tl}</span>
                     </div>
                     
-                    {/* Chapter Information */}
+                    {/* Product Name */}
                     <div className="mb-2">
-                      <span className="text-sm font-medium text-gray-600">Chapter {item.product}: </span>
-                      <span className="text-gray-700">{item.productDescription}</span>
+                      <span className="text-sm font-medium text-gray-600">Product Name: </span>
+                      <span className="text-gray-700">{item.chapterDescription}</span>
                     </div>
 
-                    {/* Product Information */}
+                    
+                    {/* Chapter */}
+                    <div className="mb-2">
+                      <span className="text-sm font-medium text-gray-600">Chapter: </span>
+                      <span className="text-gray-700">{item.chapter}</span>
+                    </div>
+
+                    {/* HS Level Tags with Green Background */}
                     {item.hs4 && (
                       <div className="mb-2">
-                        <span className="text-sm font-medium text-gray-600">Group {item.hs4}: </span>
-                        <span className="text-gray-700">{item.hs4Description}</span>
+                        <span className="inline-block px-2 py-1 text-xs font-medium bg-green-600 text-white rounded mr-2">HS4</span>
+                        <span className="text-sm text-gray-700">{item.hs4} Desc: {item.hs4Description}</span>
                       </div>
                     )}
                     
-                    {/* Product Information */}
                     {item.hs6 && (
                       <div className="mb-2">
-                        <span className="text-sm font-medium text-gray-600">Product {item.hs6}: </span>
-                        <span className="text-gray-700">{item.hs6Description}</span>
+                        <span className="inline-block px-2 py-1 text-xs font-medium bg-green-600 text-white rounded mr-2">HS6</span>
+                        <span className="text-sm text-gray-700">{item.hs6} Desc: {item.hs6Description}</span>
+                      </div>
+                    )}
+
+                    {item.tl && (
+                      <div className="mb-2">
+                        <span className="inline-block px-2 py-1 text-xs font-medium bg-green-600 text-white rounded mr-2">
+                          {item.tl.length === 8 ? 'HS8' : item.tl.length === 10 ? 'HS10' : 'HS'}
+                        </span>
+                        <span className="text-sm text-gray-700">{item.tl} Desc: {item.tldesc}</span>
                       </div>
                     )}
                   </div>
@@ -168,10 +185,7 @@ const HSCodeSearch = () => {
       {/* Initial state */}
       {!searchTerm && !loading && (
         <div className="text-center py-8">
-          <div className="text-6xl mb-4">📋</div>
-          <h3 className="text-xl font-medium text-gray-900 mb-2">
-            Ready to search
-          </h3>
+          <h3 className="text-xl font-medium text-gray-900 mb-2">Ready to search</h3>
           <p className="text-gray-600">
             Enter an HS code or description to find matching items
           </p>
@@ -181,10 +195,7 @@ const HSCodeSearch = () => {
       {/* Stats */}
       {!loading && hasData && (
         <div className="mt-8 text-center text-sm text-gray-500">
-          <p>
-            Loaded {totalCount.toLocaleString()} HS codes from {userCountry} and
-            US
-          </p>
+          <p>Loaded {totalCount.toLocaleString()} HS codes from {effectiveCountry?.name || userCountry}</p>
         </div>
       )}
     </div>

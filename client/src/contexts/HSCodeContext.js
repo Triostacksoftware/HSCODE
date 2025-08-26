@@ -25,29 +25,62 @@ export const HSCodeProvider = ({ children }) => {
 
       // Detect if first line is header
       const firstLine = lines[0].toLowerCase();
-
-      const hasHeader =
-        firstLine.includes("hscode") ||
-        firstLine.includes("code") ||
-        firstLine.includes("hs");
-
-      const dataLines = hasHeader ? lines.slice(1) : lines;
-
-      return dataLines
-        .map((line, index) => {
-          const parts = line.split(",").map((part) => part.trim());
-          const hscode = parts[0] || "";
-          const description = parts.slice(1).join(",").trim() || "";
-
-          return {
-            id: `${country}_${index}`,
-            hscode,
-            description,
-            country,
-            lineNumber: hasHeader ? index + 2 : index + 1,
-          };
-        })
-        .filter((item) => item.hscode); // Remove empty entries
+      console.log('firstLine', firstLine);
+      const hasHeader = firstLine.includes('hscode_id') || firstLine.includes('product_description');
+      console.log('hasHeader', hasHeader);
+      
+      if (!hasHeader) {
+        console.warn('CSV does not have expected headers for HS codes');
+        return [];
+      }
+      
+      // Parse header to find column indices
+      const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+      const chapterIndex = headers.findIndex(h => h.toLowerCase() === 'product');
+      const chapterDesc = headers.findIndex(h => h.toLowerCase() === 'product_description');
+      const hs4Index = headers.findIndex(h => h.toLowerCase() === 'hs4');
+      const hs4DescIndex = headers.findIndex(h => h.toLowerCase() === 'hs4desc');
+      const hs6Index = headers.findIndex(h => h.toLowerCase() === 'hs6');
+      const hs6DescIndex = headers.findIndex(h => h.toLowerCase() === 'hs6desc');
+      const tlIndex = headers.findIndex(h => h.toLowerCase() === 'tl');
+      const tldescIndex = headers.findIndex(h => h.toLowerCase() === 'tldesc');
+      
+      if (chapterIndex === -1 || chapterDesc === -1) {
+        console.warn('Required columns not found in CSV');
+        return [];
+      }
+      
+      const dataLines = lines.slice(1);
+      
+      return dataLines.map((line, index) => {
+        const parts = line.split(',').map(part => part.trim().replace(/"/g, ''));
+        const chapter = parts[chapterIndex] || '';
+        const chapterDescription = parts[chapterDesc] || ''; // Chapter name
+        const hs4 = parts[hs4Index] || ''; // Group heading
+        const hs4Description = parts[hs4DescIndex] || ''; // Group name
+        const hs6 = parts[hs6Index] || ''; // Product HS code
+        const hs6Description = parts[hs6DescIndex] || ''; // Product description
+        const tl = parts[tlIndex] || ''; // item hscode
+        const tldesc = parts[tldescIndex] || ''; // item description
+        
+        return {
+          id: `${country}_${index}`,
+          chapter,
+          description: chapterDescription, // Keep for backward compatibility
+          country,
+          lineNumber: index + 2,
+          // Additional HS code fields
+          chapterDescription, // Chapter name
+          hs4, // Group heading
+          hs4Description, // Group name
+          hs6, // Product HS code
+          hs6Description, // Product description
+          tl, // item hscode
+          tldesc, // item description 
+          // Searchable text for comprehensive search
+          searchText: `${chapter} ${chapterDescription} ${hs4} ${hs4Description} ${hs6} ${hs6Description} ${tl} ${tldesc}`.toLowerCase()
+        };
+      }).filter(item => item.chapter && item.chapterDescription); // Remove empty entries
     } catch (error) {
       console.error("Error parsing CSV:", error);
       return [];
@@ -103,16 +136,23 @@ export const HSCodeProvider = ({ children }) => {
   );
 
   // Search HS codes across user's country and US
-  const searchHSCodes = useCallback(
-    (searchTerm) => {
-      if (!searchTerm || !hscodes.allCodes) return [];
-
-      const term = searchTerm.toLowerCase();
-      const results = hscodes.allCodes.filter(
-        (item) =>
-          item.hscode.toLowerCase().includes(term) ||
-          item.description.toLowerCase().includes(term)
-      );
+  const searchHSCodes = useCallback((searchTerm) => {
+    if (!searchTerm || !hscodes.allCodes) return [];
+    
+    const term = searchTerm.toLowerCase();
+    const results = hscodes.allCodes.filter(item => 
+      // Search across all HS code fields using the comprehensive searchText
+      item.searchText.includes(term) ||
+      // Also search individual fields for exact matches
+      item.chapter.toLowerCase().includes(term) ||
+      item.chapterDescription.toLowerCase().includes(term) ||
+      item.hs4.toLowerCase().includes(term) ||
+      item.hs4Description.toLowerCase().includes(term) ||
+      item.hs6.toLowerCase().includes(term) ||
+      item.hs6Description.toLowerCase().includes(term) ||
+      item.tl.toLowerCase().includes(term) ||
+      item.tldesc.toLowerCase().includes(term)
+    );
 
       return results.slice(0, 20); // Limit to first 20 results
     },
@@ -138,7 +178,7 @@ export const HSCodeProvider = ({ children }) => {
   // Get HS codes by chapter number
   const getHSCodesByChapter = useCallback((chapterNumber) => {
     if (!hscodes.allCodes) return [];
-    return hscodes.allCodes.filter(item => item.product === chapterNumber);
+    return hscodes.allCodes.filter(item => item.chapter === chapterNumber);
   }, [hscodes.allCodes]);
 
   // Get HS codes by group (hs4)
