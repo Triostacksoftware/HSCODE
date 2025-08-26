@@ -10,6 +10,7 @@ import {
 } from "../utilities/totp.util.js";
 import bcrypt from "bcrypt";
 import { verifyFirebaseToken } from "../configurations/firebase.js";
+import admin from "../configurations/firebase.js";
 
 const setCookie = (res, tokenName, token, maxAge) => {
   res.cookie(tokenName, token, {
@@ -136,7 +137,17 @@ export const verifyOTP = async (req, res) => {
 
 // User Controllers
 export const signup = async (req, res) => {
-  const { name, email, phoneNumber, password, countryCode, country } = req.body;
+  const { 
+    name, 
+    email, 
+    phoneNumber, 
+    password, 
+    countryCode, 
+    country,
+    companyName,
+    address,
+    companyWebsite
+  } = req.body;
 
   try {
     // Check if user already exists
@@ -209,6 +220,9 @@ export const signup = async (req, res) => {
       password,
       countryCode: countryCode || "IN",
       country: country || "India",
+      companyName: companyName || "",
+      address: address || "",
+      companyWebsite: companyWebsite || "",
     });
 
     await newUser.save();
@@ -232,6 +246,9 @@ export const signup = async (req, res) => {
         phone: newUser.phone,
         countryCode: newUser.countryCode,
         country: newUser.country,
+        companyName: newUser.companyName,
+        address: newUser.address,
+        companyWebsite: newUser.companyWebsite,
       },
     });
   } catch (error) {
@@ -1017,5 +1034,317 @@ export const checkUserExists = async (req, res) => {
   } catch (err) {
     console.error("User check error:", err);
     return res.status(500).json({ message: "Failed to check user existence" });
+  }
+};
+
+// User login with phone and password
+export const userLogin = async (req, res) => {
+  const { phoneNumber, password } = req.body;
+
+  if (!phoneNumber || !password) {
+    return res.status(400).json({ 
+      success: false,
+      message: "Phone number and password are required" 
+    });
+  }
+
+  try {
+    // Find user by phone number (with or without country code)
+    let user = await UserModel.findOne({ phone: phoneNumber });
+    
+    if (!user) {
+      return res.status(401).json({ 
+        success: false,
+        message: "Invalid phone number or password" 
+      });
+    }
+
+    // Verify password
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    console.log("isPasswordValid", isPasswordValid);
+    if (!isPasswordValid) {
+      return res.status(401).json({ 
+        success: false,
+        message: "Invalid phone number or password" 
+      });
+    }
+
+    // Generate JWT token
+    const authToken = generateToken({ id: user._id, role: "user" }, "7d");
+
+    // Set JWT in HTTP-only cookie
+    setCookie(res, "auth_token", authToken);
+
+    // Return success response
+    return res.status(200).json({
+      success: true,
+      message: "Login successful",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        countryCode: user.countryCode,
+        country: user.country,
+        companyName: user.companyName,
+        address: user.address,
+        companyWebsite: user.companyWebsite,
+      },
+    });
+  } catch (error) {
+    console.error("Login error:", error);
+    return res.status(500).json({ 
+      success: false,
+      message: "Login failed. Please try again." 
+    });
+  }
+};
+
+// Forgot password - send OTP to phone
+export const forgotPasswordSendOTP = async (req, res) => {
+  const { phoneNumber } = req.body;
+  console.log("phoneNumber", phoneNumber);
+
+  if (!phoneNumber) {
+    return res.status(400).json({ 
+      success: false,
+      message: "Phone number is required" 
+    });
+  }
+
+  try {
+    // Check if user exists with this phone number
+    const user = await UserModel.findOne({ phone: phoneNumber });
+    
+    if (!user) {
+      return res.status(404).json({ 
+        success: false,
+        message: "No user found with this phone number" 
+      });
+    }
+
+    // Generate OTP
+    const otp = generateOTP();
+    
+    // Store OTP temporarily in cookie for verification
+    const forgotPasswordToken = generateToken({ 
+      phoneNumber, 
+      otp,
+      action: "forgot_password" 
+    }, "10m");
+
+    res.cookie("forgot_password_token", forgotPasswordToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 10 * 60 * 1000, // 10 minutes
+      path: "/",
+    });
+
+    // TODO: Send OTP via SMS service (for now, just return success)
+    // In production, integrate with SMS service like Twilio, AWS SNS, etc.
+    
+    return res.status(200).json({
+      success: true,
+      message: "OTP sent to your phone number",
+      // For development/testing, you might want to return the OTP
+      // In production, remove this line
+      otp: process.env.NODE_ENV === "development" ? otp : undefined
+    });
+  } catch (error) {
+    console.error("Forgot password OTP error:", error);
+    return res.status(500).json({ 
+      success: false,
+      message: "Failed to send OTP. Please try again." 
+    });
+  }
+};
+
+// Verify OTP and allow password reset
+export const verifyForgotPasswordOTP = async (req, res) => {
+  const { phoneNumber, otp } = req.body;
+
+  if (!phoneNumber || !otp) {
+    return res.status(400).json({ 
+      success: false,
+      message: "Phone number and OTP are required" 
+    });
+  }
+
+  try {
+    const forgotPasswordToken = req.cookies.forgot_password_token;
+    
+    if (!forgotPasswordToken) {
+      return res.status(401).json({ 
+        success: false,
+        message: "OTP token not found. Please request a new OTP." 
+      });
+    }
+
+    const decoded = verifyToken(forgotPasswordToken);
+    
+    if (!decoded || 
+        decoded.phoneNumber !== phoneNumber || 
+        decoded.otp !== otp || 
+        decoded.action !== "forgot_password") {
+      return res.status(401).json({ 
+        success: false,
+        message: "Invalid or expired OTP" 
+      });
+    }
+
+    // OTP verified, generate reset token
+    const resetToken = generateToken({ 
+      phoneNumber,
+      action: "reset_password" 
+    }, "15m");
+
+    res.cookie("reset_password_token", resetToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 15 * 60 * 1000, // 15 minutes
+      path: "/",
+    });
+
+    // Clear the forgot password token
+    res.clearCookie("forgot_password_token");
+
+    return res.status(200).json({
+      success: true,
+      message: "OTP verified successfully. You can now reset your password."
+    });
+  } catch (error) {
+    console.error("OTP verification error:", error);
+    return res.status(500).json({ 
+      success: false,
+      message: "Failed to verify OTP. Please try again." 
+    });
+  }
+};
+
+// Reset password with new password
+export const resetPassword = async (req, res) => {
+  const { phoneNumber, newPassword } = req.body;
+
+  if (!phoneNumber || !newPassword) {
+    return res.status(400).json({ 
+      success: false,
+      message: "Phone number and new password are required" 
+    });
+  }
+
+  if (newPassword.length < 8) {
+    return res.status(400).json({ 
+      success: false,
+      message: "Password must be at least 8 characters long" 
+    });
+  }
+
+  try {
+    const resetToken = req.cookies.reset_password_token;
+    
+    if (!resetToken) {
+      return res.status(401).json({ 
+        success: false,
+        message: "Reset token not found. Please request a new OTP." 
+      });
+    }
+
+    const decoded = verifyToken(resetToken);
+    
+    if (!decoded || 
+        decoded.phoneNumber !== phoneNumber || 
+        decoded.action !== "reset_password") {
+      return res.status(401).json({ 
+        success: false,
+        message: "Invalid or expired reset token" 
+      });
+    }
+
+    // Find user and update password
+    const user = await UserModel.findOne({ phone: phoneNumber });
+    
+    if (!user) {
+      return res.status(404).json({ 
+        success: false,
+        message: "User not found" 
+      });
+    }
+
+    // Update password (pre-save hook will hash it)
+    user.password = newPassword;
+    await user.save();
+
+    // Clear the reset token
+    res.clearCookie("reset_password_token");
+
+    return res.status(200).json({
+      success: true,
+      message: "Password reset successfully. You can now login with your new password."
+    });
+  } catch (error) {
+    console.error("Password reset error:", error);
+    return res.status(500).json({ 
+      success: false,
+      message: "Failed to reset password. Please try again." 
+    });
+  }
+};
+
+// Reset password with Firebase verification (for forgot password flow)
+export const resetPasswordWithFirebase = async (req, res) => {
+  try {
+    const { phoneNumber, newPassword } = req.body;
+    const firebaseToken = req.headers.authorization?.split(' ')[1];
+
+    if (!phoneNumber || !newPassword || !firebaseToken) {
+      return res.status(400).json({
+        success: false,
+        message: "Phone number, new password, and Firebase token are required"
+      });
+    }
+    console.log("firebaseToken", firebaseToken);
+
+    // Verify Firebase token
+    const decodedToken = await admin.auth().verifyIdToken(firebaseToken);
+    if (!decodedToken) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid Firebase token"
+      });
+    }
+
+    // Find user by phone number (try multiple formats)
+    let user = await UserModel.findOne({
+      $or: [
+        { phone: phoneNumber },
+        { phone: `+91${phoneNumber}` },
+        { phone: { $regex: phoneNumber + "$" } }
+      ]
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found with this phone number"
+      });
+    }
+
+    // Update user's password (pre-save hook will hash it)
+    user.password = newPassword;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Password reset successfully"
+    });
+
+  } catch (error) {
+    console.error("Reset password with Firebase error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error"
+    });
   }
 };

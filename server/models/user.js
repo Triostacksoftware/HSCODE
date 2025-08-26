@@ -25,6 +25,8 @@ const userSchema = new mongoose.Schema(
 
     image: { type: String },
     about: { type: String },
+    companyName: { type: String, trim: true },
+    address: { type: String, trim: true },
     companyWebsite: { type: String, trim: true },
     preferences: { type: Object },
     notificationPreferences: {
