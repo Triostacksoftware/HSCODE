@@ -38,7 +38,7 @@ Frontend (Static Data)          Backend (Dynamic Data)
 
 ### 2. **Updated DomesticChat.jsx**
 - **Before**: Complex sections → chapters → groups flow
-- **After**: Simple groups ↔ HS Navigator toggle
+- **After**: Simple groups ↔ Sections toggle
 - **Benefits**: Cleaner UI, faster navigation, better UX
 
 ### 3. **Updated GlobalChat.jsx**

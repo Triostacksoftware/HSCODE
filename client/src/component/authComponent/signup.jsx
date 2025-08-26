@@ -7,6 +7,9 @@ import {
   MdVisibilityOff,
   MdPerson,
   MdEmail,
+  MdBusiness,
+  MdLocationOn,
+  MdLanguage,
 } from "react-icons/md";
 import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
 import { auth } from "../../utilities/firebase";
@@ -15,7 +18,6 @@ import {
   validatePhoneCountryCode,
   getCountryInfo,
   getCleanPhoneNumber,
-  formatPhoneForDisplay,
 } from "../../utilities/countryCodeToPhonePrefix";
 
 export default function Signup() {
@@ -26,12 +28,17 @@ export default function Signup() {
     email: "",
     phoneNumber: "",
     password: "",
+    companyName: "",
+    address: "",
+    companyWebsite: "",
   });
   const [emailOtp, setEmailOtp] = useState("");
   const [phoneOtp, setPhoneOtp] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [emailError, setEmailError] = useState(""); // Separate error for email step
+  const [phoneError, setPhoneError] = useState(""); // Separate error for phone step
   const [recaptchaVerifier, setRecaptchaVerifier] = useState(null);
   const [confirmationResult, setConfirmationResult] = useState(null);
 
@@ -43,20 +50,48 @@ export default function Signup() {
     }));
   };
 
+  // Clear all errors when moving between steps
+  const clearAllErrors = () => {
+    setMessage("");
+    setEmailError("");
+    setPhoneError("");
+  };
+
   // Initialize reCAPTCHA
   useEffect(() => {
     if (typeof window !== "undefined" && !recaptchaVerifier) {
-      const verifier = new RecaptchaVerifier(
-        auth,
-        "recaptcha-container-signup",
-        {
-          size: "invisible",
-          callback: () => {
-            console.log("reCAPTCHA solved");
-          },
+      // Wait for the DOM to be ready
+      const timer = setTimeout(() => {
+        try {
+          const container = document.getElementById("recaptcha-container-signup");
+          if (!container) {
+            console.error("reCAPTCHA container not found");
+            return;
+          }
+
+          const verifier = new RecaptchaVerifier(
+            auth,
+            "recaptcha-container-signup",
+            {
+              size: "invisible",
+              callback: () => {
+                console.log("reCAPTCHA solved");
+              },
+              "expired-callback": () => {
+                console.log("reCAPTCHA expired");
+                setRecaptchaVerifier(null);
+              },
+            }
+          );
+          setRecaptchaVerifier(verifier);
+          console.log("reCAPTCHA initialized successfully");
+        } catch (error) {
+          console.error("Failed to initialize reCAPTCHA:", error);
+          setMessage("Failed to initialize verification. Please refresh the page.");
         }
-      );
-      setRecaptchaVerifier(verifier);
+      }, 100);
+
+      return () => clearTimeout(timer);
     }
   }, [recaptchaVerifier]);
 
@@ -72,24 +107,26 @@ export default function Signup() {
       return;
     }
 
-    // Validate country code before proceeding
-    if (countryInfo.code && !countryLoading) {
-      const fullPhoneNumber = getCountryInfo(countryInfo.code)?.phonePrefix + formData.phoneNumber.replace(/^\+/, "");
-      const validation = validatePhoneCountryCode(fullPhoneNumber, countryInfo.code);
-      if (!validation.isValid) {
-        setMessage(validation.message);
-        setIsLoading(false);
-        return;
-      }
+    // Validate phone number format
+    if (!formData.phoneNumber || formData.phoneNumber.length < 10) {
+      setMessage("Please enter a valid phone number (at least 10 digits)");
+      setIsLoading(false);
+      return;
+    }
+
+    // Validate country code
+    if (!countryInfo?.code || countryLoading) {
+      setMessage("Please wait for country code detection or select your country");
+      setIsLoading(false);
+      return;
     }
 
     try {
       // First check if user already exists and send email OTP
-      const cleanPhoneNumber = getCleanPhoneNumber(formData.phoneNumber, countryInfo.code);
-      const checkResponse = await axios.post(
+      const response = await axios.post(
         `${process.env.NEXT_PUBLIC_BASE_URL}/auth/check-user-before-otp`,
         {
-          phoneNumber: cleanPhoneNumber,
+          phoneNumber: formData.phoneNumber, // Send plain number like "9999999995"
           email: formData.email,
           password: formData.password,
         },
@@ -99,7 +136,7 @@ export default function Signup() {
       );
 
       // If user exists, show error
-      if (checkResponse.status === 200 && checkResponse.data?.message === "User exists") {
+      if (response.status === 200 && response.data?.message === "User exists") {
         setMessage("User already exists with this email or phone number. Please login instead.");
         setIsLoading(false);
         return;
@@ -107,6 +144,7 @@ export default function Signup() {
 
       // User doesn't exist, email OTP sent successfully
       setStep(2);
+      clearAllErrors(); // Clear any previous errors
       setMessage("Email OTP sent successfully! Check your email.");
       setIsLoading(false);
     } catch (error) {
@@ -123,6 +161,7 @@ export default function Signup() {
   const handleEmailOTPSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+    setEmailError(""); // Clear previous email errors
     setMessage("");
 
     try {
@@ -142,13 +181,23 @@ export default function Signup() {
       );
 
       if (verifyResponse.status === 200) {
-        // Email OTP verified, now send phone OTP
-        await handleSendPhoneOTP();
+        // Email OTP verified successfully
+        setMessage("Email verified successfully! Now sending phone OTP...");
+        
+        // Wait a moment before sending phone OTP
+        setTimeout(() => {
+          handleSendPhoneOTP();
+        }, 1000);
       }
     } catch (error) {
       console.error("Email OTP verification failed:", error);
-      setMessage("Invalid email OTP. Please try again.");
-    } finally {
+      if (error.response?.status === 400) {
+        setEmailError("Invalid OTP code. Please check your email and try again.");
+      } else if (error.response?.status === 401) {
+        setEmailError("OTP expired. Please request a new OTP.");
+      } else {
+        setEmailError("Email verification failed. Please try again.");
+      }
       setIsLoading(false);
     }
   };
@@ -160,20 +209,34 @@ export default function Signup() {
         throw new Error("reCAPTCHA not initialized");
       }
 
-      // Prepare phone number with country code
+      // Prepare phone number with country code for Firebase only
       let fullPhoneNumber = formData.phoneNumber;
       if (countryInfo?.code && !countryLoading) {
-        const all = getCountryInfo(countryInfo.code);
-        if (all?.phonePrefix) {
-          const cleanNumber = formData.phoneNumber.replace(/^\+/, "");
-          fullPhoneNumber = all.phonePrefix + cleanNumber;
+        const countryData = getCountryInfo(countryInfo.code);
+        if (countryData?.phonePrefix) {
+          // Clean the phone number - remove any existing + or spaces
+          const cleanNumber = formData.phoneNumber.replace(/^\+|\s/g, "");
+          fullPhoneNumber = countryData.phonePrefix + cleanNumber;
+          console.log("Country data:", countryData);
+          console.log("Original phone:", formData.phoneNumber);
+          console.log("Clean number:", cleanNumber);
+          console.log("Full phone with prefix:", fullPhoneNumber);
         }
       }
 
-      // Ensure phone number has + prefix
+      // Ensure phone number has + prefix and is properly formatted for Firebase
       const normalizedPhone = fullPhoneNumber.startsWith("+")
         ? fullPhoneNumber
         : `+${fullPhoneNumber}`;
+
+      // Validate phone number length (should be between 10-15 digits including country code)
+      const phoneDigits = normalizedPhone.replace(/\D/g, "");
+      if (phoneDigits.length < 10 || phoneDigits.length > 15) {
+        throw new Error("Invalid phone number length. Please check your phone number.");
+      }
+
+      console.log("Final normalized phone for Firebase:", normalizedPhone);
+      console.log("Phone digits count:", phoneDigits.length);
 
       const result = await signInWithPhoneNumber(
         auth,
@@ -183,11 +246,19 @@ export default function Signup() {
 
       setConfirmationResult(result);
       setStep(3);
+      clearAllErrors(); // Clear any previous errors
       setMessage("Phone OTP sent successfully! Check your phone.");
       setIsLoading(false);
     } catch (error) {
       console.error("Phone OTP sending failed:", error);
-      setMessage(error.message || "Failed to send phone OTP. Please try again.");
+      if (error.code === "auth/invalid-phone-number") {
+        setPhoneError("Invalid phone number format. Please check your phone number and country code.");
+      } else if (error.code === "auth/too-many-requests") {
+        setPhoneError("Too many OTP requests. Please wait a moment before trying again.");
+      } else {
+        setPhoneError(error.message || "Failed to send phone OTP. Please try again.");
+      }
+      setIsLoading(false);
     }
   };
 
@@ -196,6 +267,7 @@ export default function Signup() {
     e.preventDefault();
     setIsLoading(true);
     setMessage("");
+    setPhoneError(""); // Clear previous phone errors
 
     try {
       // Verify phone OTP with Firebase
@@ -204,9 +276,6 @@ export default function Signup() {
       if (result.user) {
         // Get Firebase ID token for backend verification
         const idToken = await result.user.getIdToken();
-        
-        // Store clean phone number (without country prefix) and country code separately
-        const cleanPhoneNumber = getCleanPhoneNumber(formData.phoneNumber, countryInfo?.code);
 
         // Both email and phone verified, now complete signup with backend
         const response = await axios.post(
@@ -214,9 +283,12 @@ export default function Signup() {
           {
             name: formData.name,
             email: formData.email,
-            phoneNumber: cleanPhoneNumber, // Store clean number without prefix
+            phoneNumber: formData.phoneNumber, // Send plain number like "9999999995"
             password: formData.password,
             countryCode: countryInfo.code, // Store country code like "IN", "US"
+            companyName: formData.companyName,
+            address: formData.address,
+            companyWebsite: formData.companyWebsite,
           },
           {
             withCredentials: true,
@@ -235,10 +307,12 @@ export default function Signup() {
       }
     } catch (error) {
       console.error("Phone OTP verification or signup failed:", error);
-      if (error.response?.status === 409) {
-        setMessage("User already exists with this email or phone number.");
+      if (error.code === "auth/invalid-verification-code") {
+        setPhoneError("Invalid OTP code. Please check your phone and try again.");
+      } else if (error.response?.status === 409) {
+        setPhoneError("User already exists with this email or phone number.");
       } else {
-        setMessage("Invalid phone OTP or signup failed. Please try again.");
+        setPhoneError("Invalid phone OTP or signup failed. Please try again.");
       }
     } finally {
       setIsLoading(false);
@@ -312,6 +386,63 @@ export default function Signup() {
             />
             <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
               <MdEmail className="w-4 h-4 sm:w-5 text-gray-400" />
+            </div>
+          </fieldset>
+
+          {/* Company Name Field */}
+          <fieldset className="relative border border-gray-300 rounded-lg p-0 m-0 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-opacity-50">
+            <legend className="absolute -top-2.5 left-3 bg-white px-2 text-gray-800 text-xs sm:text-sm font-medium focus-within:text-blue-500">
+              Company Name
+            </legend>
+            <input
+              type="text"
+              id="companyName"
+              name="companyName"
+              value={formData.companyName}
+              onChange={handleInputChange}
+              placeholder="Enter your company name"
+              className="w-full border-none outline-none px-3 py-3 sm:py-4 text-sm sm:text-base bg-transparent"
+            />
+            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+              <MdBusiness className="w-4 h-4 sm:w-5 text-gray-400" />
+            </div>
+          </fieldset>
+
+          {/* Address Field */}
+          <fieldset className="relative border border-gray-300 rounded-lg p-0 m-0 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-opacity-50">
+            <legend className="absolute -top-2.5 left-3 bg-white px-2 text-gray-800 text-xs sm:text-sm font-medium focus-within:text-blue-500">
+              Address
+            </legend>
+            <input
+              type="text"
+              id="address"
+              name="address"
+              value={formData.address}
+              onChange={handleInputChange}
+              placeholder="Enter your address"
+              className="w-full border-none outline-none px-3 py-3 sm:py-4 text-sm sm:text-base bg-transparent"
+            />
+            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+              <MdLocationOn className="w-4 h-4 sm:w-5 text-gray-400" />
+            </div>
+          </fieldset>
+
+          {/* Company Website Field */}
+          <fieldset className="relative border border-gray-300 rounded-lg p-0 m-0 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-opacity-50">
+            <legend className="absolute -top-2.5 left-3 bg-white px-2 text-gray-800 text-xs sm:text-sm font-medium focus-within:text-blue-500">
+              Company Website
+            </legend>
+            <input
+              type="url"
+              id="companyWebsite"
+              name="companyWebsite"
+              value={formData.companyWebsite}
+              onChange={handleInputChange}
+              placeholder="https://example.com"
+              className="w-full border-none outline-none px-3 py-3 sm:py-4 text-sm sm:text-base bg-transparent"
+            />
+            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+              <MdLanguage className="w-4 h-4 sm:w-5 text-gray-400" />
             </div>
           </fieldset>
 
@@ -412,6 +543,12 @@ export default function Signup() {
             </div>
           )}
 
+          {emailError && (
+            <div className="p-3 rounded-lg text-sm bg-red-50 text-red-700 border border-red-200">
+              {emailError}
+            </div>
+          )}
+
           <div className="text-center mb-4">
             <p className="text-sm text-gray-600">
               We've sent a 6-digit code to
@@ -468,7 +605,10 @@ export default function Signup() {
 
             <button
               type="button"
-              onClick={() => setStep(1)}
+              onClick={() => {
+                clearAllErrors();
+                setStep(1);
+              }}
               className="w-full text-blue-600 hover:text-blue-700 text-sm"
             >
               ← Back to form
@@ -499,6 +639,12 @@ export default function Signup() {
             </div>
           )}
 
+          {phoneError && (
+            <div className="p-3 rounded-lg text-sm bg-red-50 text-red-700 border border-red-200">
+              {phoneError}
+            </div>
+          )}
+
           <div className="text-center mb-4">
             <p className="text-sm text-gray-600">
               We've sent a 6-digit code to
@@ -515,9 +661,6 @@ export default function Signup() {
                 }
                 return displayPhone;
               })()}
-            </p>
-            <p className="text-xs text-gray-500 mt-1">
-              Country: {countryInfo.code} • Phone: {getCleanPhoneNumber(formData.phoneNumber, countryInfo.code)}
             </p>
           </div>
 
@@ -568,7 +711,10 @@ export default function Signup() {
 
             <button
               type="button"
-              onClick={() => setStep(2)}
+              onClick={() => {
+                clearAllErrors();
+                setStep(2);
+              }}
               className="w-full text-blue-600 hover:text-blue-700 text-sm"
             >
               ← Back to email verification

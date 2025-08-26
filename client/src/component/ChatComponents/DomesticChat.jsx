@@ -83,7 +83,7 @@ const DomesticChat = ({ user, refreshUser }) => {
                   : "bg-gray-200 hover:text-gray-900"
               }`}
             >
-              HS Navigator
+              Sections
             </button>
           </div>
         </div>

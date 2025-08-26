@@ -115,7 +115,7 @@ const HSCodeSearch = () => {
             {searchResults.map((item) => (
               <div
                 key={item.id}
-                className="px-6 py-4 border-5 border-gray-900 hover:bg-gray-50"
+                className="px-6 py-4 border-1 border-gray-200 hover:bg-gray-50"
               >
                 {console.log(item)}
                 <div className="flex items-start justify-between">
