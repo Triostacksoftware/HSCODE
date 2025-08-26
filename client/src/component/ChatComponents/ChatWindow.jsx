@@ -47,7 +47,21 @@ const ChatWindow = ({
   });
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messagesEndRef.current) {
+      // Use scrollTop instead of scrollIntoView to prevent page-level scrolling
+      const messagesContainer =
+        messagesEndRef.current.closest(".overflow-y-auto");
+      if (messagesContainer) {
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      } else {
+        // Fallback to scrollIntoView with block: 'nearest' to prevent page scrolling
+        messagesEndRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+          inline: "nearest",
+        });
+      }
+    }
   };
   const fetchGroupMembers = useCallback(async () => {
     if (!selectedGroupId) {
@@ -75,7 +89,12 @@ const ChatWindow = ({
   }, [selectedGroupId, user, fetchGroupMembers]);
 
   useEffect(() => {
-    scrollToBottom();
+    // Add a small delay to ensure DOM has been updated before scrolling
+    const timeoutId = setTimeout(() => {
+      scrollToBottom();
+    }, 100);
+
+    return () => clearTimeout(timeoutId);
   }, [leads]);
 
   // Listen for new-approved-lead socket event
@@ -255,7 +274,32 @@ const ChatWindow = ({
   const scrollToLead = (leadId) => {
     const element = document.getElementById(`lead-${leadId}`);
     if (element) {
-      element.scrollIntoView({ behavior: "smooth", block: "center" });
+      // Find the messages container to ensure scrolling happens within it
+      const messagesContainer = element.closest(".overflow-y-auto");
+      if (messagesContainer) {
+        // Calculate the element position relative to the container
+        const containerRect = messagesContainer.getBoundingClientRect();
+        const elementRect = element.getBoundingClientRect();
+        const scrollTop =
+          messagesContainer.scrollTop +
+          elementRect.top -
+          containerRect.top -
+          containerRect.height / 2 +
+          elementRect.height / 2;
+
+        messagesContainer.scrollTo({
+          top: scrollTop,
+          behavior: "smooth",
+        });
+      } else {
+        // Fallback with constrained scrollIntoView
+        element.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+          inline: "nearest",
+        });
+      }
+
       // Add highlight effect
       element.classList.add("ring-2", "ring-blue-500", "ring-opacity-50");
       setTimeout(() => {
