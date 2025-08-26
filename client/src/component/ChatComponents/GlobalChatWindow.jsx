@@ -12,7 +12,7 @@ import { IoArrowBack } from "react-icons/io5";
 import { LiaSearchSolid } from "react-icons/lia";
 import { IoMdClose } from "react-icons/io";
 import { FaRegPaperPlane } from "react-icons/fa";
-import UserInfoSidebar from "./UserInfoSidebar";
+import UserProfileSidebar from "./UserProfileSidebar";
 import MapPicker from "./MapPicker";
 import socket from "../../utilities/socket";
 import { OnlineUsersContext } from "../../contexts/OnlineUsersContext";
@@ -62,6 +62,7 @@ const GlobalChatWindow = ({
     isOpen: false,
     userId: null,
   });
+  const [selectedUser, setSelectedUser] = useState(null);
   const [showMembers, setShowMembers] = useState(false);
   const messagesEndRef = useRef(null);
 
@@ -282,11 +283,21 @@ const GlobalChatWindow = ({
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
-  const handleUserAvatarClick = (userId) => {
-    setUserInfoSidebar({
-      isOpen: true,
-      userId: userId,
-    });
+  const handleUserAvatarClick = async (userId) => {
+    try {
+      // Fetch user info for the profile sidebar
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/user/${userId}`,
+        { withCredentials: true }
+      );
+      setSelectedUser(response.data);
+      setUserInfoSidebar({
+        isOpen: true,
+        userId: userId,
+      });
+    } catch (error) {
+      console.error("Error fetching user info:", error);
+    }
   };
 
   const closeUserInfoSidebar = () => {
@@ -294,6 +305,12 @@ const GlobalChatWindow = ({
       isOpen: false,
       userId: null,
     });
+    setSelectedUser(null);
+  };
+
+  const handleStartChat = (chat) => {
+    // Navigate to user chat page
+    window.location.href = `/user-chat?chat=${chat._id}`;
   };
 
   // Filtered messages for search
@@ -934,11 +951,13 @@ const GlobalChatWindow = ({
         }}
         initial={{ lat: 20, lng: 78 }}
       />
-      {/* User Info Sidebar */}
-      <UserInfoSidebar
-        userId={userInfoSidebar.userId}
+      {/* User Profile Sidebar */}
+      <UserProfileSidebar
+        user={selectedUser}
         isOpen={userInfoSidebar.isOpen}
         onClose={closeUserInfoSidebar}
+        currentUser={user}
+        onStartChat={handleStartChat}
       />
       {showMembers && (
         <div className="absolute right-4 top-14 bg-white border border-gray-200 rounded shadow-lg z-20 min-w-[220px] max-h-80 overflow-y-auto">

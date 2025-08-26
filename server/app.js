@@ -22,6 +22,7 @@ import superadminRoutes from "./routes/superadmin.routes.js";
 import homeDataRoutes from "./routes/homeData.routes.js";
 import notificationRoutes from "./routes/notification.routes.js";
 import couponRoutes from "./routes/coupon.routes.js";
+import userChatRoutes from "./routes/userChat.routes.js";
 
 // Read country-wise file mapping
 const hscodes = fs.readFileSync("db/country-wise-file.csv", "utf8");
@@ -148,5 +149,6 @@ app.use("/api/v1/superadmin", superadminRoutes);
 app.use("/api/v1/home-data", homeDataRoutes);
 app.use("/api/v1/notifications", notificationRoutes);
 app.use("/api/v1/coupons", couponRoutes);
+app.use("/api/v1/user-chat", userChatRoutes);
 
 export default app;

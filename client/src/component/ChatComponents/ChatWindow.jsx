@@ -16,7 +16,7 @@ import { FaRegPaperPlane, FaUserFriends } from "react-icons/fa";
 import { MdOutlineGroup } from "react-icons/md";
 import { IoArrowBack } from "react-icons/io5";
 import { HiMegaphone } from "react-icons/hi2";
-import UserInfoSidebar from "./UserInfoSidebar";
+import UserProfileSidebar from "./UserProfileSidebar";
 import LeadFormModal from "./LeadFormModal";
 
 const ChatWindow = ({
@@ -45,6 +45,7 @@ const ChatWindow = ({
     isOpen: false,
     userId: null,
   });
+  const [selectedUser, setSelectedUser] = useState(null);
 
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
@@ -229,11 +230,21 @@ const ChatWindow = ({
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
-  const handleUserAvatarClick = (userId) => {
-    setUserInfoSidebar({
-      isOpen: true,
-      userId: userId,
-    });
+  const handleUserAvatarClick = async (userId) => {
+    try {
+      // Fetch user info for the profile sidebar
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/user/${userId}`,
+        { withCredentials: true }
+      );
+      setSelectedUser(response.data);
+      setUserInfoSidebar({
+        isOpen: true,
+        userId: userId,
+      });
+    } catch (error) {
+      console.error("Error fetching user info:", error);
+    }
   };
 
   const closeUserInfoSidebar = () => {
@@ -241,6 +252,12 @@ const ChatWindow = ({
       isOpen: false,
       userId: null,
     });
+    setSelectedUser(null);
+  };
+
+  const handleStartChat = (chat) => {
+    // Navigate to user chat page
+    window.location.href = `/user-chat?chat=${chat._id}`;
   };
 
   // Filtered leads for search
@@ -788,11 +805,13 @@ const ChatWindow = ({
         sending={sending}
       />
 
-      {/* User Info Sidebar */}
-      <UserInfoSidebar
-        userId={userInfoSidebar.userId}
+      {/* User Profile Sidebar */}
+      <UserProfileSidebar
+        user={selectedUser}
         isOpen={userInfoSidebar.isOpen}
         onClose={closeUserInfoSidebar}
+        currentUser={user}
+        onStartChat={handleStartChat}
       />
     </div>
   );

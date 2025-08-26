@@ -137,16 +137,16 @@ export const verifyOTP = async (req, res) => {
 
 // User Controllers
 export const signup = async (req, res) => {
-  const { 
-    name, 
-    email, 
-    phoneNumber, 
-    password, 
-    countryCode, 
+  const {
+    name,
+    email,
+    phoneNumber,
+    password,
+    countryCode,
     country,
     companyName,
     address,
-    companyWebsite
+    companyWebsite,
   } = req.body;
 
   try {
@@ -263,11 +263,9 @@ export const verifyFirebaseTokenAndLogin = async (req, res) => {
     const idToken = req.headers.authorization?.split(" ")[1];
     console.log("idToken", idToken);
     if (!idToken) {
-      return res
-        .status(401)
-        .json({
-          message: "Firebase ID token required in Authorization header",
-        });
+      return res.status(401).json({
+        message: "Firebase ID token required in Authorization header",
+      });
     }
     console.log("hello");
 
@@ -1042,20 +1040,20 @@ export const userLogin = async (req, res) => {
   const { phoneNumber, password } = req.body;
 
   if (!phoneNumber || !password) {
-    return res.status(400).json({ 
+    return res.status(400).json({
       success: false,
-      message: "Phone number and password are required" 
+      message: "Phone number and password are required",
     });
   }
 
   try {
     // Find user by phone number (with or without country code)
     let user = await UserModel.findOne({ phone: phoneNumber });
-    
+
     if (!user) {
-      return res.status(401).json({ 
+      return res.status(401).json({
         success: false,
-        message: "Invalid phone number or password" 
+        message: "Invalid phone number or password",
       });
     }
 
@@ -1063,9 +1061,9 @@ export const userLogin = async (req, res) => {
     const isPasswordValid = await bcrypt.compare(password, user.password);
     console.log("isPasswordValid", isPasswordValid);
     if (!isPasswordValid) {
-      return res.status(401).json({ 
+      return res.status(401).json({
         success: false,
-        message: "Invalid phone number or password" 
+        message: "Invalid phone number or password",
       });
     }
 
@@ -1093,9 +1091,9 @@ export const userLogin = async (req, res) => {
     });
   } catch (error) {
     console.error("Login error:", error);
-    return res.status(500).json({ 
+    return res.status(500).json({
       success: false,
-      message: "Login failed. Please try again." 
+      message: "Login failed. Please try again.",
     });
   }
 };
@@ -1106,32 +1104,35 @@ export const forgotPasswordSendOTP = async (req, res) => {
   console.log("phoneNumber", phoneNumber);
 
   if (!phoneNumber) {
-    return res.status(400).json({ 
+    return res.status(400).json({
       success: false,
-      message: "Phone number is required" 
+      message: "Phone number is required",
     });
   }
 
   try {
     // Check if user exists with this phone number
     const user = await UserModel.findOne({ phone: phoneNumber });
-    
+
     if (!user) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         success: false,
-        message: "No user found with this phone number" 
+        message: "No user found with this phone number",
       });
     }
 
     // Generate OTP
     const otp = generateOTP();
-    
+
     // Store OTP temporarily in cookie for verification
-    const forgotPasswordToken = generateToken({ 
-      phoneNumber, 
-      otp,
-      action: "forgot_password" 
-    }, "10m");
+    const forgotPasswordToken = generateToken(
+      {
+        phoneNumber,
+        otp,
+        action: "forgot_password",
+      },
+      "10m"
+    );
 
     res.cookie("forgot_password_token", forgotPasswordToken, {
       httpOnly: true,
@@ -1143,19 +1144,19 @@ export const forgotPasswordSendOTP = async (req, res) => {
 
     // TODO: Send OTP via SMS service (for now, just return success)
     // In production, integrate with SMS service like Twilio, AWS SNS, etc.
-    
+
     return res.status(200).json({
       success: true,
       message: "OTP sent to your phone number",
       // For development/testing, you might want to return the OTP
       // In production, remove this line
-      otp: process.env.NODE_ENV === "development" ? otp : undefined
+      otp: process.env.NODE_ENV === "development" ? otp : undefined,
     });
   } catch (error) {
     console.error("Forgot password OTP error:", error);
-    return res.status(500).json({ 
+    return res.status(500).json({
       success: false,
-      message: "Failed to send OTP. Please try again." 
+      message: "Failed to send OTP. Please try again.",
     });
   }
 };
@@ -1165,39 +1166,44 @@ export const verifyForgotPasswordOTP = async (req, res) => {
   const { phoneNumber, otp } = req.body;
 
   if (!phoneNumber || !otp) {
-    return res.status(400).json({ 
+    return res.status(400).json({
       success: false,
-      message: "Phone number and OTP are required" 
+      message: "Phone number and OTP are required",
     });
   }
 
   try {
     const forgotPasswordToken = req.cookies.forgot_password_token;
-    
+
     if (!forgotPasswordToken) {
-      return res.status(401).json({ 
+      return res.status(401).json({
         success: false,
-        message: "OTP token not found. Please request a new OTP." 
+        message: "OTP token not found. Please request a new OTP.",
       });
     }
 
     const decoded = verifyToken(forgotPasswordToken);
-    
-    if (!decoded || 
-        decoded.phoneNumber !== phoneNumber || 
-        decoded.otp !== otp || 
-        decoded.action !== "forgot_password") {
-      return res.status(401).json({ 
+
+    if (
+      !decoded ||
+      decoded.phoneNumber !== phoneNumber ||
+      decoded.otp !== otp ||
+      decoded.action !== "forgot_password"
+    ) {
+      return res.status(401).json({
         success: false,
-        message: "Invalid or expired OTP" 
+        message: "Invalid or expired OTP",
       });
     }
 
     // OTP verified, generate reset token
-    const resetToken = generateToken({ 
-      phoneNumber,
-      action: "reset_password" 
-    }, "15m");
+    const resetToken = generateToken(
+      {
+        phoneNumber,
+        action: "reset_password",
+      },
+      "15m"
+    );
 
     res.cookie("reset_password_token", resetToken, {
       httpOnly: true,
@@ -1212,13 +1218,13 @@ export const verifyForgotPasswordOTP = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "OTP verified successfully. You can now reset your password."
+      message: "OTP verified successfully. You can now reset your password.",
     });
   } catch (error) {
     console.error("OTP verification error:", error);
-    return res.status(500).json({ 
+    return res.status(500).json({
       success: false,
-      message: "Failed to verify OTP. Please try again." 
+      message: "Failed to verify OTP. Please try again.",
     });
   }
 };
@@ -1228,47 +1234,49 @@ export const resetPassword = async (req, res) => {
   const { phoneNumber, newPassword } = req.body;
 
   if (!phoneNumber || !newPassword) {
-    return res.status(400).json({ 
+    return res.status(400).json({
       success: false,
-      message: "Phone number and new password are required" 
+      message: "Phone number and new password are required",
     });
   }
 
   if (newPassword.length < 8) {
-    return res.status(400).json({ 
+    return res.status(400).json({
       success: false,
-      message: "Password must be at least 8 characters long" 
+      message: "Password must be at least 8 characters long",
     });
   }
 
   try {
     const resetToken = req.cookies.reset_password_token;
-    
+
     if (!resetToken) {
-      return res.status(401).json({ 
+      return res.status(401).json({
         success: false,
-        message: "Reset token not found. Please request a new OTP." 
+        message: "Reset token not found. Please request a new OTP.",
       });
     }
 
     const decoded = verifyToken(resetToken);
-    
-    if (!decoded || 
-        decoded.phoneNumber !== phoneNumber || 
-        decoded.action !== "reset_password") {
-      return res.status(401).json({ 
+
+    if (
+      !decoded ||
+      decoded.phoneNumber !== phoneNumber ||
+      decoded.action !== "reset_password"
+    ) {
+      return res.status(401).json({
         success: false,
-        message: "Invalid or expired reset token" 
+        message: "Invalid or expired reset token",
       });
     }
 
     // Find user and update password
     const user = await UserModel.findOne({ phone: phoneNumber });
-    
+
     if (!user) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         success: false,
-        message: "User not found" 
+        message: "User not found",
       });
     }
 
@@ -1281,13 +1289,14 @@ export const resetPassword = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "Password reset successfully. You can now login with your new password."
+      message:
+        "Password reset successfully. You can now login with your new password.",
     });
   } catch (error) {
     console.error("Password reset error:", error);
-    return res.status(500).json({ 
+    return res.status(500).json({
       success: false,
-      message: "Failed to reset password. Please try again." 
+      message: "Failed to reset password. Please try again.",
     });
   }
 };
@@ -1296,12 +1305,12 @@ export const resetPassword = async (req, res) => {
 export const resetPasswordWithFirebase = async (req, res) => {
   try {
     const { phoneNumber, newPassword } = req.body;
-    const firebaseToken = req.headers.authorization?.split(' ')[1];
+    const firebaseToken = req.headers.authorization?.split(" ")[1];
 
     if (!phoneNumber || !newPassword || !firebaseToken) {
       return res.status(400).json({
         success: false,
-        message: "Phone number, new password, and Firebase token are required"
+        message: "Phone number, new password, and Firebase token are required",
       });
     }
     console.log("firebaseToken", firebaseToken);
@@ -1311,7 +1320,7 @@ export const resetPasswordWithFirebase = async (req, res) => {
     if (!decodedToken) {
       return res.status(401).json({
         success: false,
-        message: "Invalid Firebase token"
+        message: "Invalid Firebase token",
       });
     }
 
@@ -1320,14 +1329,14 @@ export const resetPasswordWithFirebase = async (req, res) => {
       $or: [
         { phone: phoneNumber },
         { phone: `+91${phoneNumber}` },
-        { phone: { $regex: phoneNumber + "$" } }
-      ]
+        { phone: { $regex: phoneNumber + "$" } },
+      ],
     });
 
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: "User not found with this phone number"
+        message: "User not found with this phone number",
       });
     }
 
@@ -1337,14 +1346,13 @@ export const resetPasswordWithFirebase = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: "Password reset successfully"
+      message: "Password reset successfully",
     });
-
   } catch (error) {
     console.error("Reset password with Firebase error:", error);
     res.status(500).json({
       success: false,
-      message: "Internal server error"
+      message: "Internal server error",
     });
   }
 };

@@ -68,6 +68,41 @@ io.on("connection", (socket) => {
     // This will be handled by the notification system
     console.log(`Notification ${notificationId} delivered to user ${userId}`);
   });
+
+  // User-to-User Chat Events
+  socket.on("join-user-chat", ({ chatId }) => {
+    socket.join(`user-chat-${chatId}`);
+    console.log(`User ${userId} joined user chat ${chatId}`);
+  });
+
+  socket.on("leave-user-chat", ({ chatId }) => {
+    socket.leave(`user-chat-${chatId}`);
+    console.log(`User ${userId} left user chat ${chatId}`);
+  });
+
+  socket.on("user-typing", ({ chatId, isTyping }) => {
+    socket.to(`user-chat-${chatId}`).emit("user-typing", {
+      chatId,
+      userId,
+      isTyping,
+    });
+  });
+
+  socket.on("user-message", ({ chatId, message, receiverId }) => {
+    // Emit to the specific user chat room
+    io.to(`user-chat-${chatId}`).emit("new-user-message", {
+      chatId,
+      message,
+      senderId: userId,
+    });
+
+    // Also emit to the receiver's personal room for notifications
+    io.to(`user-${receiverId}`).emit("new-user-message-notification", {
+      chatId,
+      message,
+      senderId: userId,
+    });
+  });
 });
 
 // Utility: Emit list of online users in a group

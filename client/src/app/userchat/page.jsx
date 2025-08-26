@@ -6,6 +6,7 @@ import GlobalChat from "../../component/ChatComponents/GlobalChat";
 import RequestedLeads from "../../component/ChatComponents/RequestedLeads";
 import UserChatSettings from "../../component/ChatComponents/UserChatSettings";
 import NotificationTab from "../../component/ChatComponents/NotificationTab";
+import UserChatPage from "../user-chat/page";
 import { useUserAuth } from "../../utilities/userAuthMiddleware.js";
 import { connectUserSocket } from "../../utilities/socket";
 import { OnlineUsersContext } from "../../contexts/OnlineUsersContext";
@@ -17,6 +18,7 @@ const ChatPage = () => {
   const [onlineUsers, setOnlineUsers] = useState({});
   const [socket, setSocket] = useState(null);
   const [notificationCount, setNotificationCount] = useState(0);
+  const [unreadChatCount, setUnreadChatCount] = useState(0);
   const { user, refreshUser } = useUserAuth();
 
   // Fetch notification count
@@ -33,6 +35,27 @@ const ChatPage = () => {
       }
     } catch (error) {
       console.error("Error fetching notification count:", error);
+    }
+  };
+
+  // Fetch unread chat count for premium users
+  useEffect(() => {
+    if (user && (user.membership === "premium" || user.role === "admin")) {
+      fetchUnreadChatCount();
+    }
+  }, [user]);
+
+  const fetchUnreadChatCount = async () => {
+    try {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/user-chat/unread/count`,
+        { withCredentials: true }
+      );
+      if (response.data?.success) {
+        setUnreadChatCount(response.data.unreadCount || 0);
+      }
+    } catch (error) {
+      console.error("Error fetching unread chat count:", error);
     }
   };
 
@@ -128,6 +151,8 @@ const ChatPage = () => {
         return <NotificationTab onNotificationRead={fetchNotificationCount} />;
       case "settings":
         return <UserChatSettings />;
+      case "user-chat":
+        return <UserChatPage />;
       default:
         return <DomesticChat />;
     }
@@ -137,9 +162,11 @@ const ChatPage = () => {
     <OnlineUsersContext.Provider value={{ onlineCounts, onlineUsers, socket }}>
       <div className="flex h-screen bg-[#FEFEFE] ">
         <Sidebar
-          onTabChange={handleTabChange}
+          onTabChange={setActiveTab}
           activeTab={activeTab}
           notificationCount={notificationCount}
+          user={user}
+          unreadChatCount={unreadChatCount}
         />
         <div className="flex-1 overflow-auto">
           <div className="h-full">{renderActiveComponent()}</div>
