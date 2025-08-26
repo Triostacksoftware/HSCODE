@@ -10,15 +10,16 @@ import { FaRegPaperPlane, FaUserFriends } from "react-icons/fa";
 import { MdOutlineGroup } from "react-icons/md";
 import { IoArrowBack } from "react-icons/io5";
 import { HiMegaphone } from "react-icons/hi2";
-import UserInfoSidebar from "./UserInfoSidebar";
-import LeadFormModal from "./LeadFormModal";
+import UserInfoSidebar from "../ChatComponents/UserInfoSidebar";
+import LeadFormModal from "../ChatComponents/LeadFormModal";
 
-const ChatWindow = ({
+const SuperAdminChatWindow = ({
   chapterNo,
   selectedGroupId,
   groupName,
   groupImage,
   onBack,
+  isGlobal = false,
 }) => {
   const { user } = useUserAuth();
   const { onlineUsers, socket } = useContext(OnlineUsersContext);
@@ -26,7 +27,6 @@ const ChatWindow = ({
   const [broadcastLeads, setBroadcastLeads] = useState([]);
   const [processingBroadcast, setProcessingBroadcast] = useState({});
   const [leadModalOpen, setLeadModalOpen] = useState(false);
-  const [groupMembers, setGroupMembers] = useState([]);
 
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
@@ -48,7 +48,6 @@ const ChatWindow = ({
     if (selectedGroupId && user) {
       fetchLeads();
       fetchBroadcastLeads();
-      fetchGroupMembers();
     }
   }, [selectedGroupId, user]);
 
@@ -62,7 +61,10 @@ const ChatWindow = ({
     const handler = (lead) => {
       if (
         lead.selectedGroupId === selectedGroupId ||
-        (lead.selectedGroupId && lead.selectedGroupId._id === selectedGroupId)
+        (lead.selectedGroupId &&
+          lead.selectedGroupId._id === selectedGroupId) ||
+        lead.groupId === selectedGroupId ||
+        (lead.groupId && lead.groupId._id === selectedGroupId)
       ) {
         setLeads((prev) => {
           if (prev.some((l) => l._id === lead._id)) return prev;
@@ -70,21 +72,37 @@ const ChatWindow = ({
         });
       }
     };
-    socket.on("new-approved-lead", handler);
+
+    // Listen for both local and global lead events
+    if (socket && socket.on) {
+      socket.on("new-approved-lead", handler);
+      socket.on("new-approved-global-lead", handler);
+    }
+
     return () => {
-      socket.off("new-approved-lead", handler);
+      if (socket && socket.off) {
+        socket.off("new-approved-lead", handler);
+        socket.off("new-approved-global-lead", handler);
+      }
     };
-  }, [user, selectedGroupId]);
+  }, [user, selectedGroupId, socket]);
 
   const fetchLeads = async () => {
     try {
       setLoading(true);
       setError("");
+      const endpoint = isGlobal
+        ? `/superadmin/global-leads/${selectedGroupId}`
+        : `/superadmin/leads/${selectedGroupId}`;
+
       const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/leads/${selectedGroupId}`,
+        `${process.env.NEXT_PUBLIC_BASE_URL}${endpoint}`,
         { withCredentials: true }
       );
-      setLeads(response.data.leads || []);
+
+      // Handle both response formats
+      const leadsData = response.data.leads || response.data || [];
+      setLeads(leadsData);
     } catch (error) {
       console.error("Error fetching leads:", error);
       setError("Failed to load leads");
@@ -95,29 +113,22 @@ const ChatWindow = ({
 
   const fetchBroadcastLeads = async () => {
     try {
+      const endpoint = isGlobal
+        ? `/superadmin/global-leads/${selectedGroupId}`
+        : `/superadmin/leads/${selectedGroupId}`;
+
       const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/leads/${selectedGroupId}`,
+        `${process.env.NEXT_PUBLIC_BASE_URL}${endpoint}`,
         { withCredentials: true }
       );
-      const approvedLeads = response.data.leads || [];
-      const broadcasts = approvedLeads.filter(
+
+      const leadsData = response.data.leads || response.data || [];
+      const broadcasts = leadsData.filter(
         (lead) => lead.broadcast === "approved"
       );
       setBroadcastLeads(broadcasts);
     } catch (error) {
       console.error("Error fetching broadcast leads:", error);
-    }
-  };
-
-  const fetchGroupMembers = async () => {
-    try {
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/groups/${selectedGroupId}`,
-        { withCredentials: true }
-      );
-      setGroupMembers(response.data.members || []);
-    } catch (error) {
-      console.error("Error fetching group members:", error);
     }
   };
 
@@ -340,71 +351,33 @@ const ChatWindow = ({
               <LiaSearchSolid className="w-5 h-5 text-gray-600" />
             </button>
           )}
-          {/* Members dropdown: show all members with online indicators */}
+          {/* Members dropdown: show online first, then others if provided */}
           {showMembers && (
             <div className="absolute right-4 top-14 bg-white border border-gray-200 rounded shadow-lg z-20 min-w-[220px] max-h-80 overflow-y-auto">
               <div className="p-2 text-gray-700 border-b border-gray-100 text-sm">
-                Members ({groupMembers.length})
+                Members
               </div>
               <div className="py-1">
-                {groupMembers.length > 0 ? (
-                  groupMembers.map((member) => {
-                    // Check if this member is online
-                    const isOnline = (onlineUsers[selectedGroupId] || []).some(
-                      (onlineUser) => onlineUser.id === member._id
-                    );
-                    const onlineUserData = (
-                      onlineUsers[selectedGroupId] || []
-                    ).find((onlineUser) => onlineUser.id === member._id);
-
-                    return (
-                      <div
-                        key={member._id}
-                        className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 cursor-pointer"
-                        onClick={() => handleUserAvatarClick(member._id)}
-                      >
-                        <div className="relative">
-                          <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center overflow-hidden">
-                            {member.image ? (
-                              <img
-                                src={`${process.env.NEXT_PUBLIC_BASE_URL}/uploads/${member.image}`}
-                                alt={member.name}
-                                className="w-8 h-8 rounded-full object-cover"
-                              />
-                            ) : (
-                              <span className="text-xs text-gray-600 font-medium">
-                                {member.name?.charAt(0)?.toUpperCase()}
-                              </span>
-                            )}
-                          </div>
-                          {/* Online indicator */}
-                          <span
-                            className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${
-                              isOnline ? "bg-green-500" : "bg-gray-400"
-                            }`}
-                          ></span>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <span className="text-sm text-gray-900 truncate block">
-                            {member.name}
-                            {onlineUserData?.role === "admin" && (
-                              <span className="ml-1 text-violet-600 font-medium text-xs">
-                                (Admin)
-                              </span>
-                            )}
-                          </span>
-                          <span className="text-xs text-gray-500">
-                            {isOnline ? "Online" : "Offline"}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })
-                ) : (
-                  <div className="px-3 py-2 text-xs text-gray-500">
-                    No members found
+                {(onlineUsers[selectedGroupId] || []).map((m) => (
+                  <div
+                    key={`on-${m.id}`}
+                    className="flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50"
+                  >
+                    <span
+                      className={`w-2 h-2 rounded-full ${
+                        m.role === "admin" ? "bg-violet-500" : "bg-green-500"
+                      }`}
+                    ></span>
+                    <span className="text-xs text-gray-900 truncate">
+                      {m.name}
+                      {m.role === "admin" && (
+                        <span className="ml-1 text-violet-600 font-medium">
+                          (Admin)
+                        </span>
+                      )}
+                    </span>
                   </div>
-                )}
+                ))}
               </div>
             </div>
           )}
@@ -421,9 +394,9 @@ const ChatWindow = ({
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
               <div className="text-gray-400 text-4xl mb-2">💬</div>
-              <p className="text-gray-500">No approved messages yet</p>
+              <p className="text-gray-500">No messages yet</p>
               <p className="text-gray-400 text-sm">
-                Your messages will appear here after approval
+                Start the conversation by posting a lead
               </p>
             </div>
           </div>
@@ -433,7 +406,7 @@ const ChatWindow = ({
             {(() => {
               let lastDate = null;
               return sortedLeads.map((lead, idx) => {
-                const isOwnMessage = lead.userId._id === user?._id;
+                const isOwnMessage = lead.userId?._id === user?._id;
                 const msgDate = new Date(lead.createdAt);
                 const dateLabel = formatDate(lead.createdAt);
                 const showDate =
@@ -461,12 +434,12 @@ const ChatWindow = ({
                           <div
                             className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
                             onClick={() =>
-                              handleUserAvatarClick(lead.userId._id)
+                              handleUserAvatarClick(lead.userId?._id)
                             }
                           >
                             {lead.userId?.image ? (
                               <img
-                                src={`${process.env.NEXT_PUBLIC_BASE_URL}/upload/${lead.userId.image}`}
+                                src={`${process.env.NEXT_PUBLIC_BASE_URL}/uploads/${lead.userId.image}`}
                                 alt={lead.userId.name}
                                 className="w-8 h-8 rounded-full object-cover"
                               />
@@ -500,125 +473,97 @@ const ChatWindow = ({
                                     ADMIN
                                   </span>
                                 )}
-                                <span
-                                  className={`px-2 py-0.5 rounded-full text-[11px] ${
-                                    lead.type === "buy"
-                                      ? "bg-blue-100 text-blue-700"
-                                      : "bg-green-100 text-green-700"
-                                  }`}
-                                >
-                                  {(lead.type || "Lead").toUpperCase()}
-                                </span>
+                                {lead.type && (
+                                  <span
+                                    className={`px-2 py-0.5 rounded-full text-[11px] ${
+                                      lead.type === "buy"
+                                        ? "bg-blue-100 text-blue-700"
+                                        : "bg-green-100 text-green-700"
+                                    }`}
+                                  >
+                                    {lead.type.toUpperCase()}
+                                  </span>
+                                )}
                                 {lead.hscode && (
-                                  <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-[11px]">
+                                  <span className="px-2 py-0.5 rounded-full text-[11px] bg-gray-100 text-gray-700">
                                     HS: {lead.hscode}
-                                  </span>
-                                )}
-                                {/* Broadcast Status Badge */}
-                                {lead.broadcast === "approved" && (
-                                  <span className="px-2 py-0.5 rounded-full text-[11px] bg-green-100 text-green-700 flex items-center gap-1">
-                                    <HiMegaphone className="w-3 h-3" />
-                                    BROADCAST
-                                  </span>
-                                )}
-                                {lead.broadcast === "pending" && (
-                                  <span className="px-2 py-0.5 rounded-full text-[11px] bg-yellow-100 text-yellow-700 flex items-center gap-1">
-                                    <HiMegaphone className="w-3 h-3" />
-                                    PENDING
                                   </span>
                                 )}
                               </div>
                               {lead.description && (
-                                <div className="text-gray-800 font-medium leading-6">
+                                <div className="text-gray-900">
                                   {lead.description}
                                 </div>
                               )}
-                              <div className="flex flex-wrap gap-2 text-[11px] text-gray-700">
-                                {lead.quantity && (
-                                  <div>Qty: {lead.quantity}</div>
-                                )}
-                                {lead.packing && (
-                                  <div>Packing: {lead.packing}</div>
-                                )}
-                                {(lead.targetPrice ||
-                                  lead.negotiable !== undefined) && (
-                                  <div>
-                                    Target: {lead.targetPrice || "-"}{" "}
-                                    {lead.negotiable ? "(Negotiable)" : ""}
-                                  </div>
-                                )}
-                              </div>
-                              <div className="text-xs text-gray-700 space-y-1">
-                                {lead.buyerDeliveryLocation?.address && (
-                                  <div>
-                                    Delivery:{" "}
-                                    {lead.buyerDeliveryLocation.address}
-                                  </div>
-                                )}
-                                {lead.sellerPickupLocation?.address && (
-                                  <div>
-                                    Pickup: {lead.sellerPickupLocation.address}
-                                  </div>
-                                )}
-                                {lead.specialRequest && (
-                                  <div>
-                                    Special request: {lead.specialRequest}
-                                  </div>
-                                )}
-                                {lead.remarks && (
-                                  <div>Notes: {lead.remarks}</div>
-                                )}
-                              </div>
-                              {Array.isArray(lead.documents) &&
-                                lead.documents.length > 0 && (
-                                  <div className="mt-2 flex flex-wrap gap-2">
-                                    {lead.documents.map((doc, i) => (
-                                      <a
-                                        key={i}
-                                        href={`${process.env.NEXT_PUBLIC_BASE_URL}/leadDocuments/${doc}`}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-blue-700 hover:bg-gray-200 text-[11px]"
-                                      >
-                                        <span>📄</span>
-                                        <span className="truncate max-w-[140px]">
-                                          {doc}
-                                        </span>
-                                      </a>
-                                    ))}
-                                  </div>
-                                )}
+                              {lead.quantity && (
+                                <div className="text-gray-600 text-xs">
+                                  Quantity: {lead.quantity}
+                                </div>
+                              )}
+                              {lead.packing && (
+                                <div className="text-gray-600 text-xs">
+                                  Packing: {lead.packing}
+                                </div>
+                              )}
+                              {lead.targetPrice && (
+                                <div className="text-gray-600 text-xs">
+                                  Price: {lead.targetPrice}
+                                  {lead.negotiable && (
+                                    <span className="ml-1 text-green-600">
+                                      (Negotiable)
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                              {lead.buyerDeliveryAddress && (
+                                <div className="text-gray-600 text-xs">
+                                  Delivery: {lead.buyerDeliveryAddress}
+                                </div>
+                              )}
+                              {lead.sellerPickupAddress && (
+                                <div className="text-gray-600 text-xs">
+                                  Pickup: {lead.sellerPickupAddress}
+                                </div>
+                              )}
+                              {lead.specialRequest && (
+                                <div className="text-gray-600 text-xs">
+                                  Special Request: {lead.specialRequest}
+                                </div>
+                              )}
+                              {lead.remarks && (
+                                <div className="text-gray-600 text-xs">
+                                  Remarks: {lead.remarks}
+                                </div>
+                              )}
                             </div>
                           ) : (
-                            <p className="text-sm break-words">
-                              {lead.content}
-                            </p>
+                            <div className="text-gray-900">
+                              {lead.content || "Text message"}
+                            </div>
                           )}
                         </div>
-                        <div className="flex items-center justify-between mt-1">
-                          <div
-                            className={`text-xs text-gray-500 ${
-                              isOwnMessage ? "text-right" : "text-left"
-                            }`}
-                          >
-                            {formatTime(lead.createdAt)}
-                          </div>
-                          {/* Broadcast Button - Only show for own leads that haven't been broadcasted */}
-                          {isOwnMessage &&
-                            (!lead.broadcast || lead.broadcast === "none") && (
-                              <button
-                                onClick={() => handleBroadcastRequest(lead._id)}
-                                disabled={processingBroadcast[lead._id]}
-                                className="flex items-center gap-1 px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200 transition-colors disabled:opacity-50"
-                                title="Request broadcast for this lead"
-                              >
-                                <HiMegaphone className="w-3 h-3" />
-                                {processingBroadcast[lead._id]
-                                  ? "Requesting..."
-                                  : "Boost"}
-                              </button>
-                            )}
+                        <div
+                          className={`text-xs text-gray-500 mt-1 ${
+                            isOwnMessage ? "text-right" : "text-left"
+                          }`}
+                        >
+                          {formatTime(lead.createdAt)}
                         </div>
+                        {/* Broadcast Button - Only show for own leads that haven't been broadcasted */}
+                        {isOwnMessage &&
+                          (!lead.broadcast || lead.broadcast === "none") && (
+                            <button
+                              onClick={() => handleBroadcastRequest(lead._id)}
+                              disabled={processingBroadcast[lead._id]}
+                              className="flex items-center gap-1 px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200 transition-colors disabled:opacity-50"
+                              title="Request broadcast for this lead"
+                            >
+                              <HiMegaphone className="w-3 h-3" />
+                              {processingBroadcast[lead._id]
+                                ? "Requesting..."
+                                : "Boost"}
+                            </button>
+                          )}
                       </div>
                     </div>
                   </React.Fragment>
@@ -629,6 +574,7 @@ const ChatWindow = ({
           </div>
         )}
       </div>
+
       {/* Action bar */}
       <div className="p-3 md:p-4 border-t border-gray-200 flex-shrink-0 bg-white flex items-center justify-end">
         <button
@@ -646,7 +592,6 @@ const ChatWindow = ({
         isOpen={leadModalOpen}
         onClose={() => setLeadModalOpen(false)}
         onSubmit={async (vals) => {
-          // reuse existing submit logic with vals
           try {
             setSending(true);
             setError("");
@@ -675,19 +620,30 @@ const ChatWindow = ({
             (vals.documents || []).forEach((file) =>
               form.append("documents", file)
             );
-            await axios.post(
-              `${process.env.NEXT_PUBLIC_BASE_URL}/requested-leads`,
+
+            // For superadmin, post directly to approved leads
+            const endpoint = isGlobal
+              ? "/superadmin/global-lead-direct"
+              : "/superadmin/lead-direct";
+
+            const response = await axios.post(
+              `${process.env.NEXT_PUBLIC_BASE_URL}${endpoint}`,
               form,
               {
                 withCredentials: true,
                 headers: { "Content-Type": "multipart/form-data" },
               }
             );
-            setLeadModalOpen(false);
-            toast.success("Your lead has been submitted for approval!");
+
+            if (response.data.success) {
+              setLeadModalOpen(false);
+              toast.success("Lead posted successfully!");
+              // Refresh leads to show the new lead
+              fetchLeads();
+            }
           } catch (err) {
             console.error("Error sending lead:", err);
-            setError("Failed to send lead");
+            toast.error("Failed to post lead");
           } finally {
             setSending(false);
           }
@@ -705,4 +661,4 @@ const ChatWindow = ({
   );
 };
 
-export default ChatWindow;
+export default SuperAdminChatWindow;

@@ -3,6 +3,7 @@ import {
   superadminMiddleware,
   authMiddleware,
 } from "../middlewares/auth.mdware.js";
+import upload from "../configurations/multer.js";
 import {
   getDashboardStats,
   getAdmins,
@@ -14,7 +15,8 @@ import {
   approveRejectGlobalLead,
   postSuperadminMessage,
   postSuperadminLocalMessage,
-
+  postLeadDirect,
+  postGlobalLeadDirect,
   getLocalRequestedLeadsCountryCounts,
   getPendingLocalRequestedLeadsByCountry,
   getSuperadmins,
@@ -24,6 +26,8 @@ import {
 } from "../controllers/superadmin.ctrls.js";
 import { approveRejectLead } from "../controllers/requestedLeads.ctrls.js";
 import { getGlobalLeadsByGroup } from "../controllers/globalLeads.ctrls.js";
+import ApprovedLeads from "../models/ApprovedLeads.js";
+import GlobalApprovedLeads from "../models/GlobalApprovedLeads.js";
 
 const router = express.Router();
 
@@ -95,6 +99,48 @@ router.post(
   postSuperadminLocalMessage
 );
 
+// Superadmin post lead directly to approved leads (local)
+router.post(
+  "/lead-direct",
+  superadminMiddleware,
+  upload.array("documents", 10),
+  postLeadDirect
+);
 
+// Superadmin post global lead directly to approved global leads
+router.post(
+  "/global-lead-direct",
+  superadminMiddleware,
+  upload.array("documents", 10),
+  postGlobalLeadDirect
+);
+
+// Superadmin fetch leads from any local group
+router.get("/leads/:groupId", superadminMiddleware, async (req, res) => {
+  try {
+    const { groupId } = req.params;
+    const leads = await ApprovedLeads.find({ groupId })
+      .populate("userId", "name email image")
+      .sort({ createdAt: -1 });
+    res.json({ leads });
+  } catch (error) {
+    console.error("Error fetching leads:", error);
+    res.status(500).json({ message: "Error fetching leads" });
+  }
+});
+
+// Superadmin fetch leads from any global group
+router.get("/global-leads/:groupId", superadminMiddleware, async (req, res) => {
+  try {
+    const { groupId } = req.params;
+    const leads = await GlobalApprovedLeads.find({ groupId })
+      .populate("userId", "name email image")
+      .sort({ createdAt: -1 });
+    res.json({ leads });
+  } catch (error) {
+    console.error("Error fetching global leads:", error);
+    res.status(500).json({ message: "Error fetching global leads" });
+  }
+});
 
 export default router;

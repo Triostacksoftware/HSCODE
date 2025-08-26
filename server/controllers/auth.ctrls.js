@@ -86,7 +86,9 @@ export const updateProfile = async (req, res) => {
 export const userExists = async (req, res) => {
   try {
     const { email, phoneNumber } = req.body;
-    const user = await UserModel.findOne({$or: [{email}, {phone: phoneNumber}]});
+    const user = await UserModel.findOne({
+      $or: [{ email }, { phone: phoneNumber }],
+    });
     if (user) {
       return res.status(200).json({ message: "User exists" });
     }
@@ -113,16 +115,18 @@ export const verifyOTP = async (req, res) => {
     console.log("Cookies received:", req.cookies);
     console.log("otp_token cookie:", req.cookies.otp_token);
     const otpToken = req.cookies.otp_token;
-    
+
     if (!otpToken) {
-      return res.status(401).json({ message: "OTP token not found in cookies" });
+      return res
+        .status(401)
+        .json({ message: "OTP token not found in cookies" });
     }
-    
+
     const decoded = verifyToken(otpToken);
     if (decoded.email !== email || decoded.otp !== otp) {
       return res.status(401).json({ message: "Invalid or expired OTP" });
     }
-    
+
     return res.status(200).json({ message: "OTP verified" });
   } catch (error) {
     console.error("OTP verification error:", error);
@@ -136,7 +140,9 @@ export const signup = async (req, res) => {
 
   try {
     // Check if user already exists
-    const existingUser = await UserModel.findOne({$or: [{email}, {phone: phoneNumber}]});
+    const existingUser = await UserModel.findOne({
+      $or: [{ email }, { phone: phoneNumber }],
+    });
 
     if (existingUser) {
       console.log("existingUser", existingUser);
@@ -168,7 +174,7 @@ export const signup = async (req, res) => {
     }
 
     // Get Firebase ID token from Authorization header
-    const idToken = req.headers.authorization?.split(' ')[1];
+    const idToken = req.headers.authorization?.split(" ")[1];
     console.log("idToken", idToken);
     if (!idToken) {
       return res.status(401).json({
@@ -179,7 +185,7 @@ export const signup = async (req, res) => {
 
     // Verify Firebase ID token
     const firebaseResult = await verifyFirebaseToken(idToken);
-    
+
     if (!firebaseResult.success) {
       return res.status(401).json({
         success: false,
@@ -194,7 +200,6 @@ export const signup = async (req, res) => {
         message: "Phone number not verified in Firebase",
       });
     }
-
 
     // Create new user directly (phone verification already done by Firebase)
     const newUser = new UserModel({
@@ -241,14 +246,18 @@ export const verifyFirebaseTokenAndLogin = async (req, res) => {
     const idToken = req.headers.authorization?.split(" ")[1];
     console.log("idToken", idToken);
     if (!idToken) {
-      return res.status(401).json({ message: "Firebase ID token required in Authorization header" });
+      return res
+        .status(401)
+        .json({
+          message: "Firebase ID token required in Authorization header",
+        });
     }
-    console.log("hello")
+    console.log("hello");
 
     const firebaseResult = await verifyFirebaseToken(idToken);
     console.log("firebaseResult", firebaseResult);
     if (!firebaseResult.success) {
-      return res.status(401).json({ message: "Invalid Firebase token" }); 
+      return res.status(401).json({ message: "Invalid Firebase token" });
     }
     const user = await UserModel.findOne({ phone: phoneNumber });
     console.log("user", user);
@@ -372,12 +381,6 @@ export const userVerification = async (req, res) => {
   }
 };
 
-
-
-
-
-
-
 // Admin Controllers
 export const adminLogin = async (req, res) => {
   const { email, password } = req.body;
@@ -397,10 +400,10 @@ export const adminLogin = async (req, res) => {
     // Check if TOTP is already configured
     if (admin.totpEnabled && admin.totpSecret) {
       // Admin has TOTP configured - require TOTP verification
-      return res.status(200).json({ 
+      return res.status(200).json({
         message: "TOTP verification required",
         requiresTOTP: true,
-        adminId: admin._id
+        adminId: admin._id,
       });
     } else {
       // Admin doesn't have TOTP - generate TOTP secret and QR code
@@ -420,11 +423,11 @@ export const adminLogin = async (req, res) => {
         maxAge: 10 * 60 * 1000, // 10 minutes
       });
 
-      return res.status(200).json({ 
+      return res.status(200).json({
         message: "TOTP setup required",
         requiresTOTP: false,
         qrCode,
-        totpSecret
+        totpSecret,
       });
     }
   } catch (err) {
@@ -432,8 +435,6 @@ export const adminLogin = async (req, res) => {
     return res.status(500).json({ message: "Login failed" });
   }
 };
-
-
 
 // Superadmin Login
 export const superadminLogin = async (req, res) => {
@@ -609,35 +610,42 @@ export const verifyTOTPSetup = async (req, res) => {
     const totpSetupToken = req.cookies.totp_setup_token;
 
     if (!totpCode || !totpSetupToken) {
-      return res.status(400).json({ message: "TOTP code and setup token required" });
+      return res
+        .status(400)
+        .json({ message: "TOTP code and setup token required" });
     }
 
     const decoded = verifyToken(totpSetupToken);
     if (!decoded) {
-      return res.status(401).json({ message: "Invalid or expired TOTP setup token" });
+      return res
+        .status(401)
+        .json({ message: "Invalid or expired TOTP setup token" });
     }
 
     // Verify the TOTP code
     console.log("TOTP Verification Debug:", {
       totpCode,
       totpSecret: decoded.totpSecret.secret,
-      decodedTotpSecret: decoded.totpSecret
+      decodedTotpSecret: decoded.totpSecret,
     });
-    
+
     // Generate current TOTP for debugging
     const { generateCurrentTOTP } = await import("../utilities/totp.util.js");
     const currentTOTP = generateCurrentTOTP(decoded.totpSecret.secret);
     console.log("Current TOTP for comparison:", currentTOTP);
-    
+
     const isValid = verifyTOTP(totpCode, decoded.totpSecret.secret);
     console.log("TOTP Verification Result:", isValid);
-    
+
     if (!isValid) {
       return res.status(401).json({ message: "Invalid TOTP code" });
     }
 
     // Find admin and enable TOTP
-    const admin = await UserModel.findOne({ email: decoded.email, role: "admin" });
+    const admin = await UserModel.findOne({
+      email: decoded.email,
+      role: "admin",
+    });
     if (!admin) return res.status(404).json("Admin not found");
 
     // Enable TOTP for this admin
@@ -661,7 +669,7 @@ export const verifyTOTPSetup = async (req, res) => {
 
     res.clearCookie("totp_setup_token");
 
-    return res.status(200).json({ 
+    return res.status(200).json({
       message: "TOTP setup complete. Login successful.",
       admin: {
         id: admin._id,
@@ -669,7 +677,7 @@ export const verifyTOTPSetup = async (req, res) => {
         email: admin.email,
         countryCode: admin.countryCode,
         role: "admin",
-      }
+      },
     });
   } catch (error) {
     console.error("TOTP setup verification error:", error);
@@ -831,8 +839,10 @@ export const verifyAuth = async (req, res) => {
 export const verifyUserAuth = async (req, res) => {
   try {
     const token = req.cookies.auth_token;
+    console.log("verifyUserAuth - token:", token);
 
     if (!token) {
+      console.log("verifyUserAuth - No token provided");
       return res.status(401).json({
         authenticated: false,
         message: "No authentication token",
@@ -840,36 +850,82 @@ export const verifyUserAuth = async (req, res) => {
     }
 
     const decoded = verifyToken(token);
+    console.log("verifyUserAuth - decoded token:", decoded);
+
     if (!decoded) {
+      console.log("verifyUserAuth - Invalid token");
       return res.status(401).json({
         authenticated: false,
         message: "Invalid or expired token",
       });
     }
 
-    // Check if user exists (any role)
-    const user = await UserModel.findById(decoded.id);
+    console.log("verifyUserAuth - decoded role:", decoded.role);
+
+    // Check if user exists (any role) or if superadmin exists
+    let user = null;
+    let isSuperadmin = false;
+
+    if (decoded.role === "superadmin") {
+      console.log(
+        "verifyUserAuth - Checking SuperAdminModel for ID:",
+        decoded.id
+      );
+      user = await SuperAdminModel.findById(decoded.id);
+      isSuperadmin = true;
+      console.log("verifyUserAuth - Superadmin found:", user ? "Yes" : "No");
+    } else {
+      console.log("verifyUserAuth - Checking UserModel for ID:", decoded.id);
+      user = await UserModel.findById(decoded.id);
+      console.log("verifyUserAuth - User found:", user ? "Yes" : "No");
+    }
+
     if (!user) {
+      console.log("verifyUserAuth - No user found for role:", decoded.role);
       return res.status(401).json({
         authenticated: false,
         message: "User not found",
       });
     }
 
-    return res.status(200).json({
-      authenticated: true,
-      user: {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-        membership: user.membership,
-        groupsID: user.groupsID,
-        globalGroupsID: user.globalGroupsID,
-        countryCode: user.countryCode,
-        role: decoded.role,
-      },
-    });
+    console.log(
+      "verifyUserAuth - Authentication successful for role:",
+      decoded.role
+    );
+
+    // Return appropriate user data based on role
+    if (isSuperadmin) {
+      return res.status(200).json({
+        authenticated: true,
+        user: {
+          _id: user._id,
+          name: user.name,
+          email: user.email,
+          countryCode: user.countryCode,
+          role: decoded.role,
+          // Superadmins don't have these fields, so we'll provide defaults
+          phone: null,
+          membership: null,
+          groupsID: [],
+          globalGroupsID: [],
+        },
+      });
+    } else {
+      return res.status(200).json({
+        authenticated: true,
+        user: {
+          _id: user._id,
+          name: user.name,
+          email: user.email,
+          phone: user.phone,
+          membership: user.membership,
+          groupsID: user.groupsID,
+          globalGroupsID: user.globalGroupsID,
+          countryCode: user.countryCode,
+          role: decoded.role,
+        },
+      });
+    }
   } catch (error) {
     console.error("User auth verification error:", error);
     return res.status(500).json({
@@ -892,9 +948,9 @@ export const checkUserBeforeOTP = async (req, res) => {
   try {
     // Check if user already exists with this email or phone
     const existingUser = await UserModel.findOne({
-      $or: [{ email }, { phone: phoneNumber }]
+      $or: [{ email }, { phone: phoneNumber }],
     });
-    
+
     if (existingUser) {
       return res.status(200).json({
         message: "User exists",
@@ -906,9 +962,9 @@ export const checkUserBeforeOTP = async (req, res) => {
     const otp = generateOTP();
     await emailVerificatonMail(email, otp, "signup");
     const otpToken = generateToken({ email, otp }, "5m");
-    
+
     console.log("Setting otp_token cookie:", otpToken);
-    
+
     res.cookie("otp_token", otpToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -916,9 +972,9 @@ export const checkUserBeforeOTP = async (req, res) => {
       maxAge: 5 * 60 * 1000,
       path: "/",
     });
-    
+
     console.log("Cookie set successfully");
-    
+
     return res.status(200).json({
       message: "OTP sent to email",
       userExists: false,
@@ -944,9 +1000,9 @@ export const checkUserExists = async (req, res) => {
     // We need to search for users whose phone number ends with the plain number
     // since database stores full numbers like "+919999999995"
     const existingUser = await UserModel.findOne({
-      phone: phoneNumber
+      phone: phoneNumber,
     });
-    
+
     if (existingUser) {
       return res.status(200).json({
         message: "User found",
@@ -963,5 +1019,3 @@ export const checkUserExists = async (req, res) => {
     return res.status(500).json({ message: "Failed to check user existence" });
   }
 };
-
-

@@ -6,6 +6,7 @@ import {
 } from "../middlewares/auth.mdware.js";
 import {
   getGlobalGroups,
+  getGlobalGroupById,
   getAllGlobalGroups,
   createGlobalGroup,
   updateGlobalGroup,
@@ -19,6 +20,7 @@ const router = express.Router();
 // Global Group routes
 router.get("/", authMiddleware, getGlobalGroups); // Anyone can fetch
 router.get("/all", superadminMiddleware, getAllGlobalGroups); // Get all groups for superadmin
+router.get("/:groupId", authMiddleware, getGlobalGroupById); // Get single group with members
 router.post(
   "/",
   superadminMiddleware,

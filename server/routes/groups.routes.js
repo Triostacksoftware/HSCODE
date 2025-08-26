@@ -2,6 +2,7 @@ import express from "express";
 import { adminMiddleware, authMiddleware } from "../middlewares/auth.mdware.js";
 import {
   getGroups,
+  getGroupById,
   createGroup,
   updateGroup,
   deleteGroup,
@@ -14,6 +15,7 @@ const router = express.Router();
 
 // Direct group routes (admin only)
 router.get("/", authMiddleware, getGroups);
+router.get("/:groupId", authMiddleware, getGroupById);
 router.post("/", adminMiddleware, upload.single("file"), createGroup);
 router.post("/many", adminMiddleware, upload.single("file"), createManyGroup);
 router.patch("/:groupId", adminMiddleware, updateGroup);

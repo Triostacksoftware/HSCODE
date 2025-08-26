@@ -10,10 +10,23 @@ import {
 } from "react-icons/md";
 import axios from "axios";
 
-const SuperAddGroup = ({ categoryId, categoryName, onClose }) => {
+const SuperAddGroup = ({
+  chapterNumber,
+  chapterName,
+  groupType,
+  onClose,
+  onGroupCreated,
+}) => {
+  console.log("📝 SuperAddGroup received props:", {
+    chapterNumber,
+    chapterName,
+    groupType,
+  });
+
   const [formData, setFormData] = useState({
     name: "",
     heading: "",
+    chapterNumber: chapterNumber || "",
   });
   const [selectedFile, setSelectedFile] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -23,6 +36,12 @@ const SuperAddGroup = ({ categoryId, categoryName, onClose }) => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+
+    // Prevent editing chapter number as it should be auto-filled
+    if (name === "chapterNumber") {
+      return;
+    }
+
     setFormData((prev) => ({
       ...prev,
       [name]: value,
@@ -65,15 +84,26 @@ const SuperAddGroup = ({ categoryId, categoryName, onClose }) => {
     try {
       const submitFormData = new FormData();
       submitFormData.append("name", formData.name);
-    submitFormData.append("heading", formData.heading);
-      submitFormData.append("categoryId", categoryId);
+      submitFormData.append("heading", formData.heading);
+      submitFormData.append("chapterNumber", formData.chapterNumber);
 
       if (selectedFile) {
         submitFormData.append("file", selectedFile);
       }
 
+      // Determine API endpoint based on group type
+      const endpoint = groupType === "global" ? "/global-groups" : "/groups";
+
+      console.log("🚀 Creating group with:", {
+        groupType,
+        endpoint,
+        fullUrl: `${process.env.NEXT_PUBLIC_BASE_URL}${endpoint}`,
+        chapterNumber: formData.chapterNumber,
+        name: formData.name,
+      });
+
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/global-groups/${categoryId}`,
+        `${process.env.NEXT_PUBLIC_BASE_URL}${endpoint}`,
         submitFormData,
         {
           withCredentials: true,
@@ -83,16 +113,20 @@ const SuperAddGroup = ({ categoryId, categoryName, onClose }) => {
         }
       );
 
-      setSuccess("Global group created successfully!");
+      const groupTypeText = groupType === "global" ? "Global" : "Local";
+      setSuccess(`${groupTypeText} group created successfully!`);
 
       // Close modal after a short delay to show success message
       setTimeout(() => {
+        if (onGroupCreated) onGroupCreated();
         onClose();
       }, 500);
     } catch (error) {
-      console.error("Error creating global group:", error);
+      const groupTypeText = groupType === "global" ? "global" : "local";
+      console.error(`Error creating ${groupTypeText} group:`, error);
       setError(
-        error.response?.data?.message || "Failed to create global group"
+        error.response?.data?.message ||
+          `Failed to create ${groupTypeText} group`
       );
     } finally {
       setIsLoading(false);
@@ -111,13 +145,17 @@ const SuperAddGroup = ({ categoryId, categoryName, onClose }) => {
     setSuccess("");
 
     try {
-      const formData = new FormData();
-      formData.append("file", selectedFile);
-      formData.append("categoryId", categoryId);
+      const bulkFormData = new FormData();
+      bulkFormData.append("file", selectedFile);
+      bulkFormData.append("chapterNumber", chapterNumber);
+
+      // Determine API endpoint based on group type
+      const endpoint =
+        groupType === "global" ? "/global-groups/bulk" : "/groups/bulk";
 
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/global-groups/${categoryId}/bulk`,
-        formData,
+        `${process.env.NEXT_PUBLIC_BASE_URL}${endpoint}`,
+        bulkFormData,
         {
           withCredentials: true,
           headers: {
@@ -126,16 +164,20 @@ const SuperAddGroup = ({ categoryId, categoryName, onClose }) => {
         }
       );
 
-      setSuccess("Global groups imported successfully!");
+      const groupTypeText = groupType === "global" ? "Global" : "Local";
+      setSuccess(`${groupTypeText} groups imported successfully!`);
 
       // Close modal after a short delay to show success message
       setTimeout(() => {
+        if (onGroupCreated) onGroupCreated();
         onClose();
       }, 500);
     } catch (error) {
-      console.error("Error importing global groups:", error);
+      const groupTypeText = groupType === "global" ? "global" : "local";
+      console.error(`Error importing ${groupTypeText} groups:`, error);
       setError(
-        error.response?.data?.message || "Failed to import global groups"
+        error.response?.data?.message ||
+          `Failed to import ${groupTypeText} groups`
       );
     } finally {
       setIsBulkLoading(false);
@@ -155,10 +197,11 @@ const SuperAddGroup = ({ categoryId, categoryName, onClose }) => {
           </button>
           <div>
             <h2 className="text-lg font-semibold text-gray-900">
-              Add Global Group
+              Add {groupType === "global" ? "Global" : "Local"} Group
             </h2>
             <p className="text-sm text-gray-500">
-              Create a new global group in {categoryName}
+              Create a new {groupType === "global" ? "global" : "local"} group
+              in {chapterName}
             </p>
           </div>
         </div>
@@ -175,7 +218,7 @@ const SuperAddGroup = ({ categoryId, categoryName, onClose }) => {
         {/* Single Group Form */}
         <div className="mb-8">
           <h3 className="text-md font-semibold text-gray-800 mb-4">
-            Add Single Global Group
+            Add Single {groupType === "global" ? "Global" : "Local"} Group
           </h3>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -188,8 +231,25 @@ const SuperAddGroup = ({ categoryId, categoryName, onClose }) => {
                 value={formData.name}
                 onChange={handleInputChange}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter global group name"
+                placeholder={`Enter ${
+                  groupType === "global" ? "global" : "local"
+                } group name`}
                 required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-500 mb-2">
+                Chapter Number
+              </label>
+              <input
+                type="text"
+                name="chapterNumber"
+                value={formData.chapterNumber}
+                readOnly
+                disabled
+                className="w-full p-3 border border-gray-200 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed"
+                placeholder="Auto-filled from selected chapter"
               />
             </div>
 
@@ -257,7 +317,7 @@ const SuperAddGroup = ({ categoryId, categoryName, onClose }) => {
               ) : (
                 <>
                   <MdSave className="w-4 h-4 mr-2" />
-                  Create Global Group
+                  Create {groupType === "global" ? "Global" : "Local"} Group
                 </>
               )}
             </button>
@@ -277,7 +337,7 @@ const SuperAddGroup = ({ categoryId, categoryName, onClose }) => {
         {/* Bulk Import Form */}
         <div>
           <h3 className="text-md font-semibold text-gray-800 mb-4">
-            Bulk Import Global Groups
+            Bulk Import {groupType === "global" ? "Global" : "Local"} Groups
           </h3>
           <form onSubmit={handleBulkSubmit} className="space-y-4">
             <div>
@@ -327,7 +387,7 @@ const SuperAddGroup = ({ categoryId, categoryName, onClose }) => {
               ) : (
                 <>
                   <MdUpload className="w-4 h-4 mr-2" />
-                  Import Global Groups
+                  Import {groupType === "global" ? "Global" : "Local"} Groups
                 </>
               )}
             </button>

@@ -5,20 +5,20 @@ import useCountryCode from '../../utilities/useCountryCode';
 import { useHomeCountry } from '../../contexts/HomeCountryContext';
 
 const HSCodeSearch = () => {
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
-  
-  const { 
-    hscodes, 
-    loading, 
-    error, 
-    userCountry, 
-    loadHSCodes, 
-    searchHSCodes, 
-    totalCount, 
-    hasData 
+
+  const {
+    hscodes,
+    loading,
+    error,
+    userCountry,
+    loadHSCodes,
+    searchHSCodes,
+    totalCount,
+    hasData,
   } = useHSCode();
-  
+
   const { countryInfo } = useCountryCode();
   const { homeCountry } = useHomeCountry();
 
@@ -35,7 +35,7 @@ const HSCodeSearch = () => {
   // Search HS codes
   const handleSearch = (term) => {
     setSearchTerm(term);
-    
+
     if (!term.trim()) {
       setSearchResults([]);
       return;
@@ -53,7 +53,7 @@ const HSCodeSearch = () => {
 
   // Clear search
   const clearSearch = () => {
-    setSearchTerm('');
+    setSearchTerm("");
     setSearchResults([]);
   };
 
@@ -78,7 +78,7 @@ const HSCodeSearch = () => {
             </button>
           )}
         </div>
-        
+
         {/* Loading indicator */}
         {loading && (
           <div className="text-center mt-4">
@@ -105,14 +105,19 @@ const HSCodeSearch = () => {
             
             {searchResults.length === 20 && (
               <p className="text-sm text-gray-600 mt-1">
-                Showing first 20 results. Refine your search for more specific results.
+                Showing first 20 results. Refine your search for more specific
+                results.
               </p>
             )}
           </div>
           
           <div className="max-h-96 overflow-y-auto relative z-999">
             {searchResults.map((item) => (
-              <div key={item.id} className="px-6 py-4 border-b border-gray-100 hover:bg-gray-50">
+              <div
+                key={item.id}
+                className="px-6 py-4 border-5 border-gray-900 hover:bg-gray-50"
+              >
+                {console.log(item)}
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     {/* HS CODE - Large and Bold */}
@@ -168,7 +173,9 @@ const HSCodeSearch = () => {
       {searchTerm && searchResults.length === 0 && !loading && (
         <div className="text-center py-8">
           <div className="text-6xl mb-4">🔍</div>
-          <h3 className="text-xl font-medium text-gray-900 mb-2">No results found</h3>
+          <h3 className="text-xl font-medium text-gray-900 mb-2">
+            No results found
+          </h3>
           <p className="text-gray-600">
             Try searching with different keywords or check your spelling
           </p>

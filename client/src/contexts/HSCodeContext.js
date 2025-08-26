@@ -1,12 +1,12 @@
 "use client";
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback } from "react";
 
 const HSCodeContext = createContext();
 
 export const useHSCode = () => {
   const context = useContext(HSCodeContext);
   if (!context) {
-    throw new Error('useHSCode must be used within an HSCodeProvider');
+    throw new Error("useHSCode must be used within an HSCodeProvider");
   }
   return context;
 };
@@ -20,7 +20,7 @@ export const HSCodeProvider = ({ children }) => {
   // Parse CSV text to structured data
   const parseCSV = useCallback((csvText, country) => {
     try {
-      const lines = csvText.split('\n').filter(line => line.trim());
+      const lines = csvText.split("\n").filter((line) => line.trim());
       if (lines.length === 0) return [];
 
       // Detect if first line is header
@@ -82,49 +82,58 @@ export const HSCodeProvider = ({ children }) => {
         };
       }).filter(item => item.chapter && item.chapterDescription); // Remove empty entries
     } catch (error) {
-      console.error('Error parsing CSV:', error);
+      console.error("Error parsing CSV:", error);
       return [];
     }
   }, []);
 
   // Load HS codes for user's country and US
-  const loadHSCodes = useCallback(async (userCountryCode) => {
-    if (!userCountryCode) return;
-    
-    setLoading(true);
-    setError(null);
-    setUserCountry(userCountryCode.toUpperCase());
-    
-    try {
-      // Load from user's country only
-      const country = userCountryCode.toUpperCase();
-      let allCodes = [];
-      
+  const loadHSCodes = useCallback(
+    async (userCountryCode) => {
+      if (!userCountryCode) return;
+
+      setLoading(true);
+      setError(null);
+      setUserCountry(userCountryCode.toUpperCase());
+
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/hscodes?countryCode=${country}`);
-        if (response.ok) {
-          const csvText = await response.text();
-          const parsedCodes = parseCSV(csvText, country);
-          allCodes = parsedCodes;
+        // Load from user's country and US
+        const countries = [userCountryCode.toUpperCase(), "US"];
+        let allCodes = [];
+
+        for (const country of countries) {
+          try {
+            const response = await fetch(
+              `${process.env.NEXT_PUBLIC_BASE_URL}/hscodes?countryCode=${country}`
+            );
+            if (response.ok) {
+              const csvText = await response.text();
+              const parsedCodes = parseCSV(csvText, country);
+              allCodes = [...allCodes, ...parsedCodes];
+            }
+          } catch (err) {
+            console.log(`Could not load ${country} codes:`, err.message);
+          }
         }
-      } catch (err) {
-        console.log(`Could not load ${country} codes:`, err.message);
+
+        setHscodes((prev) => ({
+          ...prev,
+          userCountry: userCountryCode.toUpperCase(),
+          allCodes: allCodes,
+        }));
+
+        console.log(
+          `Loaded ${allCodes.length} total HS codes from ${userCountryCode} and US`
+        );
+      } catch (error) {
+        console.error("Error loading HS codes:", error);
+        setError("Failed to load HS codes");
+      } finally {
+        setLoading(false);
       }
-      
-      setHscodes(prev => ({
-        ...prev,
-        userCountry: country,
-        allCodes: allCodes
-      }));
-      
-      console.log(`Loaded ${allCodes.length} HS codes from ${country}`);
-    } catch (error) {
-      console.error('Error loading HS codes:', error);
-      setError('Failed to load HS codes');
-    } finally {
-      setLoading(false);
-    }
-  }, [parseCSV]);
+    },
+    [parseCSV]
+  );
 
   // Search HS codes across user's country and US
   const searchHSCodes = useCallback((searchTerm) => {
@@ -145,8 +154,10 @@ export const HSCodeProvider = ({ children }) => {
       item.tldesc.toLowerCase().includes(term)
     );
 
-    return results.slice(0, 20); // Limit to first 20 results
-  }, [hscodes.allCodes]);
+      return results.slice(0, 20); // Limit to first 20 results
+    },
+    [hscodes.allCodes]
+  );
 
   // Get all loaded HS codes
   const getAllHSCodes = useCallback(() => {
@@ -182,23 +193,17 @@ export const HSCodeProvider = ({ children }) => {
     loading,
     error,
     userCountry,
-    
+
     // Actions
     loadHSCodes,
     searchHSCodes,
     getAllHSCodes,
-    getHSCodeById,
-    getHSCodesByChapter,
-    getHSCodesByGroup,
-    
     // Computed values
     totalCount: getTotalCount(),
-    hasData: hscodes.allCodes && hscodes.allCodes.length > 0
+    hasData: hscodes.allCodes && hscodes.allCodes.length > 0,
   };
 
   return (
-    <HSCodeContext.Provider value={value}>
-      {children}
-    </HSCodeContext.Provider>
+    <HSCodeContext.Provider value={value}>{children}</HSCodeContext.Provider>
   );
 };

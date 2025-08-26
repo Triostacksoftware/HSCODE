@@ -80,8 +80,10 @@ export const adminMiddleware = async (req, res, next) => {
 export const superadminMiddleware = async (req, res, next) => {
   try {
     const token = req.cookies.auth_token;
+    console.log("Superadmin middleware - token:", token);
 
     if (!token) {
+      console.log("Superadmin middleware - No token provided");
       return res
         .status(401)
         .json({ message: "No token provided. Please log in." });
@@ -89,12 +91,18 @@ export const superadminMiddleware = async (req, res, next) => {
 
     // Verify token
     const decoded = verifyToken(token);
+    console.log("Superadmin middleware - decoded token:", decoded);
+
     if (!decoded) {
+      console.log("Superadmin middleware - Invalid token");
       return res.status(401).json({ message: "Invalid or expired token" });
     }
 
+    console.log("Superadmin middleware - decoded role:", decoded.role);
+
     // Check if user is superadmin
     if (decoded.role !== "superadmin") {
+      console.log("Superadmin middleware - Role mismatch:", decoded.role);
       return res
         .status(403)
         .json({ message: "Access denied. Superadmin role required." });
@@ -102,11 +110,20 @@ export const superadminMiddleware = async (req, res, next) => {
 
     // Verify superadmin exists in database
     const superadmin = await SuperAdminModel.findById(decoded.id);
+    console.log(
+      "Superadmin middleware - found superadmin:",
+      superadmin ? "Yes" : "No"
+    );
+
     if (!superadmin) {
+      console.log("Superadmin middleware - Superadmin not found in database");
       return res.status(401).json({ message: "Superadmin not found" });
     }
 
     req.user = decoded;
+    console.log(
+      "Superadmin middleware - Authentication successful, proceeding"
+    );
     next();
   } catch (err) {
     console.error("Superadmin middleware error:", err);

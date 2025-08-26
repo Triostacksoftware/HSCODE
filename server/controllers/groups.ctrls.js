@@ -4,8 +4,8 @@ import { parseFile } from "../utilities/xlsx.util.js";
 // GET groups (can filter by chapter number)
 export const getGroups = async (req, res) => {
   try {
-    const { chapterNumber } = req.query;
-    console.log(chapterNumber)
+    const { chapterNumber, countryCode } = req.query;
+    console.log("Query params:", { chapterNumber, countryCode });
     const userCountryCode = req.user.countryCode;
 
     let query = {};
@@ -15,13 +15,19 @@ export const getGroups = async (req, res) => {
       query.chapterNumber = chapterNumber;
     }
 
-    // Always filter by country code
-    if (userCountryCode) {
+    // If countryCode is provided in query (for superadmin), use that
+    // Otherwise, use the user's own country code
+    if (countryCode) {
+      query.countryCode = countryCode;
+    } else if (userCountryCode) {
       query.countryCode = userCountryCode;
     }
-    console.log(query)
 
-    const groups = await LocalGroupModel.find(query).select("_id name heading image chapterNumber countryCode members");
+    console.log("Final query:", query);
+
+    const groups = await LocalGroupModel.find(query)
+      .populate("members", "name email image")
+      .select("_id name heading image chapterNumber countryCode members");
     res.json(groups);
   } catch (err) {
     console.error("Error fetching groups:", err);
@@ -29,8 +35,28 @@ export const getGroups = async (req, res) => {
   }
 };
 
+// GET single group by ID with members
+export const getGroupById = async (req, res) => {
+  try {
+    const { groupId } = req.params;
+
+    const group = await LocalGroupModel.findById(groupId)
+      .populate("members", "name email image")
+      .select("_id name heading image chapterNumber countryCode members");
+
+    if (!group) {
+      return res.status(404).json({ message: "Group not found" });
+    }
+
+    res.json(group);
+  } catch (err) {
+    console.error("Error fetching group by ID:", err);
+    res.status(500).json({ message: "Error fetching group" });
+  }
+};
+
 // CREATE group directly (Admin only)
-export const  createGroup = async (req, res) => {
+export const createGroup = async (req, res) => {
   try {
     const { name, heading, chapterNumber } = req.body;
     const { countryCode } = req.user;
@@ -38,8 +64,9 @@ export const  createGroup = async (req, res) => {
 
     // Validate required fields
     if (!name || !heading || !chapterNumber) {
-      return res.status(400).json({ 
-        message: "Missing required fields: name, heading, and chapterNumber are required" 
+      return res.status(400).json({
+        message:
+          "Missing required fields: name, heading, and chapterNumber are required",
       });
     }
 
@@ -57,16 +84,18 @@ export const  createGroup = async (req, res) => {
     res.status(201).json(newGroup);
   } catch (err) {
     console.error("Error creating group:", err);
-    
+
     // Check if it's a mongoose validation error
-    if (err.name === 'ValidationError') {
-      return res.status(400).json({ 
-        message: "Validation error", 
-        details: Object.values(err.errors).map(e => e.message) 
+    if (err.name === "ValidationError") {
+      return res.status(400).json({
+        message: "Validation error",
+        details: Object.values(err.errors).map((e) => e.message),
       });
     }
-    
-    res.status(500).json({ message: "Error creating group", error: err.message });
+
+    res
+      .status(500)
+      .json({ message: "Error creating group", error: err.message });
   }
 };
 
@@ -91,30 +120,36 @@ export const createManyGroup = async (req, res) => {
     }));
 
     // Validate that all required fields are present
-    const validGroups = formatted.filter(g => g.name && g.heading && g.chapterNumber);
-    
+    const validGroups = formatted.filter(
+      (g) => g.name && g.heading && g.chapterNumber
+    );
+
     if (validGroups.length === 0) {
-      return res.status(400).json({ message: "No valid groups found after validation" });
+      return res
+        .status(400)
+        .json({ message: "No valid groups found after validation" });
     }
 
     const newGroups = await LocalGroupModel.insertMany(validGroups);
-    res.status(201).json({ 
-      message: "Groups created successfully", 
-      count: newGroups.length 
+    res.status(201).json({
+      message: "Groups created successfully",
+      count: newGroups.length,
     });
   } catch (err) {
     console.error("Error bulk creating groups:", err);
     console.error("Error stack:", err.stack);
-    
+
     // Check if it's a mongoose validation error
-    if (err.name === 'ValidationError') {
-      return res.status(400).json({ 
-        message: "Validation error", 
-        details: Object.values(err.errors).map(e => e.message) 
+    if (err.name === "ValidationError") {
+      return res.status(400).json({
+        message: "Validation error",
+        details: Object.values(err.errors).map((e) => e.message),
       });
     }
-    
-    res.status(500).json({ message: "Error creating groups", error: err.message });
+
+    res
+      .status(500)
+      .json({ message: "Error creating groups", error: err.message });
   }
 };
 
@@ -131,8 +166,8 @@ export const updateGroup = async (req, res) => {
 
     // Check if user can modify this group (same country)
     if (group.countryCode !== req.user.countryCode) {
-      return res.status(403).json({ 
-        message: "Cannot modify group from another country" 
+      return res.status(403).json({
+        message: "Cannot modify group from another country",
       });
     }
 
@@ -162,8 +197,8 @@ export const deleteGroup = async (req, res) => {
 
     // Check if user can delete this group (same country)
     if (group.countryCode !== req.user.countryCode) {
-      return res.status(403).json({ 
-        message: "Cannot delete group from another country" 
+      return res.status(403).json({
+        message: "Cannot delete group from another country",
       });
     }
 
@@ -178,8 +213,8 @@ export const deleteGroup = async (req, res) => {
 // GET all groups for admin
 export const getAllGroups = async (req, res) => {
   try {
-    const groups = await LocalGroupModel.find({ 
-      countryCode: req.user.countryCode 
+    const groups = await LocalGroupModel.find({
+      countryCode: req.user.countryCode,
     }).select("_id name heading image chapterNumber countryCode members");
     res.json(groups);
   } catch (err) {
