@@ -22,6 +22,13 @@ const CountriesSection = ({
       .catch(err => console.error('Error loading countries:', err));
   }, []);
 
+  // Scroll to top when home country changes
+  useEffect(() => {
+    if (homeCountry) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [homeCountry]);
+
   const filteredCountries =
     selectedLetter === "ALL"
       ? countries
@@ -39,6 +46,12 @@ const CountriesSection = ({
       updateHomeCountry(selectedCountry);
       setIsModalOpen(false);
       setSelectedCountry(null);
+      
+      // Optional: Show a success message
+      setTimeout(() => {
+        // You can add a toast notification here if you want
+        console.log(`Home country changed to ${selectedCountry.name}`);
+      }, 100);
     }
   };
 

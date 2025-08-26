@@ -34,8 +34,8 @@ export const HomeCountryProvider = ({ children }) => {
     setHomeCountry(newCountry);
     localStorage.setItem('homeCountry', JSON.stringify(newCountry));
     
-    // Trigger a page reload to update all content
-    window.location.reload();
+    // Don't reload the page - just update the state
+    // The components will re-render automatically with the new country
   };
 
   // Clear home country
