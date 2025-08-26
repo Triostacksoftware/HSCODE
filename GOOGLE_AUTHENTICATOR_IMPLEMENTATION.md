@@ -97,7 +97,7 @@ const handleTOTPSetupSubmit = async (e) => {
     {
       totpCode: totpCode,
     },
-    {
+    {l
       withCredentials: true,
     }
   );

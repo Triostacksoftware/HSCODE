@@ -8,7 +8,7 @@ const GoogleTranslate = ({
   right = "20px",
   bottom,
   left,
-  className = "hidden", // Hide the Google Translate widget
+  className="hidden",
   style = {},
   onLanguageChange,
 }) => {
@@ -42,7 +42,7 @@ const GoogleTranslate = ({
       // Create new script element
       scriptRef.current = document.createElement("script");
       scriptRef.current.src =
-        "//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
+        "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
       scriptRef.current.async = true;
       scriptRef.current.defer = true;
       document.head.appendChild(scriptRef.current);

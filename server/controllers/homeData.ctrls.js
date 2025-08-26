@@ -171,6 +171,7 @@ export const saveDummyData = async (req, res) => {
 
     // Check if data already exists
     let existingData = await HomeData.findOne({ countryCode: Countrycode });
+    console.log("existingData", existingData);
 
     if (existingData) {
       return res.status(400).json({

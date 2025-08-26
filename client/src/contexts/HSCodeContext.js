@@ -36,15 +36,16 @@ export const HSCodeProvider = ({ children }) => {
       
       // Parse header to find column indices
       const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
-      const hscodeIndex = headers.findIndex(h => h.toLowerCase() === 'hscode_id');
-      const productIndex = headers.findIndex(h => h.toLowerCase() === 'product');
-      const productDescIndex = headers.findIndex(h => h.toLowerCase() === 'product_description');
+      const chapterIndex = headers.findIndex(h => h.toLowerCase() === 'product');
+      const chapterDesc = headers.findIndex(h => h.toLowerCase() === 'product_description');
       const hs4Index = headers.findIndex(h => h.toLowerCase() === 'hs4');
       const hs4DescIndex = headers.findIndex(h => h.toLowerCase() === 'hs4desc');
       const hs6Index = headers.findIndex(h => h.toLowerCase() === 'hs6');
       const hs6DescIndex = headers.findIndex(h => h.toLowerCase() === 'hs6desc');
+      const tlIndex = headers.findIndex(h => h.toLowerCase() === 'tl');
+      const tldescIndex = headers.findIndex(h => h.toLowerCase() === 'tldesc');
       
-      if (hscodeIndex === -1 || productDescIndex === -1) {
+      if (chapterIndex === -1 || chapterDesc === -1) {
         console.warn('Required columns not found in CSV');
         return [];
       }
@@ -53,31 +54,33 @@ export const HSCodeProvider = ({ children }) => {
       
       return dataLines.map((line, index) => {
         const parts = line.split(',').map(part => part.trim().replace(/"/g, ''));
-        const hscode = parts[hscodeIndex] || '';
-        const product = parts[productIndex] || ''; // Chapter number
-        const productDescription = parts[productDescIndex] || ''; // Chapter name
+        const chapter = parts[chapterIndex] || '';
+        const chapterDescription = parts[chapterDesc] || ''; // Chapter name
         const hs4 = parts[hs4Index] || ''; // Group heading
         const hs4Description = parts[hs4DescIndex] || ''; // Group name
         const hs6 = parts[hs6Index] || ''; // Product HS code
         const hs6Description = parts[hs6DescIndex] || ''; // Product description
+        const tl = parts[tlIndex] || ''; // item hscode
+        const tldesc = parts[tldescIndex] || ''; // item description
         
         return {
           id: `${country}_${index}`,
-          hscode,
-          description: productDescription, // Keep for backward compatibility
+          chapter,
+          description: chapterDescription, // Keep for backward compatibility
           country,
           lineNumber: index + 2,
           // Additional HS code fields
-          product, // Chapter number
-          productDescription, // Chapter name
+          chapterDescription, // Chapter name
           hs4, // Group heading
           hs4Description, // Group name
           hs6, // Product HS code
           hs6Description, // Product description
+          tl, // item hscode
+          tldesc, // item description 
           // Searchable text for comprehensive search
-          searchText: `${hscode} ${productDescription} ${hs4} ${hs4Description} ${hs6} ${hs6Description}`.toLowerCase()
+          searchText: `${chapter} ${chapterDescription} ${hs4} ${hs4Description} ${hs6} ${hs6Description} ${tl} ${tldesc}`.toLowerCase()
         };
-      }).filter(item => item.hscode && item.productDescription); // Remove empty entries
+      }).filter(item => item.chapter && item.chapterDescription); // Remove empty entries
     } catch (error) {
       console.error('Error parsing CSV:', error);
       return [];
@@ -132,12 +135,14 @@ export const HSCodeProvider = ({ children }) => {
       // Search across all HS code fields using the comprehensive searchText
       item.searchText.includes(term) ||
       // Also search individual fields for exact matches
-      item.hscode.toLowerCase().includes(term) ||
-      item.productDescription.toLowerCase().includes(term) ||
+      item.chapter.toLowerCase().includes(term) ||
+      item.chapterDescription.toLowerCase().includes(term) ||
       item.hs4.toLowerCase().includes(term) ||
       item.hs4Description.toLowerCase().includes(term) ||
       item.hs6.toLowerCase().includes(term) ||
-      item.hs6Description.toLowerCase().includes(term)
+      item.hs6Description.toLowerCase().includes(term) ||
+      item.tl.toLowerCase().includes(term) ||
+      item.tldesc.toLowerCase().includes(term)
     );
 
     return results.slice(0, 20); // Limit to first 20 results
@@ -162,7 +167,7 @@ export const HSCodeProvider = ({ children }) => {
   // Get HS codes by chapter number
   const getHSCodesByChapter = useCallback((chapterNumber) => {
     if (!hscodes.allCodes) return [];
-    return hscodes.allCodes.filter(item => item.product === chapterNumber);
+    return hscodes.allCodes.filter(item => item.chapter === chapterNumber);
   }, [hscodes.allCodes]);
 
   // Get HS codes by group (hs4)

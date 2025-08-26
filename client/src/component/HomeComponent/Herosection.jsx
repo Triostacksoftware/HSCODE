@@ -47,11 +47,11 @@ const Herosection = ({
   }
 
   return (
-    <div className="relative min-h-screen">
+    <div className="min-h-screen">
       {/* Desktop Background Image (md and larger) */}
       <div className="absolute hidden md:block inset-0">
         <img
-          src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/MAERSK_MC_KINNEY_M%C3%96LLER_%26_MARSEILLE_MAERSK_%2848694054418%29.jpg/1200px-MAERSK_MC_KINNEY_M%C3%96LLER_%26_MARSEILLE_MAERSK_%2848694054418%29.jpg"
+          src="https://images8.alphacoders.com/458/458508.jpg"
           alt="Shipping Background"
           style={{
             position: "fixed",
