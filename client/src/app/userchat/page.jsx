@@ -135,7 +135,7 @@ const ChatPage = () => {
 
   return (
     <OnlineUsersContext.Provider value={{ onlineCounts, onlineUsers, socket }}>
-      <div className="flex h-screen bg-[#FEFEFE]">
+      <div className="flex h-screen bg-[#FEFEFE] ">
         <Sidebar
           onTabChange={handleTabChange}
           activeTab={activeTab}
