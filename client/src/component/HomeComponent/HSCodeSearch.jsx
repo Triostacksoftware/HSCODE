@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useHSCode } from '../../contexts/HSCodeContext';
 import useCountryCode from '../../utilities/useCountryCode';
+import { useHomeCountry } from '../../contexts/HomeCountryContext';
 
 const HSCodeSearch = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -19,13 +20,17 @@ const HSCodeSearch = () => {
   } = useHSCode();
   
   const { countryInfo } = useCountryCode();
+  const { homeCountry } = useHomeCountry();
+
+  // Use home country if available, otherwise fall back to detected country
+  const effectiveCountry = homeCountry || countryInfo;
 
   // Load HS codes when component mounts and country is detected
   useEffect(() => {
-    if (countryInfo?.code && !hasData) {
-      loadHSCodes(countryInfo.code);
+    if (effectiveCountry?.code && !hasData) {
+      loadHSCodes(effectiveCountry.code);
     }
-  }, [countryInfo?.code, hasData, loadHSCodes]);
+  }, [effectiveCountry?.code, hasData, loadHSCodes]);
 
   // Search HS codes
   const handleSearch = (term) => {
@@ -95,7 +100,7 @@ const HSCodeSearch = () => {
         <div className="bg-white m-auto  max-w-5xl rounded-lg shadow-lg overflow-hidden">
           <div className="px-6 py-4 bg-gray-50 border-b">
             <h3 className="text-lg font-semibold text-gray-900">
-              Search Results ({searchResults.length} found for <span className="text-red-600">{userCountry}</span>)
+              Search Results ({searchResults.length} found for <span className="text-red-600">{effectiveCountry?.name || userCountry}</span>)
             </h3>
             
             {searchResults.length === 20 && (
@@ -183,7 +188,7 @@ const HSCodeSearch = () => {
       {/* Stats */}
       {!loading && hasData && (
         <div className="mt-8 text-center text-sm text-gray-500">
-          <p>Loaded {totalCount.toLocaleString()} HS codes from {userCountry}</p>
+          <p>Loaded {totalCount.toLocaleString()} HS codes from {effectiveCountry?.name || userCountry}</p>
         </div>
       )}
     </div>

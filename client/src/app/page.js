@@ -15,16 +15,25 @@ import Footer from "@/component/HomeComponent/Footer";
 import useCountryCode from "@/utilities/useCountryCode";
 import useHomeData from "@/utilities/useHomeData";
 import ErrorBoundary from "@/component/ErrorBoundary";
+import { HomeCountryProvider, useHomeCountry } from "@/contexts/HomeCountryContext";
 
 function HomeContent() {
   console.log("HomeContent render", Date.now());
   const { countryInfo, loading: countryLoading } = useCountryCode();
+  const { homeCountry } = useHomeCountry();
+  
+  // Use home country if available, otherwise fall back to detected country
+  const effectiveCountry = homeCountry || countryInfo;
+  
   console.log("country code", countryInfo);
+  console.log("home country", homeCountry);
+  console.log("effective country", effectiveCountry);
+  
   const {
     homeData,
     loading: dataLoading,
     isFallback,
-  } = useHomeData(countryInfo?.code);
+  } = useHomeData(effectiveCountry?.code);
   console.log("home data", homeData);
   console.log("heroSection data", homeData?.heroSection);
 
@@ -100,18 +109,20 @@ function HomeContent() {
 export default function Home() {
   return (
     <ErrorBoundary>
-      <Suspense
-        fallback={
-          <div className="min-h-screen flex items-center justify-center">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="mt-4 text-gray-600">Loading...</p>
+      <HomeCountryProvider>
+        <Suspense
+          fallback={
+            <div className="min-h-screen flex items-center justify-center">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
+                <p className="mt-4 text-gray-600">Loading...</p>
+              </div>
             </div>
-          </div>
-        }
-      >
-        <HomeContent />
-      </Suspense>
+          }
+        >
+          <HomeContent />
+        </Suspense>
+      </HomeCountryProvider>
     </ErrorBoundary>
   );
 }
