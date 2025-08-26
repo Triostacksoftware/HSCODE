@@ -3,6 +3,7 @@ import LocalGroupModel from "../models/LocalGroup.js";
 import GlobalGroupModel from "../models/GlobalGroup.js";
 import ApprovedLeads from "../models/ApprovedLeads.js";
 import GlobalApprovedLeads from "../models/GlobalApprovedLeads.js";
+import { io } from "../server.js";
 
 // GET GROUP by IDs (for user's joined groups)
 export const getGroups = async (req, res) => {
@@ -229,6 +230,73 @@ export const joinGroup = async (req, res) => {
     group.members.push(userId);
     await group.save();
 
+    // Emit socket event to notify all group members about new member
+    io.emit("user-joined-group", {
+      groupId: groupId,
+      userId: userId,
+      userName: user.name,
+      userImage: user.image,
+      message: `${user.name} joined the group`,
+    });
+
+    // Add user to the group socket room to update online status immediately
+    io.in(`user-${userId}`)
+      .fetchSockets()
+      .then(async (userSockets) => {
+        userSockets.forEach((socket) => {
+          socket.join(`group-${groupId}`);
+          console.log(`User ${userId} added to group-${groupId} room`);
+        });
+
+        // Broadcast updated online users list immediately after room change
+        const clients =
+          io.sockets.adapter.rooms.get(`group-${groupId}`) || new Set();
+        const userIds = Array.from(clients)
+          .map((sid) => {
+            const socket = io.sockets.sockets.get(sid);
+            return socket?.handshake.query.userId;
+          })
+          .filter(Boolean);
+
+        const uniqueUserIds = [...new Set(userIds)];
+
+        try {
+          const users = await UserModel.find(
+            { _id: { $in: uniqueUserIds } },
+            { _id: 1, name: 1, role: 1 }
+          ).lean();
+
+          const formattedUsers = users.map((user) => ({
+            id: user._id.toString(),
+            name: user.name,
+            role: user.role,
+          }));
+
+          io.to(`group-${groupId}`).emit("group-online-users", {
+            groupId,
+            onlineUserIds: uniqueUserIds,
+            onlineUsers: formattedUsers,
+          });
+
+          console.log(
+            `Updated online users for group ${groupId} after user ${userId} joined`
+          );
+        } catch (error) {
+          console.error(
+            `Error broadcasting online users for group ${groupId}:`,
+            error
+          );
+          io.to(`group-${groupId}`).emit("group-online-users", {
+            groupId,
+            onlineUserIds: [],
+            onlineUsers: [],
+          });
+        }
+      })
+      .catch((err) => {
+        console.error("Error adding user to group room:", err);
+      });
+
     res.json({
       message: "Successfully joined group",
       groupsID: user.groupsID,
@@ -286,6 +354,73 @@ export const joinGlobalGroup = async (req, res) => {
     group.members.push(userId);
     await group.save();
 
+    // Emit socket event to notify all group members about new member
+    io.emit("user-joined-global-group", {
+      groupId: groupId,
+      userId: userId,
+      userName: user.name,
+      userImage: user.image,
+      message: `${user.name} joined the group`,
+    });
+
+    // Add user to the group socket room to update online status immediately
+    io.in(`user-${userId}`)
+      .fetchSockets()
+      .then(async (userSockets) => {
+        userSockets.forEach((socket) => {
+          socket.join(`group-${groupId}`);
+          console.log(`User ${userId} added to global group-${groupId} room`);
+        });
+
+        // Broadcast updated online users list immediately after room change
+        const clients =
+          io.sockets.adapter.rooms.get(`group-${groupId}`) || new Set();
+        const userIds = Array.from(clients)
+          .map((sid) => {
+            const socket = io.sockets.sockets.get(sid);
+            return socket?.handshake.query.userId;
+          })
+          .filter(Boolean);
+
+        const uniqueUserIds = [...new Set(userIds)];
+
+        try {
+          const users = await UserModel.find(
+            { _id: { $in: uniqueUserIds } },
+            { _id: 1, name: 1, role: 1 }
+          ).lean();
+
+          const formattedUsers = users.map((user) => ({
+            id: user._id.toString(),
+            name: user.name,
+            role: user.role,
+          }));
+
+          io.to(`group-${groupId}`).emit("group-online-users", {
+            groupId,
+            onlineUserIds: uniqueUserIds,
+            onlineUsers: formattedUsers,
+          });
+
+          console.log(
+            `Updated online users for global group ${groupId} after user ${userId} joined`
+          );
+        } catch (error) {
+          console.error(
+            `Error broadcasting online users for global group ${groupId}:`,
+            error
+          );
+          io.to(`group-${groupId}`).emit("group-online-users", {
+            groupId,
+            onlineUserIds: [],
+            onlineUsers: [],
+          });
+        }
+      })
+      .catch((err) => {
+        console.error("Error adding user to global group room:", err);
+      });
+
     res.json({
       message: "Successfully joined global group",
       globalGroupsID: user.globalGroupsID,
@@ -326,6 +461,72 @@ export const leaveGroup = async (req, res) => {
     // Remove user from group's members array
     group.members = group.members.filter((id) => id.toString() !== userId);
     await group.save();
+
+    // Emit socket event to notify all group members about member leaving
+    io.emit("user-left-group", {
+      groupId: groupId,
+      userId: userId,
+      userName: user.name,
+      message: `${user.name} left the group`,
+    });
+
+    // Remove user from the group socket room to update online status immediately
+    io.in(`user-${userId}`)
+      .fetchSockets()
+      .then(async (userSockets) => {
+        userSockets.forEach((socket) => {
+          socket.leave(`group-${groupId}`);
+          console.log(`User ${userId} removed from group-${groupId} room`);
+        });
+
+        // Broadcast updated online users list immediately after room change
+        const clients =
+          io.sockets.adapter.rooms.get(`group-${groupId}`) || new Set();
+        const userIds = Array.from(clients)
+          .map((sid) => {
+            const socket = io.sockets.sockets.get(sid);
+            return socket?.handshake.query.userId;
+          })
+          .filter(Boolean);
+
+        const uniqueUserIds = [...new Set(userIds)];
+
+        try {
+          const users = await UserModel.find(
+            { _id: { $in: uniqueUserIds } },
+            { _id: 1, name: 1, role: 1 }
+          ).lean();
+
+          const formattedUsers = users.map((user) => ({
+            id: user._id.toString(),
+            name: user.name,
+            role: user.role,
+          }));
+
+          io.to(`group-${groupId}`).emit("group-online-users", {
+            groupId,
+            onlineUserIds: uniqueUserIds,
+            onlineUsers: formattedUsers,
+          });
+
+          console.log(
+            `Updated online users for group ${groupId} after user ${userId} left`
+          );
+        } catch (error) {
+          console.error(
+            `Error broadcasting online users for group ${groupId}:`,
+            error
+          );
+          io.to(`group-${groupId}`).emit("group-online-users", {
+            groupId,
+            onlineUserIds: [],
+            onlineUsers: [],
+          });
+        }
+      })
+      .catch((err) => {
+        console.error("Error removing user from group room:", err);
+      });
 
     res.json({
       message: "Successfully left group",
@@ -371,6 +572,74 @@ export const leaveGlobalGroup = async (req, res) => {
     // Remove user from group's members array
     group.members = group.members.filter((id) => id.toString() !== userId);
     await group.save();
+
+    // Emit socket event to notify all group members about member leaving
+    io.emit("user-left-global-group", {
+      groupId: groupId,
+      userId: userId,
+      userName: user.name,
+      message: `${user.name} left the group`,
+    });
+
+    // Remove user from the group socket room to update online status immediately
+    io.in(`user-${userId}`)
+      .fetchSockets()
+      .then(async (userSockets) => {
+        userSockets.forEach((socket) => {
+          socket.leave(`group-${groupId}`);
+          console.log(
+            `User ${userId} removed from global group-${groupId} room`
+          );
+        });
+
+        // Broadcast updated online users list immediately after room change
+        const clients =
+          io.sockets.adapter.rooms.get(`group-${groupId}`) || new Set();
+        const userIds = Array.from(clients)
+          .map((sid) => {
+            const socket = io.sockets.sockets.get(sid);
+            return socket?.handshake.query.userId;
+          })
+          .filter(Boolean);
+
+        const uniqueUserIds = [...new Set(userIds)];
+
+        try {
+          const users = await UserModel.find(
+            { _id: { $in: uniqueUserIds } },
+            { _id: 1, name: 1, role: 1 }
+          ).lean();
+
+          const formattedUsers = users.map((user) => ({
+            id: user._id.toString(),
+            name: user.name,
+            role: user.role,
+          }));
+
+          io.to(`group-${groupId}`).emit("group-online-users", {
+            groupId,
+            onlineUserIds: uniqueUserIds,
+            onlineUsers: formattedUsers,
+          });
+
+          console.log(
+            `Updated online users for global group ${groupId} after user ${userId} left`
+          );
+        } catch (error) {
+          console.error(
+            `Error broadcasting online users for global group ${groupId}:`,
+            error
+          );
+          io.to(`group-${groupId}`).emit("group-online-users", {
+            groupId,
+            onlineUserIds: [],
+            onlineUsers: [],
+          });
+        }
+      })
+      .catch((err) => {
+        console.error("Error removing user from global group room:", err);
+      });
 
     res.json({
       message: "Successfully left global group",

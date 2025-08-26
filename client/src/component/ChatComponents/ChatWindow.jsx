@@ -1,5 +1,11 @@
 "use client";
-import React, { useState, useEffect, useRef, useContext } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useContext,
+  useCallback,
+} from "react";
 import axios from "axios";
 import { useUserAuth } from "../../utilities/userAuthMiddleware";
 import { OnlineUsersContext } from "../../contexts/OnlineUsersContext";
@@ -43,6 +49,22 @@ const ChatWindow = ({
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
+  const fetchGroupMembers = useCallback(async () => {
+    if (!selectedGroupId) {
+      setGroupMembers([]);
+      return;
+    }
+    try {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/groups/${selectedGroupId}`,
+        { withCredentials: true }
+      );
+      setGroupMembers(response.data.members || []);
+    } catch (error) {
+      console.error("Error fetching group members:", error);
+      setGroupMembers([]);
+    }
+  }, [selectedGroupId]);
 
   useEffect(() => {
     if (selectedGroupId && user) {
@@ -50,7 +72,7 @@ const ChatWindow = ({
       fetchBroadcastLeads();
       fetchGroupMembers();
     }
-  }, [selectedGroupId, user]);
+  }, [selectedGroupId, user, fetchGroupMembers]);
 
   useEffect(() => {
     scrollToBottom();
@@ -58,7 +80,7 @@ const ChatWindow = ({
 
   // Listen for new-approved-lead socket event
   useEffect(() => {
-    if (!user || !selectedGroupId) return;
+    if (!user || !selectedGroupId || !socket || !socket.connected) return;
     const handler = (lead) => {
       if (
         lead.selectedGroupId === selectedGroupId ||
@@ -72,9 +94,48 @@ const ChatWindow = ({
     };
     socket.on("new-approved-lead", handler);
     return () => {
-      socket.off("new-approved-lead", handler);
+      if (socket && socket.connected) {
+        socket.off("new-approved-lead", handler);
+      }
     };
-  }, [user, selectedGroupId]);
+  }, [user, selectedGroupId, socket]);
+
+  // Listen for group membership changes
+  useEffect(() => {
+    if (!user || !selectedGroupId || !socket || !socket.connected) return;
+
+    const handleUserJoined = (data) => {
+      if (data.groupId === selectedGroupId) {
+        // Refresh members list when someone joins
+        fetchGroupMembers();
+        // Optionally show a toast notification
+        if (data.userId !== user._id) {
+          toast.success(data.message);
+        }
+      }
+    };
+
+    const handleUserLeft = (data) => {
+      if (data.groupId === selectedGroupId) {
+        // Refresh members list when someone leaves
+        fetchGroupMembers();
+        // Optionally show a toast notification
+        if (data.userId !== user._id) {
+          toast.info(data.message);
+        }
+      }
+    };
+
+    socket.on("user-joined-group", handleUserJoined);
+    socket.on("user-left-group", handleUserLeft);
+
+    return () => {
+      if (socket && socket.connected) {
+        socket.off("user-joined-group", handleUserJoined);
+        socket.off("user-left-group", handleUserLeft);
+      }
+    };
+  }, [user, selectedGroupId, fetchGroupMembers, socket]);
 
   const fetchLeads = async () => {
     try {
@@ -106,18 +167,6 @@ const ChatWindow = ({
       setBroadcastLeads(broadcasts);
     } catch (error) {
       console.error("Error fetching broadcast leads:", error);
-    }
-  };
-
-  const fetchGroupMembers = async () => {
-    try {
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/groups/${selectedGroupId}`,
-        { withCredentials: true }
-      );
-      setGroupMembers(response.data.members || []);
-    } catch (error) {
-      console.error("Error fetching group members:", error);
     }
   };
 

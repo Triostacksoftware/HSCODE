@@ -1,5 +1,11 @@
 "use client";
-import React, { useState, useEffect, useRef, useContext } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useContext,
+  useCallback,
+} from "react";
 import axios from "axios";
 import { useUserAuth } from "../../utilities/userAuthMiddleware";
 import { IoArrowBack } from "react-icons/io5";
@@ -59,12 +65,28 @@ const GlobalChatWindow = ({
   const [showMembers, setShowMembers] = useState(false);
   const messagesEndRef = useRef(null);
 
+  const fetchGroupMembers = useCallback(async () => {
+    if (!selectedGroupId) {
+      setGroupMembers([]);
+      return;
+    }
+    try {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/global-groups/${selectedGroupId}`,
+        { withCredentials: true }
+      );
+      setGroupMembers(response.data.members || []);
+    } catch (error) {
+      console.error("Error fetching global group members:", error);
+      setGroupMembers([]);
+    }
+  }, [selectedGroupId]);
   useEffect(() => {
     if (selectedGroupId) {
       fetchGlobalMessages();
       fetchGroupMembers();
     }
-  }, [selectedGroupId]);
+  }, [selectedGroupId, fetchGroupMembers]);
 
   useEffect(() => {
     scrollToBottom();
@@ -72,7 +94,7 @@ const GlobalChatWindow = ({
 
   // Listen for new-approved-lead socket event (for global leads)
   useEffect(() => {
-    if (!user || !selectedGroupId) return;
+    if (!user || !selectedGroupId || !socket || !socket.connected) return;
     const handler = (lead) => {
       if (
         lead.groupId === selectedGroupId ||
@@ -84,15 +106,50 @@ const GlobalChatWindow = ({
         });
       }
     };
-    if (socket && socket.on) {
-      socket.on("new-approved-global-lead", handler);
-    }
+    socket.on("new-approved-global-lead", handler);
     return () => {
-      if (socket && socket.off) {
+      if (socket && socket.connected) {
         socket.off("new-approved-global-lead", handler);
       }
     };
-  }, [user, selectedGroupId]);
+  }, [user, selectedGroupId, socket]);
+
+  // Listen for global group membership changes
+  useEffect(() => {
+    if (!user || !selectedGroupId || !socket || !socket.connected) return;
+
+    const handleUserJoined = (data) => {
+      if (data.groupId === selectedGroupId) {
+        // Refresh members list when someone joins
+        fetchGroupMembers();
+        // Optionally show a toast notification
+        if (data.userId !== user._id) {
+          toast.success(data.message);
+        }
+      }
+    };
+
+    const handleUserLeft = (data) => {
+      if (data.groupId === selectedGroupId) {
+        // Refresh members list when someone leaves
+        fetchGroupMembers();
+        // Optionally show a toast notification
+        if (data.userId !== user._id) {
+          toast.info(data.message);
+        }
+      }
+    };
+
+    socket.on("user-joined-global-group", handleUserJoined);
+    socket.on("user-left-global-group", handleUserLeft);
+
+    return () => {
+      if (socket && socket.connected) {
+        socket.off("user-joined-global-group", handleUserJoined);
+        socket.off("user-left-global-group", handleUserLeft);
+      }
+    };
+  }, [user, selectedGroupId, fetchGroupMembers, socket]);
 
   const fetchGlobalMessages = async () => {
     try {
@@ -110,18 +167,6 @@ const GlobalChatWindow = ({
       setError("Failed to load messages");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchGroupMembers = async () => {
-    try {
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/global-groups/${selectedGroupId}`,
-        { withCredentials: true }
-      );
-      setGroupMembers(response.data.members || []);
-    } catch (error) {
-      console.error("Error fetching global group members:", error);
     }
   };
 
