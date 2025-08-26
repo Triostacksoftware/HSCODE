@@ -1,15 +1,32 @@
 "use client";
 import React, { useState } from "react";
-import { FaTimes, FaComments, FaUser, FaEnvelope, FaPhone, FaGlobe, FaMapMarkerAlt } from "react-icons/fa";
+import {
+  FaTimes,
+  FaComments,
+  FaUser,
+  FaEnvelope,
+  FaPhone,
+  FaGlobe,
+  FaMapMarkerAlt,
+} from "react-icons/fa";
 import axios from "axios";
 
-const UserProfileSidebar = ({ user, isOpen, onClose, currentUser, onStartChat }) => {
+const UserProfileSidebar = ({
+  user,
+  isOpen,
+  onClose,
+  currentUser,
+  onStartChat,
+}) => {
   const [startingChat, setStartingChat] = useState(false);
 
   if (!isOpen || !user) return null;
 
   const handleStartChat = async () => {
-    if (!currentUser || (currentUser.membership !== "premium" && currentUser.role !== "admin")) {
+    if (
+      !currentUser ||
+      (currentUser.membership !== "premium" && currentUser.role !== "admin")
+    ) {
       return;
     }
 
@@ -37,7 +54,9 @@ const UserProfileSidebar = ({ user, isOpen, onClose, currentUser, onStartChat })
     }
   };
 
-  const canStartChat = currentUser && (currentUser.membership === "premium" || currentUser.role === "admin");
+  const canStartChat =
+    currentUser &&
+    (currentUser.membership === "premium" || currentUser.role === "admin");
 
   return (
     <div className="fixed inset-y-0 right-0 w-80 bg-white shadow-2xl transform transition-transform duration-300 ease-in-out z-50">
@@ -163,7 +182,7 @@ const UserProfileSidebar = ({ user, isOpen, onClose, currentUser, onStartChat })
                 Upgrade to premium to start chatting
               </p>
               <button
-                onClick={() => window.open('/subscription', '_blank')}
+                onClick={() => window.open("/subscription", "_blank")}
                 className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm"
               >
                 Upgrade Now

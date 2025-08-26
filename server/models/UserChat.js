@@ -87,13 +87,13 @@ userChatSchema.pre("save", function (next) {
 
 // Index for efficient queries
 userChatSchema.index({ participants: 1 });
-userChatSchema.index({ "lastMessageAt": -1 });
-userChatSchema.index({ "unreadCount": 1 });
+userChatSchema.index({ lastMessageAt: -1 });
+userChatSchema.index({ unreadCount: 1 });
 
 // Virtual for getting the other participant
 userChatSchema.virtual("otherParticipant").get(function (userId) {
   if (!userId) return null;
-  return this.participants.find(p => p.toString() !== userId.toString());
+  return this.participants.find((p) => p.toString() !== userId.toString());
 });
 
 // Method to get unread count for a specific user

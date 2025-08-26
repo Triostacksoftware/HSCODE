@@ -48,7 +48,7 @@ const UserChatList = ({ user, onChatSelect, selectedChatId }) => {
 
   const formatLastMessage = (message) => {
     if (!message) return "No messages yet";
-    
+
     const content = message.content || "";
     if (content.length > 30) {
       return content.substring(0, 30) + "...";
@@ -58,13 +58,16 @@ const UserChatList = ({ user, onChatSelect, selectedChatId }) => {
 
   const formatTime = (timestamp) => {
     if (!timestamp) return "";
-    
+
     const date = new Date(timestamp);
     const now = new Date();
     const diffInHours = (now - date) / (1000 * 60 * 60);
-    
+
     if (diffInHours < 24) {
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      return date.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
     } else if (diffInHours < 48) {
       return "Yesterday";
     } else {
@@ -153,7 +156,9 @@ const UserChatList = ({ user, onChatSelect, selectedChatId }) => {
             key={chat._id}
             onClick={() => handleChatSelect(chat)}
             className={`flex items-center p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${
-              selectedChatId === chat._id ? "bg-purple-50 border-purple-200" : ""
+              selectedChatId === chat._id
+                ? "bg-purple-50 border-purple-200"
+                : ""
             }`}
           >
             {/* User Avatar */}
