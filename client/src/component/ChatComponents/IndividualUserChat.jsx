@@ -1,25 +1,64 @@
 "use client";
 import React, { useState, useEffect, useRef, useContext } from "react";
-import { FaArrowLeft, FaPaperPlane, FaUser } from "react-icons/fa";
+import { FaArrowLeft, FaUser, FaPaperPlane } from "react-icons/fa";
 import axios from "axios";
 import { OnlineUsersContext } from "../../contexts/OnlineUsersContext";
+import { toast } from "react-hot-toast";
 
-const IndividualUserChat = ({ chat, onBack, user }) => {
+const IndividualUserChat = ({ chat, user, onBack, onMessageSent }) => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
-  const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [typing, setTyping] = useState(false);
   const [otherUserTyping, setOtherUserTyping] = useState(false);
-  const messagesEndRef = useRef(null);
+  const [showScrollButton, setShowScrollButton] = useState(false);
+  const [newMessageNotification, setNewMessageNotification] = useState(false);
+  const [otherUserMessageNotification, setOtherUserMessageNotification] =
+    useState(null);
+
   const { socket } = useContext(OnlineUsersContext);
+  const messagesEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
+
+  // Add body class to prevent page scrolling
+  useEffect(() => {
+    document.body.classList.add("chat-active");
+    return () => {
+      document.body.classList.remove("chat-active");
+    };
+  }, []);
 
   // Fetch messages when chat changes
   useEffect(() => {
     if (chat?._id) {
       fetchMessages();
+
+      // Scroll to bottom when switching to a new chat
+      setTimeout(() => {
+        scrollToBottomImmediate();
+      }, 200);
+
+      // Clear unread count for this chat when opened
+      if (chat.unreadCount > 0) {
+        clearUnreadCount();
+      }
     }
   }, [chat?._id]);
+
+  // Clear unread count for the current chat
+  const clearUnreadCount = async () => {
+    try {
+      await axios.patch(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/user-chat/${chat._id}/read`,
+        {},
+        { withCredentials: true }
+      );
+      console.log("Unread count cleared for chat:", chat._id);
+    } catch (error) {
+      console.error("Error clearing unread count:", error);
+    }
+  };
 
   // Socket event handling
   useEffect(() => {
@@ -57,6 +96,67 @@ const IndividualUserChat = ({ chat, onBack, user }) => {
     }
   }, [socket, chat?._id, user._id]);
 
+  // Listen for messages from other users while in this chat
+  useEffect(() => {
+    if (!socket || !user || !chat) return;
+
+    const handleOtherUserMessage = (data) => {
+      console.log("Message received while in chat:", data);
+
+      // SIMPLE RULE: If you're in a chat with someone, don't show notifications from them
+      const currentChatUserId = chat.otherUser?._id;
+      const messageSenderId = data.sender?._id || data.senderId;
+
+      // Don't show notification if message is from the user you're currently chatting with
+      if (currentChatUserId === messageSenderId) {
+        console.log("No notification - message from current chat user");
+        return;
+      }
+
+      // Show notification for messages from other users
+      console.log("Showing notification - message from different user");
+      const senderName = data.sender?.name || data.senderName || "Someone";
+
+      setOtherUserMessageNotification({
+        senderName,
+        messageContent: data.message?.content || "sent you a message",
+        chatId: data.chatId,
+        timestamp: new Date(),
+      });
+
+      // Auto-hide after 5 seconds
+      setTimeout(() => setOtherUserMessageNotification(null), 5000);
+    };
+
+    socket.on("new-user-message", handleOtherUserMessage);
+    return () => socket.off("new-user-message", handleOtherUserMessage);
+  }, [socket, user, chat]);
+
+  // Keyboard shortcuts for scrolling
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Ctrl+End or Cmd+End to scroll to bottom
+      if ((e.ctrlKey || e.metaKey) && e.key === "End") {
+        e.preventDefault();
+        scrollToBottomImmediate();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
+  // Add scroll event listener to messages container
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (container) {
+      container.addEventListener("scroll", checkScrollPosition);
+      return () => container.removeEventListener("scroll", checkScrollPosition);
+    }
+  }, []);
+
   // Scroll to bottom when messages change
   useEffect(() => {
     // Add delay to ensure DOM is fully updated
@@ -68,18 +168,60 @@ const IndividualUserChat = ({ chat, onBack, user }) => {
 
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
-      // Find the messages container to ensure scrolling happens within it
       const messagesContainer =
         messagesEndRef.current.closest(".overflow-y-auto");
       if (messagesContainer) {
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
       } else {
-        // Fallback with constrained scrollIntoView
         messagesEndRef.current.scrollIntoView({
           behavior: "smooth",
           block: "nearest",
           inline: "nearest",
         });
+      }
+    }
+  };
+
+  // Enhanced scroll to bottom for new messages
+  const scrollToBottomImmediate = () => {
+    if (messagesEndRef.current) {
+      const messagesContainer =
+        messagesEndRef.current.closest(".overflow-y-auto");
+      if (messagesContainer) {
+        // Use requestAnimationFrame to ensure DOM is fully rendered
+        requestAnimationFrame(() => {
+          messagesContainer.scrollTop = messagesContainer.scrollHeight;
+          // Hide scroll button when scrolling to bottom
+          setShowScrollButton(false);
+          console.log("Scrolled to bottom immediately");
+        });
+      } else {
+        // Fallback with constrained scrollIntoView
+        requestAnimationFrame(() => {
+          messagesEndRef.current.scrollIntoView({
+            behavior: "smooth",
+            block: "nearest",
+            inline: "nearest",
+          });
+          // Hide scroll button when scrolling to bottom
+          setShowScrollButton(false);
+          console.log("Scrolled to bottom with fallback");
+        });
+      }
+    }
+  };
+
+  // Check if user is at bottom of messages
+  const checkScrollPosition = () => {
+    if (messagesContainerRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } =
+        messagesContainerRef.current;
+      const isAtBottom = scrollTop + clientHeight >= scrollHeight - 10; // 10px threshold
+      setShowScrollButton(!isAtBottom);
+
+      // Hide notification when user scrolls to bottom
+      if (isAtBottom) {
+        setNewMessageNotification(false);
       }
     }
   };
@@ -102,6 +244,11 @@ const IndividualUserChat = ({ chat, onBack, user }) => {
           {},
           { withCredentials: true }
         );
+
+        // Scroll to bottom after loading messages
+        setTimeout(() => {
+          scrollToBottomImmediate();
+        }, 100);
       }
     } catch (error) {
       console.error("Error fetching messages:", error);
@@ -139,6 +286,32 @@ const IndividualUserChat = ({ chat, onBack, user }) => {
         return [...prev, data.message];
       });
       setOtherUserTyping(false);
+
+      // Check scroll position and scroll to bottom if user is near bottom
+      setTimeout(() => {
+        if (messagesContainerRef.current) {
+          const { scrollTop, scrollHeight, clientHeight } =
+            messagesContainerRef.current;
+          const isNearBottom = scrollTop + clientHeight >= scrollHeight - 100; // 100px threshold
+          console.log("Scroll check:", {
+            scrollTop,
+            scrollHeight,
+            clientHeight,
+            isNearBottom,
+          });
+          if (isNearBottom) {
+            console.log("User near bottom, scrolling to bottom");
+            scrollToBottomImmediate();
+          } else {
+            console.log("User not near bottom, showing scroll button");
+            // Show scroll button and notification if user is not near bottom
+            setShowScrollButton(true);
+            setNewMessageNotification(true);
+            // Hide notification after 5 seconds
+            setTimeout(() => setNewMessageNotification(false), 5000);
+          }
+        }
+      }, 50);
     }
   };
 
@@ -169,6 +342,18 @@ const IndividualUserChat = ({ chat, onBack, user }) => {
     }
   };
 
+  // Clear typing indicator when message is sent
+  const clearTypingIndicator = () => {
+    if (socket && chat?._id && typing) {
+      setTyping(false);
+      socket.emit("user-typing", {
+        chatId: chat._id,
+        userId: user._id,
+        isTyping: false,
+      });
+    }
+  };
+
   const sendMessage = async () => {
     if (!newMessage.trim() || !chat?._id) return;
 
@@ -176,13 +361,7 @@ const IndividualUserChat = ({ chat, onBack, user }) => {
       setSending(true);
 
       // Emit typing stop
-      if (socket) {
-        socket.emit("user-typing", {
-          chatId: chat._id,
-          userId: user._id,
-          isTyping: false,
-        });
-      }
+      clearTypingIndicator();
 
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_BASE_URL}/user-chat/${chat._id}/message`,
@@ -194,7 +373,6 @@ const IndividualUserChat = ({ chat, onBack, user }) => {
         // Add message to local state
         setMessages((prev) => [...prev, response.data.message]);
         setNewMessage("");
-        setTyping(false);
 
         // Emit message to socket for other users to receive
         if (socket) {
@@ -203,6 +381,42 @@ const IndividualUserChat = ({ chat, onBack, user }) => {
             message: response.data.message,
             receiverId: chat.otherUser._id,
           });
+
+          // Emit event to update chat list with new last message
+          socket.emit("user-message-sent", {
+            chatId: chat._id,
+            message: response.data.message,
+          });
+
+          // Also emit a chat-update event for immediate local update
+          socket.emit("chat-update", {
+            chatId: chat._id,
+            message: response.data.message,
+          });
+        }
+
+        // Directly update the chat list if the function is available
+        if (typeof window !== "undefined" && window.updateChatLastMessage) {
+          window.updateChatLastMessage(
+            chat._id,
+            response.data.message.content,
+            response.data.message.createdAt
+          );
+        }
+
+        // Force refresh the entire chat list
+        if (typeof window !== "undefined" && window.refreshChatList) {
+          window.refreshChatList();
+        }
+
+        // Scroll to bottom after sending message
+        setTimeout(() => {
+          scrollToBottomImmediate();
+        }, 50);
+
+        // Notify parent that message was sent
+        if (onMessageSent) {
+          onMessageSent();
         }
       }
     } catch (error) {
@@ -230,9 +444,9 @@ const IndividualUserChat = ({ chat, onBack, user }) => {
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="chat-container flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center p-4 border-b border-gray-200 bg-white">
+      <div className="flex items-center p-4 border-b border-gray-200 bg-white flex-shrink-0">
         <button
           onClick={onBack}
           className="p-2 mr-3 hover:bg-gray-100 rounded-full transition-colors"
@@ -257,15 +471,20 @@ const IndividualUserChat = ({ chat, onBack, user }) => {
             <h3 className="font-semibold text-gray-900">
               {chat.otherUser?.name || "Unknown User"}
             </h3>
-            {otherUserTyping && (
-              <p className="text-sm text-gray-500 italic">typing...</p>
-            )}
+            <div className="flex items-center space-x-2">
+              {otherUserTyping && (
+                <p className="text-sm text-gray-500 italic">typing...</p>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+      <div
+        ref={messagesContainerRef}
+        className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 relative"
+      >
         {loading ? (
           <div className="flex items-center justify-center h-32">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
@@ -275,55 +494,121 @@ const IndividualUserChat = ({ chat, onBack, user }) => {
             <p>No messages yet. Start the conversation!</p>
           </div>
         ) : (
-          messages.map((message) => (
-            <div
-              key={message._id}
-              className={`flex ${
-                message.senderId._id === user._id
-                  ? "justify-end"
-                  : "justify-start"
-              }`}
-            >
+          <div className="space-y-4">
+            {messages.map((message) => (
               <div
-                className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                key={message._id}
+                className={`flex ${
                   message.senderId._id === user._id
-                    ? "bg-purple-600 text-white"
-                    : "bg-gray-200 text-gray-900"
+                    ? "justify-end"
+                    : "justify-start"
                 }`}
               >
-                <p className="text-sm">{message.content}</p>
-                <p
-                  className={`text-xs mt-1 ${
+                <div
+                  className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
                     message.senderId._id === user._id
-                      ? "text-purple-100"
-                      : "text-gray-500"
+                      ? "bg-purple-600 text-white"
+                      : "bg-gray-200 text-gray-900"
                   }`}
                 >
-                  {formatTime(message.createdAt)}
-                </p>
+                  <p className="text-sm">{message.content}</p>
+                  <p
+                    className={`text-xs mt-1 ${
+                      message.senderId._id === user._id
+                        ? "text-purple-100"
+                        : "text-gray-500"
+                    }`}
+                  >
+                    {formatTime(message.createdAt)}
+                  </p>
+                </div>
               </div>
-            </div>
-          ))
+            ))}
+          </div>
         )}
         <div ref={messagesEndRef} />
+
+        {/* New message notification */}
+        {newMessageNotification && (
+          <div
+            className="fixed bottom-32 right-6 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-10 animate-bounce cursor-pointer"
+            onClick={() => {
+              scrollToBottomImmediate();
+              setNewMessageNotification(false);
+            }}
+          >
+            <div className="flex items-center space-x-2">
+              <span className="text-sm font-medium">New message!</span>
+              <span className="text-xs opacity-80">Click to view</span>
+            </div>
+          </div>
+        )}
+
+        {/* Other user message notification - Simplified */}
+        {otherUserMessageNotification && (
+          <div className="fixed top-20 right-6 bg-purple-600 text-white px-3 py-2 rounded-lg shadow-lg z-20 text-sm">
+            <div className="flex items-center space-x-2">
+              <span>💬</span>
+              <span>
+                {otherUserMessageNotification.senderName} sent you a message
+              </span>
+              <button
+                onClick={() => setOtherUserMessageNotification(null)}
+                className="ml-2 text-purple-200 hover:text-white"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Scroll to bottom button */}
+        {showScrollButton && (
+          <button
+            onClick={scrollToBottomImmediate}
+            className="fixed bottom-24 right-6 bg-purple-600 text-white p-3 rounded-full shadow-lg hover:bg-purple-700 transition-all duration-200 z-10"
+            title="Scroll to bottom (Ctrl+End)"
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 14l-7 7m0 0l-7-7m7 7V3"
+              />
+            </svg>
+          </button>
+        )}
       </div>
 
       {/* Message Input */}
-      <div className="p-4 bg-white border-t border-gray-200">
+      <div className="p-4 bg-white border-t border-gray-200 flex-shrink-0 mt-auto">
         <div className="flex space-x-3">
-          <input
-            type="text"
-            value={newMessage}
-            onChange={handleTyping}
-            placeholder="Type a message..."
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-            disabled={sending}
-            onKeyPress={(e) => {
-              if (e.key === "Enter") {
-                sendMessage();
-              }
-            }}
-          />
+          <div className="flex-1 relative">
+            <input
+              type="text"
+              value={newMessage}
+              onChange={handleTyping}
+              placeholder="Type a message..."
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              disabled={sending}
+              onKeyPress={(e) => {
+                if (e.key === "Enter") {
+                  sendMessage();
+                }
+              }}
+            />
+            {typing && (
+              <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-purple-500 text-xs">
+                typing...
+              </div>
+            )}
+          </div>
           <button
             onClick={sendMessage}
             disabled={!newMessage.trim() || sending}

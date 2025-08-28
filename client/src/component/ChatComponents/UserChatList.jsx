@@ -1,54 +1,144 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
+import { FaComments, FaUser, FaCircle } from "react-icons/fa";
 import { useRouter } from "next/navigation";
-import { FaComments, FaCircle, FaUser } from "react-icons/fa";
 import axios from "axios";
+import { OnlineUsersContext } from "../../contexts/OnlineUsersContext";
 
 const UserChatList = ({ user, onChatSelect, selectedChatId }) => {
   const [chats, setChats] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [totalUnread, setTotalUnread] = useState(0);
-  const router = useRouter();
+  const [refreshing, setRefreshing] = useState(false);
 
+  const router = useRouter();
+  const { socket } = useContext(OnlineUsersContext);
+
+  // Fetch chats on component mount
   useEffect(() => {
-    if (user?.membership === "premium" || user?.role === "admin") {
+    if (user) {
       fetchUserChats();
-      fetchUnreadCount();
     }
   }, [user]);
 
+  // Listen for new messages to update unread counts in real-time
+  useEffect(() => {
+    if (!socket || !user) return;
+
+    const handleNewMessage = (data) => {
+      console.log("New message received:", data);
+
+      // Update the specific chat's unread count and last message
+      setChats((prevChats) => {
+        const updatedChats = prevChats.map((chat) => {
+          if (chat._id === data.chatId) {
+            const updatedChat = {
+              ...chat,
+              lastMessage: {
+                content: data.message?.content || data.content || data.message,
+                createdAt:
+                  data.message?.createdAt ||
+                  data.createdAt ||
+                  new Date().toISOString(),
+              },
+              lastMessageAt:
+                data.message?.createdAt ||
+                data.createdAt ||
+                new Date().toISOString(),
+            };
+
+            // Only increment unread count if this chat is not currently selected
+            if (selectedChatId !== chat._id) {
+              updatedChat.unreadCount = (chat.unreadCount || 0) + 1;
+            }
+
+            return updatedChat;
+          }
+          return chat;
+        });
+        return updatedChats;
+      });
+
+      // Update total unread count (only if not in the current chat)
+      if (selectedChatId !== data.chatId) {
+        setTotalUnread((prev) => prev + 1);
+      }
+    };
+
+    // Listen for new user messages
+    socket.on("new-user-message", handleNewMessage);
+
+    return () => {
+      socket.off("new-user-message", handleNewMessage);
+    };
+  }, [socket, user, selectedChatId]);
+
+  // Refresh unread counts when returning to chat list
+  useEffect(() => {
+    if (selectedChatId === null) {
+      fetchUserChats();
+    }
+  }, [selectedChatId]);
+
   const fetchUserChats = async () => {
     try {
-      setLoading(true);
+      setRefreshing(true);
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_BASE_URL}/user-chat`,
         { withCredentials: true }
       );
-      setChats(response.data.chats || []);
+
+      const fetchedChats = response.data.chats || [];
+      setChats(fetchedChats);
+
+      // Calculate total unread from fetched chats
+      const totalUnreadFromChats = fetchedChats.reduce(
+        (total, chat) => total + (chat.unreadCount || 0),
+        0
+      );
+      setTotalUnread(totalUnreadFromChats);
     } catch (error) {
       console.error("Error fetching user chats:", error);
       setError("Failed to load chats");
     } finally {
-      setLoading(false);
+      setRefreshing(false);
     }
   };
 
-  const fetchUnreadCount = async () => {
+  // Clear unread count for a specific chat when it's selected
+  const handleChatSelect = async (chat) => {
     try {
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/user-chat/unread/count`,
-        { withCredentials: true }
-      );
-      setTotalUnread(response.data.unreadCount || 0);
+      // Clear unread count for this chat
+      if (chat.unreadCount > 0) {
+        await axios.patch(
+          `${process.env.NEXT_PUBLIC_BASE_URL}/user-chat/${chat._id}/read`,
+          {},
+          { withCredentials: true }
+        );
+
+        // Update local state to reflect the cleared unread count
+        setChats((prevChats) =>
+          prevChats.map((c) =>
+            c._id === chat._id ? { ...c, unreadCount: 0 } : c
+          )
+        );
+
+        // Update total unread count
+        setTotalUnread((prev) => Math.max(0, prev - chat.unreadCount));
+      }
+
+      // Call the parent handler
+      onChatSelect(chat);
     } catch (error) {
-      console.error("Error fetching unread count:", error);
+      console.error("Error clearing unread count:", error);
+      // Still call the parent handler even if clearing fails
+      onChatSelect(chat);
     }
   };
 
   const formatLastMessage = (message) => {
     if (!message) return "No messages yet";
-
     const content = message.content || "";
     if (content.length > 30) {
       return content.substring(0, 30) + "...";
@@ -58,7 +148,6 @@ const UserChatList = ({ user, onChatSelect, selectedChatId }) => {
 
   const formatTime = (timestamp) => {
     if (!timestamp) return "";
-
     const date = new Date(timestamp);
     const now = new Date();
     const diffInHours = (now - date) / (1000 * 60 * 60);
@@ -73,10 +162,6 @@ const UserChatList = ({ user, onChatSelect, selectedChatId }) => {
     } else {
       return date.toLocaleDateString();
     }
-  };
-
-  const handleChatSelect = (chat) => {
-    onChatSelect(chat);
   };
 
   if (!user || (user.membership !== "premium" && user.role !== "admin")) {
@@ -136,16 +221,42 @@ const UserChatList = ({ user, onChatSelect, selectedChatId }) => {
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full" data-chat-list>
       {/* Header */}
       <div className="p-4 border-b border-gray-200 bg-gray-50">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold text-gray-900">Direct Chats</h3>
-          {totalUnread > 0 && (
-            <span className="inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-500 rounded-full">
-              {totalUnread}
-            </span>
-          )}
+          <div className="flex items-center space-x-2">
+            {totalUnread > 0 && (
+              <span className="inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-500 rounded-full">
+                {totalUnread}
+              </span>
+            )}
+            <button
+              onClick={fetchUserChats}
+              className="p-1 hover:bg-gray-200 rounded transition-colors"
+              title="Refresh chats"
+              disabled={refreshing}
+            >
+              {refreshing ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600"></div>
+              ) : (
+                <svg
+                  className="w-4 h-4 text-gray-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                  />
+                </svg>
+              )}
+            </button>
+          </div>
         </div>
       </div>
 

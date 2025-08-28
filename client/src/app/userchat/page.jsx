@@ -120,6 +120,30 @@ const ChatPage = () => {
     };
   }, []);
 
+  // Listen for new messages to update unread chat count in real-time
+  useEffect(() => {
+    if (!socket || !user) return;
+
+    const handleNewMessage = (data) => {
+      console.log("New message received in main chat page:", data);
+
+      // Update unread chat count if user is premium and not in the current chat
+      if (user.membership === "premium" || user.role === "admin") {
+        // Only increment if not in the current chat
+        if (activeTab !== "user-chat") {
+          setUnreadChatCount((prev) => prev + 1);
+        }
+      }
+    };
+
+    // Listen for new user messages
+    socket.on("new-user-message", handleNewMessage);
+
+    return () => {
+      socket.off("new-user-message", handleNewMessage);
+    };
+  }, [socket, user, activeTab]);
+
   // Periodic refresh of notification count
   useEffect(() => {
     if (!user) return;
@@ -133,10 +157,21 @@ const ChatPage = () => {
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
+
     // Refresh notification count when switching to notifications tab
     if (tab === "notifications") {
       fetchNotificationCount();
     }
+
+    // Clear unread chat count when switching to user-chat tab
+    if (tab === "user-chat") {
+      setUnreadChatCount(0);
+    }
+  };
+
+  const handleChatOpened = () => {
+    // Decrease unread count when a chat is opened
+    setUnreadChatCount((prev) => Math.max(0, prev - 1));
   };
 
   const renderActiveComponent = () => {
@@ -152,7 +187,7 @@ const ChatPage = () => {
       case "settings":
         return <UserChatSettings />;
       case "user-chat":
-        return <UserChatPage />;
+        return <UserChatPage onChatOpened={handleChatOpened} />;
       default:
         return <DomesticChat />;
     }
