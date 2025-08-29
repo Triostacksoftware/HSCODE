@@ -6,6 +6,7 @@ import {
   FaPaperPlane,
   FaImage,
   FaTimes,
+  FaFile,
 } from "react-icons/fa";
 import axios from "axios";
 import { OnlineUsersContext } from "../../contexts/OnlineUsersContext";
@@ -29,10 +30,20 @@ const IndividualUserChat = ({ chat, user, onBack, onMessageSent }) => {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
 
+  // Document upload states
+  const [selectedDocument, setSelectedDocument] = useState(null);
+  const [documentCaption, setDocumentCaption] = useState("");
+  const [uploadingDocument, setUploadingDocument] = useState(false);
+
+  // Image modal states
+  const [selectedImageModal, setSelectedImageModal] = useState(null);
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+
   const { socket } = useContext(OnlineUsersContext);
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const imageInputRef = useRef(null);
+  const documentInputRef = useRef(null);
 
   // Add body class to prevent page scrolling
   useEffect(() => {
@@ -153,13 +164,18 @@ const IndividualUserChat = ({ chat, user, onBack, onMessageSent }) => {
         e.preventDefault();
         scrollToBottomImmediate();
       }
+
+      // Escape key to close image modal
+      if (e.key === "Escape" && isImageModalOpen) {
+        closeImageModal();
+      }
     };
 
     document.addEventListener("keydown", handleKeyDown);
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, []);
+  }, [isImageModalOpen]);
 
   // Add scroll event listener to messages container
   useEffect(() => {
@@ -558,6 +574,140 @@ const IndividualUserChat = ({ chat, user, onBack, onMessageSent }) => {
     }
   };
 
+  const handleDocumentSelect = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      // Validate file type - allow common document formats
+      const allowedTypes = [
+        "application/pdf",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/vnd.ms-excel",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "text/plain",
+        "application/rtf",
+      ];
+
+      if (!allowedTypes.includes(file.type)) {
+        toast.error(
+          "Please select a valid document file (PDF, DOC, DOCX, XLS, XLSX, TXT, RTF)"
+        );
+        return;
+      }
+
+      // Validate file size (10MB limit for documents)
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error("Document size should be less than 10MB");
+        return;
+      }
+
+      setSelectedDocument(file);
+    }
+  };
+
+  const removeSelectedDocument = () => {
+    setSelectedDocument(null);
+    setDocumentCaption("");
+    if (documentInputRef.current) {
+      documentInputRef.current.value = "";
+    }
+  };
+
+  const openImageModal = (imageUrl, fileName) => {
+    console.log("Opening image modal:", { imageUrl, fileName });
+    setSelectedImageModal({ url: imageUrl, fileName });
+    setIsImageModalOpen(true);
+  };
+
+  const closeImageModal = () => {
+    console.log("Closing image modal");
+    setIsImageModalOpen(false);
+    setSelectedImageModal(null);
+  };
+
+  const sendDocument = async () => {
+    if (!selectedDocument || !chat?._id) return;
+
+    try {
+      setUploadingDocument(true);
+
+      const formData = new FormData();
+      formData.append("document", selectedDocument);
+      if (documentCaption.trim()) {
+        formData.append("caption", documentCaption.trim());
+      }
+
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/user-chat/${chat._id}/document`,
+        formData,
+        {
+          withCredentials: true,
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      );
+
+      if (response.data.success) {
+        // Add message to local state
+        setMessages((prev) => [...prev, response.data.message]);
+
+        // Clear document states
+        removeSelectedDocument();
+
+        // Emit message to socket for other users to receive
+        if (socket) {
+          socket.emit("user-message", {
+            chatId: chat._id,
+            message: response.data.message,
+            receiverId: chat.otherUser._id,
+          });
+
+          // Emit event to update chat list with new last message
+          socket.emit("user-message-sent", {
+            chatId: chat._id,
+            message: response.data.message,
+          });
+
+          // Also emit a chat-update event for immediate local update
+          socket.emit("chat-update", {
+            chatId: chat._id,
+            message: response.data.message,
+          });
+        }
+
+        // Directly update the chat list if the function is available
+        if (typeof window !== "undefined" && window.updateChatLastMessage) {
+          window.updateChatLastMessage(
+            chat._id,
+            response.data.message.content,
+            response.data.message.createdAt
+          );
+        }
+
+        // Force refresh the entire chat list
+        if (typeof window !== "undefined" && window.refreshChatList) {
+          window.refreshChatList();
+        }
+
+        // Scroll to bottom after sending message
+        setTimeout(() => {
+          scrollToBottomImmediate();
+        }, 50);
+
+        // Notify parent that message was sent
+        if (onMessageSent) {
+          onMessageSent();
+        }
+
+        toast.success("Document sent successfully!");
+      }
+    } catch (error) {
+      console.error("Error sending document:", error);
+      toast.error("Failed to send document. Please try again.");
+    } finally {
+      setUploadingDocument(false);
+    }
+  };
+
   const formatTime = (timestamp) => {
     if (!timestamp) return "";
     const date = new Date(timestamp);
@@ -594,8 +744,14 @@ const IndividualUserChat = ({ chat, user, onBack, onMessageSent }) => {
               <img
                 src={`${process.env.NEXT_PUBLIC_BASE_URL}${message.fileUrl}`}
                 alt={message.fileName || "Image"}
-                className="max-w-full h-auto rounded-lg mb-2"
+                className="max-w-full h-auto rounded-lg mb-2 cursor-pointer hover:opacity-90 hover:scale-105 transition-all duration-200"
                 style={{ maxHeight: "300px" }}
+                onClick={() =>
+                  openImageModal(
+                    `${process.env.NEXT_PUBLIC_BASE_URL}${message.fileUrl}`,
+                    message.fileName
+                  )
+                }
                 onError={(e) => {
                   console.error("Image failed to load:", e.target.src);
                   e.target.style.display = "none";
@@ -609,6 +765,29 @@ const IndividualUserChat = ({ chat, user, onBack, onMessageSent }) => {
               <div className="hidden text-sm text-gray-500 mb-2">
                 📷 {message.fileName || "Image"}
               </div>
+            </div>
+          ) : message.messageType === "file" ? (
+            <div>
+              <div className="flex items-center space-x-2 p-3 bg-gray-100 rounded-lg mb-2">
+                <FaFile className="text-2xl text-gray-600" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate">
+                    {message.fileName}
+                  </p>
+                  <p className="text-xs text-gray-500">Document</p>
+                </div>
+                <a
+                  href={`${process.env.NEXT_PUBLIC_BASE_URL}${message.fileUrl}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 transition-colors"
+                >
+                  Download
+                </a>
+              </div>
+              {message.content && message.content !== "📄 Document" && (
+                <p className="text-sm mb-2">{message.content}</p>
+              )}
             </div>
           ) : (
             <p className="text-sm">{message.content}</p>
@@ -631,9 +810,9 @@ const IndividualUserChat = ({ chat, user, onBack, onMessageSent }) => {
       <div className="flex items-center p-4 border-b border-gray-200 bg-white flex-shrink-0">
         <button
           onClick={onBack}
-          className="p-2 mr-3 hover:bg-gray-100 rounded-full transition-colors"
+          className="p-2 hover:bg-gray-100 rounded-lg transition-colors mr-3"
         >
-          <FaArrowLeft className="text-gray-600" />
+          <FaArrowLeft className="w-5 h-5 text-gray-600" />
         </button>
 
         <div className="flex items-center flex-1">
@@ -772,8 +951,43 @@ const IndividualUserChat = ({ chat, user, onBack, onMessageSent }) => {
           </div>
         )}
 
+        {/* Document Preview */}
+        {selectedDocument && (
+          <div className="mb-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-gray-700">
+                Document Preview
+              </span>
+              <button
+                onClick={removeSelectedDocument}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <FaTimes className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="flex items-center space-x-2 p-2 bg-white rounded border">
+              <FaFile className="text-2xl text-gray-600" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 truncate">
+                  {selectedDocument.name}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {(selectedDocument.size / 1024 / 1024).toFixed(2)} MB
+                </p>
+              </div>
+            </div>
+            <input
+              type="text"
+              value={documentCaption}
+              onChange={(e) => setDocumentCaption(e.target.value)}
+              placeholder="Add a caption (optional)..."
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm mt-2"
+            />
+          </div>
+        )}
+
         <div className="flex space-x-3">
-          {/* Hidden file input */}
+          {/* Hidden file inputs */}
           <input
             ref={imageInputRef}
             type="file"
@@ -782,13 +996,28 @@ const IndividualUserChat = ({ chat, user, onBack, onMessageSent }) => {
             className="hidden"
           />
 
+          <input
+            ref={documentInputRef}
+            type="file"
+            accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.rtf"
+            onChange={handleDocumentSelect}
+            className="hidden"
+          />
+
           {/* Image picker button */}
           <button
             onClick={() => imageInputRef.current?.click()}
             className="px-3 py-2 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
-            title="Send image"
           >
             <FaImage className="w-5 h-5" />
+          </button>
+
+          {/* Document picker button */}
+          <button
+            onClick={() => documentInputRef.current?.click()}
+            className="px-3 py-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+          >
+            <FaFile className="w-5 h-5" />
           </button>
 
           <div className="flex-1 relative">
@@ -798,11 +1027,13 @@ const IndividualUserChat = ({ chat, user, onBack, onMessageSent }) => {
               onChange={handleTyping}
               placeholder="Type a message..."
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              disabled={sending || uploadingImage}
+              disabled={sending || uploadingImage || uploadingDocument}
               onKeyPress={(e) => {
                 if (e.key === "Enter") {
                   if (selectedImage) {
                     sendImage();
+                  } else if (selectedDocument) {
+                    sendDocument();
                   } else {
                     sendMessage();
                   }
@@ -817,15 +1048,22 @@ const IndividualUserChat = ({ chat, user, onBack, onMessageSent }) => {
           </div>
 
           <button
-            onClick={selectedImage ? sendImage : sendMessage}
+            onClick={
+              selectedImage
+                ? sendImage
+                : selectedDocument
+                ? sendDocument
+                : sendMessage
+            }
             disabled={
-              (!newMessage.trim() && !selectedImage) ||
+              (!newMessage.trim() && !selectedImage && !selectedDocument) ||
               sending ||
-              uploadingImage
+              uploadingImage ||
+              uploadingDocument
             }
             className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {sending || uploadingImage ? (
+            {sending || uploadingImage || uploadingDocument ? (
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
             ) : (
               <FaPaperPlane />
@@ -833,6 +1071,30 @@ const IndividualUserChat = ({ chat, user, onBack, onMessageSent }) => {
           </button>
         </div>
       </div>
+
+      {/* Image Modal/Overlay */}
+      {isImageModalOpen && selectedImageModal && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center "
+          onClick={closeImageModal}
+        >
+          <div className="relative max-w-[90vw] max-h-[90vh] p-4">
+            <button
+              onClick={closeImageModal}
+              className="absolute top-4 right-4 z-10 p-2 bg-black bg-opacity-50 text-white rounded-full hover:bg-opacity-70"
+            >
+              <FaTimes className="w-6 h-6" />
+            </button>
+
+            <img
+              src={selectedImageModal.url}
+              alt={selectedImageModal.fileName || "Image"}
+              className="max-w-[90vw] max-h-[70vh] object-contain"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
