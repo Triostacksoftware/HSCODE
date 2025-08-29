@@ -263,6 +263,73 @@ export const sendMessage = async (req, res) => {
   }
 };
 
+// Send an image message
+export const sendImageMessage = async (req, res) => {
+  try {
+    const { chatId } = req.params;
+    const currentUserId = req.user.id;
+    const { caption } = req.body;
+
+    if (!req.file) {
+      return res.status(400).json({ message: "Image file is required" });
+    }
+
+    // Verify user is part of this chat
+    const chat = await UserChatModel.findOne({
+      _id: chatId,
+      participants: currentUserId,
+      isActive: true,
+    });
+
+    if (!chat) {
+      return res.status(404).json({ message: "Chat not found" });
+    }
+
+    // Get the other participant
+    const otherParticipant = chat.participants.find(
+      (p) => p.toString() !== currentUserId
+    );
+
+    // Create image message
+    const message = new MessageModel({
+      senderId: currentUserId,
+      receiverId: otherParticipant,
+      content: caption || "📷 Image",
+      messageType: "image",
+      fileUrl: `/upload/${req.file.filename}`,
+      fileName: req.file.originalname,
+    });
+
+    await message.save();
+
+    // Update chat
+    chat.lastMessage = message._id;
+    chat.lastMessageAt = new Date();
+    await chat.incrementUnreadCount(otherParticipant);
+
+    // Populate sender info
+    await message.populate("senderId", "name image");
+
+    res.json({
+      success: true,
+      message: {
+        _id: message._id,
+        content: message.content,
+        messageType: message.messageType,
+        fileUrl: message.fileUrl,
+        fileName: message.fileName,
+        senderId: message.senderId,
+        receiverId: message.receiverId,
+        createdAt: message.createdAt,
+        isRead: message.isRead,
+      },
+    });
+  } catch (error) {
+    console.error("Error sending image message:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 // Get unread message count for current user
 export const getUnreadCount = async (req, res) => {
   try {

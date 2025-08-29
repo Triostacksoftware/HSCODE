@@ -139,6 +139,20 @@ const UserChatList = ({ user, onChatSelect, selectedChatId }) => {
 
   const formatLastMessage = (message) => {
     if (!message) return "No messages yet";
+
+    // Handle image messages
+    if (message.messageType === "image") {
+      const caption =
+        message.content && message.content !== "📷 Image"
+          ? message.content
+          : "";
+      if (caption) {
+        return caption.length > 30 ? caption.substring(0, 30) + "..." : caption;
+      }
+      return "📷 Image";
+    }
+
+    // Handle text messages
     const content = message.content || "";
     if (content.length > 30) {
       return content.substring(0, 30) + "...";

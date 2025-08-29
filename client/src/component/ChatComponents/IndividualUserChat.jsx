@@ -1,6 +1,12 @@
 "use client";
 import React, { useState, useEffect, useRef, useContext } from "react";
-import { FaArrowLeft, FaUser, FaPaperPlane } from "react-icons/fa";
+import {
+  FaArrowLeft,
+  FaUser,
+  FaPaperPlane,
+  FaImage,
+  FaTimes,
+} from "react-icons/fa";
 import axios from "axios";
 import { OnlineUsersContext } from "../../contexts/OnlineUsersContext";
 import { toast } from "react-hot-toast";
@@ -17,9 +23,16 @@ const IndividualUserChat = ({ chat, user, onBack, onMessageSent }) => {
   const [otherUserMessageNotification, setOtherUserMessageNotification] =
     useState(null);
 
+  // Image upload states
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imageCaption, setImageCaption] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [imagePreview, setImagePreview] = useState(null);
+
   const { socket } = useContext(OnlineUsersContext);
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
+  const imageInputRef = useRef(null);
 
   // Add body class to prevent page scrolling
   useEffect(() => {
@@ -427,6 +440,124 @@ const IndividualUserChat = ({ chat, user, onBack, onMessageSent }) => {
     }
   };
 
+  const handleImageSelect = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith("image/")) {
+        toast.error("Please select an image file");
+        return;
+      }
+
+      // Validate file size (5MB limit)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Image size should be less than 5MB");
+        return;
+      }
+
+      setSelectedImage(file);
+
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeSelectedImage = () => {
+    setSelectedImage(null);
+    setImagePreview(null);
+    setImageCaption("");
+    if (imageInputRef.current) {
+      imageInputRef.current.value = "";
+    }
+  };
+
+  const sendImage = async () => {
+    if (!selectedImage || !chat?._id) return;
+
+    try {
+      setUploadingImage(true);
+
+      const formData = new FormData();
+      formData.append("image", selectedImage);
+      if (imageCaption.trim()) {
+        formData.append("caption", imageCaption.trim());
+      }
+
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/user-chat/${chat._id}/image`,
+        formData,
+        {
+          withCredentials: true,
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      );
+
+      if (response.data.success) {
+        // Add message to local state
+        setMessages((prev) => [...prev, response.data.message]);
+
+        // Clear image states
+        removeSelectedImage();
+
+        // Emit message to socket for other users to receive
+        if (socket) {
+          socket.emit("user-message", {
+            chatId: chat._id,
+            message: response.data.message,
+            receiverId: chat.otherUser._id,
+          });
+
+          // Emit event to update chat list with new last message
+          socket.emit("user-message-sent", {
+            chatId: chat._id,
+            message: response.data.message,
+          });
+
+          // Also emit a chat-update event for immediate local update
+          socket.emit("chat-update", {
+            chatId: chat._id,
+            message: response.data.message,
+          });
+        }
+
+        // Directly update the chat list if the function is available
+        if (typeof window !== "undefined" && window.updateChatLastMessage) {
+          window.updateChatLastMessage(
+            chat._id,
+            response.data.message.content,
+            response.data.message.createdAt
+          );
+        }
+
+        // Force refresh the entire chat list
+        if (typeof window !== "undefined" && window.refreshChatList) {
+          window.refreshChatList();
+        }
+
+        // Scroll to bottom after sending message
+        setTimeout(() => {
+          scrollToBottomImmediate();
+        }, 50);
+
+        // Notify parent that message was sent
+        if (onMessageSent) {
+          onMessageSent();
+        }
+
+        toast.success("Image sent successfully!");
+      }
+    } catch (error) {
+      console.error("Error sending image:", error);
+      toast.error("Failed to send image. Please try again.");
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   const formatTime = (timestamp) => {
     if (!timestamp) return "";
     const date = new Date(timestamp);
@@ -442,6 +573,57 @@ const IndividualUserChat = ({ chat, user, onBack, onMessageSent }) => {
       </div>
     );
   }
+
+  const renderMessage = (message) => {
+    const isOwnMessage = message.senderId._id === user._id;
+
+    return (
+      <div
+        key={message._id}
+        className={`flex ${isOwnMessage ? "justify-end" : "justify-start"}`}
+      >
+        <div
+          className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+            isOwnMessage
+              ? "bg-purple-600 text-white"
+              : "bg-gray-200 text-gray-900"
+          }`}
+        >
+          {message.messageType === "image" ? (
+            <div>
+              <img
+                src={`${process.env.NEXT_PUBLIC_BASE_URL}${message.fileUrl}`}
+                alt={message.fileName || "Image"}
+                className="max-w-full h-auto rounded-lg mb-2"
+                style={{ maxHeight: "300px" }}
+                onError={(e) => {
+                  console.error("Image failed to load:", e.target.src);
+                  e.target.style.display = "none";
+                  e.target.nextSibling.style.display = "block";
+                }}
+              />
+              {message.content && message.content !== "📷 Image" && (
+                <p className="text-sm mb-2">{message.content}</p>
+              )}
+              {/* Fallback if image fails to load */}
+              <div className="hidden text-sm text-gray-500 mb-2">
+                📷 {message.fileName || "Image"}
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm">{message.content}</p>
+          )}
+          <p
+            className={`text-xs mt-1 ${
+              isOwnMessage ? "text-purple-100" : "text-gray-500"
+            }`}
+          >
+            {formatTime(message.createdAt)}
+          </p>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="chat-container flex flex-col h-full">
@@ -495,35 +677,7 @@ const IndividualUserChat = ({ chat, user, onBack, onMessageSent }) => {
           </div>
         ) : (
           <div className="space-y-4">
-            {messages.map((message) => (
-              <div
-                key={message._id}
-                className={`flex ${
-                  message.senderId._id === user._id
-                    ? "justify-end"
-                    : "justify-start"
-                }`}
-              >
-                <div
-                  className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                    message.senderId._id === user._id
-                      ? "bg-purple-600 text-white"
-                      : "bg-gray-200 text-gray-900"
-                  }`}
-                >
-                  <p className="text-sm">{message.content}</p>
-                  <p
-                    className={`text-xs mt-1 ${
-                      message.senderId._id === user._id
-                        ? "text-purple-100"
-                        : "text-gray-500"
-                    }`}
-                  >
-                    {formatTime(message.createdAt)}
-                  </p>
-                </div>
-              </div>
-            ))}
+            {messages.map((message) => renderMessage(message))}
           </div>
         )}
         <div ref={messagesEndRef} />
@@ -588,7 +742,55 @@ const IndividualUserChat = ({ chat, user, onBack, onMessageSent }) => {
 
       {/* Message Input */}
       <div className="p-4 bg-white border-t border-gray-200 flex-shrink-0 mt-auto">
+        {/* Image Preview */}
+        {imagePreview && (
+          <div className="mb-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-gray-700">
+                Image Preview
+              </span>
+              <button
+                onClick={removeSelectedImage}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <FaTimes className="w-4 h-4" />
+              </button>
+            </div>
+            <img
+              src={imagePreview}
+              alt="Preview"
+              className="max-w-full h-auto rounded-lg mb-2"
+              style={{ maxHeight: "200px" }}
+            />
+            <input
+              type="text"
+              value={imageCaption}
+              onChange={(e) => setImageCaption(e.target.value)}
+              placeholder="Add a caption (optional)..."
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
+            />
+          </div>
+        )}
+
         <div className="flex space-x-3">
+          {/* Hidden file input */}
+          <input
+            ref={imageInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleImageSelect}
+            className="hidden"
+          />
+
+          {/* Image picker button */}
+          <button
+            onClick={() => imageInputRef.current?.click()}
+            className="px-3 py-2 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+            title="Send image"
+          >
+            <FaImage className="w-5 h-5" />
+          </button>
+
           <div className="flex-1 relative">
             <input
               type="text"
@@ -596,10 +798,14 @@ const IndividualUserChat = ({ chat, user, onBack, onMessageSent }) => {
               onChange={handleTyping}
               placeholder="Type a message..."
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              disabled={sending}
+              disabled={sending || uploadingImage}
               onKeyPress={(e) => {
                 if (e.key === "Enter") {
-                  sendMessage();
+                  if (selectedImage) {
+                    sendImage();
+                  } else {
+                    sendMessage();
+                  }
                 }
               }}
             />
@@ -609,12 +815,17 @@ const IndividualUserChat = ({ chat, user, onBack, onMessageSent }) => {
               </div>
             )}
           </div>
+
           <button
-            onClick={sendMessage}
-            disabled={!newMessage.trim() || sending}
+            onClick={selectedImage ? sendImage : sendMessage}
+            disabled={
+              (!newMessage.trim() && !selectedImage) ||
+              sending ||
+              uploadingImage
+            }
             className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {sending ? (
+            {sending || uploadingImage ? (
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
             ) : (
               <FaPaperPlane />

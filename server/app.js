@@ -84,6 +84,24 @@ app.get("/api/v1/test-cookie", (req, res) => {
   res.json({ message: "Test cookie set", cookies: req.cookies });
 });
 
+// Test image serving endpoint
+app.get("/api/v1/test-image/:filename", (req, res) => {
+  const { filename } = req.params;
+  const filePath = `public/uploads/${filename}`;
+
+  console.log("Testing image serving:", {
+    filename,
+    filePath,
+    exists: require("fs").existsSync(filePath),
+  });
+
+  if (require("fs").existsSync(filePath)) {
+    res.sendFile(filePath, { root: process.cwd() });
+  } else {
+    res.status(404).json({ error: "Image not found", filePath });
+  }
+});
+
 // Unified country detection endpoint
 app.get("/api/v1/location", async (req, res) => {
   try {

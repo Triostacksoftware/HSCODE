@@ -4,12 +4,14 @@ import {
   getUserChats,
   getChatMessages,
   sendMessage,
+  sendImageMessage,
   getUnreadCount,
   markChatAsRead,
   getChatById,
 } from "../controllers/userChat.ctrls.js";
 import { authMiddleware } from "../middlewares/auth.mdware.js";
 import { premiumMembership } from "../middlewares/membership.mdware.js";
+import upload from "../configurations/multer.js";
 
 const router = express.Router();
 
@@ -31,6 +33,9 @@ router.get("/:chatId/messages", getChatMessages);
 
 // Send a message in a chat
 router.post("/:chatId/message", sendMessage);
+
+// Send an image message in a chat
+router.post("/:chatId/image", upload.single("image"), sendImageMessage);
 
 // Mark chat as read
 router.patch("/:chatId/read", markChatAsRead);
