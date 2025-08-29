@@ -803,6 +803,8 @@ const ChatWindow = ({
           }
         }}
         sending={sending}
+        user={user}
+        groupType="local"
       />
 
       {/* User Profile Sidebar */}

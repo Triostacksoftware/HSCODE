@@ -107,7 +107,9 @@ const SuperGlobalRequestedLeads = () => {
     const name = (lead.userId?.name || "").toLowerCase();
     const email = (lead.userId?.email || "").toLowerCase();
     const q = searchTerm.toLowerCase();
-    return hay.includes(q) || hs.includes(q) || name.includes(q) || email.includes(q);
+    return (
+      hay.includes(q) || hs.includes(q) || name.includes(q) || email.includes(q)
+    );
   });
 
   return (
@@ -176,66 +178,142 @@ const SuperGlobalRequestedLeads = () => {
               <div
                 key={lead._id}
                 className="relative p-4 bg-white border border-gray-200 rounded-lg hover:shadow-sm transition-all"
-                style={{ borderLeft: `4px solid ${lead.type==='buy'?'#3b82f6': lead.type==='sell'?'#22c55e':'#e5e7eb'}` }}
+                style={{
+                  borderLeft: `4px solid ${
+                    lead.type === "buy"
+                      ? "#3b82f6"
+                      : lead.type === "sell"
+                      ? "#22c55e"
+                      : lead.type === "high-sea-buy"
+                      ? "#6366f1"
+                      : lead.type === "high-sea-sell"
+                      ? "#a855f7"
+                      : "#e5e7eb"
+                  }`,
+                }}
               >
                 {/* Header */}
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    <span className={`text-[11px] px-2 py-0.5 rounded ${lead.type==='buy'?'bg-blue-100 text-blue-800':'bg-green-100 text-green-800'}`}>{(lead.type||'lead').toUpperCase()}</span>
-                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">HS: {lead.hscode || '-'}</span>
-                    {lead.leadCode && <span className="text-[11px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">ID: {lead.leadCode}</span>}
+                    <span
+                      className={`text-[11px] px-2 py-0.5 rounded ${
+                        lead.type === "buy"
+                          ? "bg-blue-100 text-blue-800"
+                          : lead.type === "sell"
+                          ? "bg-green-100 text-green-800"
+                          : lead.type === "high-sea-buy"
+                          ? "bg-indigo-100 text-indigo-800"
+                          : lead.type === "high-sea-sell"
+                          ? "bg-purple-100 text-purple-800"
+                          : "bg-gray-100 text-gray-800"
+                      }`}
+                    >
+                      {(lead.type || "lead").toUpperCase()}
+                    </span>
+                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">
+                      HS: {lead.hscode || "-"}
+                    </span>
+                    {lead.leadCode && (
+                      <span className="text-[11px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">
+                        ID: {lead.leadCode}
+                      </span>
+                    )}
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-500">{new Date(lead.createdAt).toLocaleString()}</span>
+                    <span className="text-xs text-gray-500">
+                      {new Date(lead.createdAt).toLocaleString()}
+                    </span>
                   </div>
                 </div>
 
                 {/* Body */}
                 <div className="text-sm space-y-2">
-                  {lead.description && (<div className="text-gray-900 font-medium leading-6">{lead.description}</div>)}
+                  {lead.description && (
+                    <div className="text-gray-900 font-medium leading-6">
+                      {lead.description}
+                    </div>
+                  )}
                   <div className="flex flex-wrap gap-2 text-[11px] text-gray-700">
-                    {lead.quantity && <span className="px-2 py-0.5 rounded-full bg-gray-100">Qty: {lead.quantity}</span>}
-                    {lead.packing && <span className="px-2 py-0.5 rounded-full bg-gray-100">Packing: {lead.packing}</span>}
+                    {lead.quantity && (
+                      <span className="px-2 py-0.5 rounded-full bg-gray-100">
+                        Qty: {lead.quantity}
+                      </span>
+                    )}
+                    {lead.packing && (
+                      <span className="px-2 py-0.5 rounded-full bg-gray-100">
+                        Packing: {lead.packing}
+                      </span>
+                    )}
                     {(lead.targetPrice || lead.negotiable !== undefined) && (
-                      <span className="px-2 py-0.5 rounded-full bg-gray-100">Target: {lead.targetPrice || '-'} {lead.negotiable ? '(Negotiable)' : ''}</span>
+                      <span className="px-2 py-0.5 rounded-full bg-gray-100">
+                        Target: {lead.targetPrice || "-"}{" "}
+                        {lead.negotiable ? "(Negotiable)" : ""}
+                      </span>
                     )}
                     {lead.countryCode && (
-                      <span className="px-2 py-0.5 rounded bg-gray-800 text-white ">Country: {lead.countryCode}</span>
+                      <span className="px-2 py-0.5 rounded bg-gray-800 text-white ">
+                        Country: {lead.countryCode}
+                      </span>
                     )}
                   </div>
                   <div className="text-xs text-gray-700 space-y-1">
-                    {lead.buyerDeliveryLocation?.address && (<div>Delivery: {lead.buyerDeliveryLocation.address}</div>)}
-                    {lead.sellerPickupLocation?.address && (<div>Pickup: {lead.sellerPickupLocation.address}</div>)}
-                    {lead.specialRequest && (<div>Special request: {lead.specialRequest}</div>)}
-                    {lead.remarks && (<div>Notes: {lead.remarks}</div>)}
+                    {lead.buyerDeliveryLocation?.address && (
+                      <div>Delivery: {lead.buyerDeliveryLocation.address}</div>
+                    )}
+                    {lead.sellerPickupLocation?.address && (
+                      <div>Pickup: {lead.sellerPickupLocation.address}</div>
+                    )}
+                    {lead.specialRequest && (
+                      <div>Special request: {lead.specialRequest}</div>
+                    )}
+                    {lead.remarks && <div>Notes: {lead.remarks}</div>}
                   </div>
-                  {Array.isArray(lead.documents) && lead.documents.length > 0 && (
-                    <div className="mt-1 flex flex-wrap gap-2">
-                      {lead.documents.map((doc, i) => (
-                        <a
-                          key={i}
-                          href={`${process.env.NEXT_PUBLIC_BASE_URL}/leadDocuments/${doc}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 text-[11px]"
-                        >
-                          <span>📄</span>
-                          <span className="truncate max-w-[140px]">{doc}</span>
-                        </a>
-                      ))}
-                    </div>
-                  )}
+                  {Array.isArray(lead.documents) &&
+                    lead.documents.length > 0 && (
+                      <div className="mt-1 flex flex-wrap gap-2">
+                        {lead.documents.map((doc, i) => (
+                          <a
+                            key={i}
+                            href={`${process.env.NEXT_PUBLIC_BASE_URL}/leadDocuments/${doc}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 text-[11px]"
+                          >
+                            <span>📄</span>
+                            <span className="truncate max-w-[140px]">
+                              {doc}
+                            </span>
+                          </a>
+                        ))}
+                      </div>
+                    )}
                 </div>
 
                 {/* Footer */}
                 <div className="mt-3 flex items-end justify-between">
                   <div className="text-xs text-gray-600">
-                    <div><span className="font-medium">User:</span> {lead.userId?.name} ({lead.userId?.email})</div>
-                    <div><span className="font-medium">Group:</span> {lead.groupId?.name}</div>
+                    <div>
+                      <span className="font-medium">User:</span>{" "}
+                      {lead.userId?.name} ({lead.userId?.email})
+                    </div>
+                    <div>
+                      <span className="font-medium">Group:</span>{" "}
+                      {lead.groupId?.name}
+                    </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <button onClick={() => handleApproveReject(lead._id, 'approve')} className="px-3 py-1 border border-gray-600 hover:text-white rounded-md hover:bg-gray-800 text-xs">Approve</button>
-                    <button onClick={() => openRejectModal(lead)} className="px-3 py-1 border border-gray-600 hover:text-white rounded-md hover:bg-gray-800 text-xs">Reject</button>
+                    <button
+                      onClick={() => handleApproveReject(lead._id, "approve")}
+                      className="px-3 py-1 border border-gray-600 hover:text-white rounded-md hover:bg-gray-800 text-xs"
+                    >
+                      Approve
+                    </button>
+                    <button
+                      onClick={() => openRejectModal(lead)}
+                      className="px-3 py-1 border border-gray-600 hover:text-white rounded-md hover:bg-gray-800 text-xs"
+                    >
+                      Reject
+                    </button>
                   </div>
                 </div>
               </div>
@@ -270,7 +348,7 @@ const SuperGlobalRequestedLeads = () => {
               <button
                 onClick={() => handleApproveReject(selectedLead._id, "reject")}
                 className="px-3 py-1 text-white rounded-md bg-gray-800 text-base"
-                >
+              >
                 Reject
               </button>
             </div>

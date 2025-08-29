@@ -649,6 +649,8 @@ const SuperAdminChatWindow = ({
           }
         }}
         sending={sending}
+        user={user}
+        groupType={isGlobal ? "global" : "local"}
       />
 
       {/* User Info Sidebar */}

@@ -66,6 +66,33 @@ const GlobalChatWindow = ({
   const [showMembers, setShowMembers] = useState(false);
   const messagesEndRef = useRef(null);
 
+  // Check user membership and determine available lead types
+  const isPremiumUser =
+    user && (user.membership === "premium" || user.role === "admin");
+
+  // Define available lead types based on user membership
+  const getAvailableLeadTypes = () => {
+    if (!isPremiumUser) {
+      // Free users can only post buy leads
+      return [{ value: "buy", label: "Buy" }];
+    } else {
+      // Premium users can post all types in global groups
+      return [
+        { value: "buy", label: "Buy" },
+        { value: "sell", label: "Sell" },
+        { value: "high-sea-buy", label: "High Sea Buy" },
+        { value: "high-sea-sell", label: "High Sea Sell" },
+      ];
+    }
+  };
+
+  // Set initial lead type based on user membership
+  useEffect(() => {
+    if (!isPremiumUser && leadType !== "buy") {
+      setLeadType("buy");
+    }
+  }, [isPremiumUser, leadType]);
+
   const fetchGroupMembers = useCallback(async () => {
     if (!selectedGroupId) {
       setGroupMembers([]);
@@ -534,6 +561,10 @@ const GlobalChatWindow = ({
                               ? "bg-blue-50 border-blue-100 text-gray-900"
                               : msg.type === "sell"
                               ? "bg-green-50 border-green-100 text-gray-900"
+                              : msg.type === "high-sea-buy"
+                              ? "bg-indigo-50 border-indigo-100 text-gray-900"
+                              : msg.type === "high-sea-sell"
+                              ? "bg-purple-50 border-purple-100 text-gray-900"
                               : "bg-white border-gray-200 text-gray-900"
                           }`}
                         >
@@ -549,7 +580,13 @@ const GlobalChatWindow = ({
                                   className={`px-2 py-0.5 rounded-full text-[11px] ${
                                     msg.type === "buy"
                                       ? "bg-blue-100 text-blue-700"
-                                      : "bg-green-100 text-green-700"
+                                      : msg.type === "sell"
+                                      ? "bg-green-100 text-green-700"
+                                      : msg.type === "high-sea-buy"
+                                      ? "bg-indigo-100 text-indigo-700"
+                                      : msg.type === "high-sea-sell"
+                                      ? "bg-purple-100 text-purple-700"
+                                      : "bg-gray-100 text-gray-700"
                                   }`}
                                 >
                                   {(msg.type || "Lead").toUpperCase()}
@@ -672,30 +709,17 @@ const GlobalChatWindow = ({
                 <div className="text-xs text-gray-500 mb-1">
                   Select lead type
                 </div>
-                <div className="inline-flex rounded border border-gray-300 overflow-hidden">
-                  <button
-                    type="button"
-                    onClick={() => setLeadType("buy")}
-                    className={`px-4 py-1.5 text-sm ${
-                      leadType === "buy"
-                        ? "bg-sky-500 text-white"
-                        : "bg-white text-gray-700"
-                    }`}
-                  >
-                    Buy
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setLeadType("sell")}
-                    className={`px-4 py-1.5 text-sm border-l border-gray-300 ${
-                      leadType === "sell"
-                        ? "bg-green-500 text-white"
-                        : "bg-white text-gray-700"
-                    }`}
-                  >
-                    Sell
-                  </button>
-                </div>
+                <select
+                  value={leadType}
+                  onChange={(e) => setLeadType(e.target.value)}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-gray-700 focus:border-gray-700"
+                >
+                  {getAvailableLeadTypes().map((type) => (
+                    <option key={type.value} value={type.value}>
+                      {type.label}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
