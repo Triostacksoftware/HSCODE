@@ -13,8 +13,10 @@ const server = http.createServer(app);
 // Create Socket.IO instance
 const io = new SocketServer(server, {
   cors: {
-    origin: process.env.ORIGIN,
+    origin: [process.env.ORIGIN, "https://hscodes.com"],
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
   },
 });
 
