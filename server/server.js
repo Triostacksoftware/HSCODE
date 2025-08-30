@@ -13,11 +13,18 @@ const server = http.createServer(app);
 // Create Socket.IO instance
 const io = new SocketServer(server, {
   cors: {
-    origin: [process.env.ORIGIN, "https://hscodes.com"],
+    origin: [
+      process.env.ORIGIN,
+      "https://hscodes.com",
+      "http://localhost:3000", // Keep localhost for development
+      "https://localhost:3000",
+    ].filter(Boolean),
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
   },
+  transports: ["websocket", "polling"], // Support both WebSocket and polling
+  allowEIO3: true, // Allow Engine.IO v3 clients
 });
 
 export { io };
@@ -159,7 +166,7 @@ mongoose
   .then(() => {
     console.log("✅ Database connected successfully");
 
-    const PORT = process.env.PORT || 3000;
+    const PORT = process.env.PORT || 8000; // Changed default to 8000 to match client expectation
 
     server.listen(PORT, () => {
       console.log(
@@ -167,6 +174,8 @@ mongoose
           process.env.DOMAIN || "http://localhost:" + PORT
         }`
       );
+      console.log(`🔌 Socket.IO server ready on port ${PORT}`);
+      console.log(`🌍 Environment: ${process.env.NODE_ENV || "development"}`);
 
       // Start the scheduled notifications processor
       startScheduledNotificationsProcessor();
