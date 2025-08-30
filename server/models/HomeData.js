@@ -112,15 +112,14 @@ const HomeDataSchema = new mongoose.Schema(
         {
           id: { type: String, required: true },
           name: { type: String, required: true },
-          price: {
-            monthly: { type: Number, required: true },
-            yearly: { type: Number, required: true },
-          },
+          monthlyPrice: { type: Number, required: true, min: 0 },
           description: { type: String, required: true },
           features: [{ type: String }],
           icon: { type: String, default: "🌟" },
           popular: { type: Boolean, default: false },
           color: { type: String, default: "blue" },
+          maxGroups: { type: Number, default: 3, min: 0 },
+          maxLeads: { type: Number, default: 10, min: 0 },
         },
       ],
       faqSection: {

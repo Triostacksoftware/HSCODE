@@ -107,6 +107,30 @@ export const upsertHomeData = async (req, res) => {
     const Countrycode = req.user.countryCode;
     const updateData = req.body;
 
+    // Transform subscription plans data if it exists
+    if (updateData.subscriptionPlans && updateData.subscriptionPlans.plans) {
+      updateData.subscriptionPlans.plans =
+        updateData.subscriptionPlans.plans.map((plan) => {
+          // If plan has old price structure, transform it to new structure
+          if (plan.price && typeof plan.price.monthly === "number") {
+            return {
+              ...plan,
+              monthlyPrice: plan.price.monthly,
+              maxGroups: plan.maxGroups || 3,
+              maxLeads: plan.maxLeads || 10,
+              // Remove old price structure
+              price: undefined,
+            };
+          }
+          // If plan already has new structure, ensure required fields exist
+          return {
+            ...plan,
+            maxGroups: plan.maxGroups || 3,
+            maxLeads: plan.maxLeads || 10,
+          };
+        });
+    }
+
     // Find existing home data or create new one
     let homeData = await HomeData.findOne({ countryCode: Countrycode });
 
@@ -477,6 +501,76 @@ export const saveDummyData = async (req, res) => {
     });
   } catch (error) {
     console.error("Error saving dummy data:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// Migrate existing subscription plans to new structure
+export const migrateSubscriptionPlans = async (req, res) => {
+  try {
+    const Countrycode = req.user.countryCode;
+
+    // Find existing home data
+    let homeData = await HomeData.findOne({ countryCode: Countrycode });
+
+    if (
+      !homeData ||
+      !homeData.subscriptionPlans ||
+      !homeData.subscriptionPlans.plans
+    ) {
+      return res.status(404).json({
+        success: false,
+        message: "No subscription plans found to migrate",
+      });
+    }
+
+    // Check if migration is needed
+    const needsMigration = homeData.subscriptionPlans.plans.some(
+      (plan) => plan.price && plan.price.monthly
+    );
+
+    if (!needsMigration) {
+      return res.status(200).json({
+        success: true,
+        message: "Subscription plans are already in the correct format",
+      });
+    }
+
+    // Transform plans to new structure
+    const updatedPlans = homeData.subscriptionPlans.plans.map((plan) => {
+      if (plan.price && typeof plan.price.monthly === "number") {
+        return {
+          ...plan,
+          monthlyPrice: plan.price.monthly,
+          maxGroups: plan.maxGroups || 3,
+          maxLeads: plan.maxLeads || 10,
+          price: undefined, // Remove old structure
+        };
+      }
+      return {
+        ...plan,
+        maxGroups: plan.maxGroups || 3,
+        maxLeads: plan.maxLeads || 10,
+      };
+    });
+
+    // Update the database
+    const updatedData = await HomeData.findOneAndUpdate(
+      { countryCode: Countrycode },
+      {
+        "subscriptionPlans.plans": updatedPlans,
+        adminId: req.user.id,
+      },
+      { new: true, runValidators: true }
+    );
+
+    res.status(200).json({
+      success: true,
+      data: updatedData,
+      message: "Subscription plans migrated successfully to new format",
+    });
+  } catch (error) {
+    console.error("Error migrating subscription plans:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };

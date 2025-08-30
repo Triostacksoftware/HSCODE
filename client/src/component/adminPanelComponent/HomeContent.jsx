@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { HiPencil, HiSave, HiX, HiRefresh, HiTrash } from "react-icons/hi";
 import axios from "axios";
 import CouponManager from "./CouponManager";
+import toast from "react-hot-toast";
 
 const HomeContent = () => {
   const [homeData, setHomeData] = useState();
@@ -71,10 +72,10 @@ const HomeContent = () => {
       setEditing(false);
       setNewItemsAdded(false);
       await fetchHomeData();
-      alert("Home data saved successfully!");
+      toast.success("Home data saved successfully!");
     } catch (error) {
       console.error("Error saving home data:", error);
-      alert("Error saving home data");
+      toast.error("Error saving home data");
     } finally {
       setSaving(false);
     }
@@ -1255,12 +1256,14 @@ const SubscriptionPlansEditor = ({
               onAddItem("plans", {
                 id: `plan_${Date.now()}`,
                 name: "New Plan",
-                price: { monthly: 0, yearly: 0 },
+                monthlyPrice: 0,
                 description: "Plan description",
                 features: ["Feature 1", "Feature 2"],
                 icon: "🌟",
                 popular: false,
                 color: "blue",
+                maxGroups: 3,
+                maxLeads: 10,
               })
             }
             className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
@@ -1270,165 +1273,222 @@ const SubscriptionPlansEditor = ({
         )}
       </div>
 
-      {data?.plans?.map((plan, index) => (
-        <div
-          key={plan.id || index}
-          className="border rounded-lg p-4 bg-gray-50"
-        >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <InputField
-              label="Plan ID"
-              value={plan?.id}
-              onChange={(value) => onArrayChange("plans", index, "id", value)}
-              editing={editing}
-            />
-            <InputField
-              label="Plan Name"
-              value={plan?.name}
-              onChange={(value) => onArrayChange("plans", index, "name", value)}
-              editing={editing}
-            />
-            <InputField
-              label="Description"
-              value={plan?.description}
-              onChange={(value) =>
-                onArrayChange("plans", index, "description", value)
-              }
-              editing={editing}
-              multiline
-            />
-            <InputField
-              label="Icon"
-              value={plan?.icon}
-              onChange={(value) => onArrayChange("plans", index, "icon", value)}
-              editing={editing}
-            />
-          </div>
+      {data?.plans?.map((plan, index) => {
+        const yearlyPrice =
+          plan.monthlyPrice * 12 * (1 - (data?.yearlyDiscount || 0) / 100);
+        const monthlyEquivalent = yearlyPrice / 12;
 
-          {/* Pricing */}
-          <div className="mt-4">
-            <h5 className="text-md font-semibold text-gray-900 mb-3">
-              Pricing
-            </h5>
+        return (
+          <div
+            key={plan.id || index}
+            className="border rounded-lg p-4 bg-gray-50"
+          >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <InputField
-                label="Monthly Price"
-                value={plan?.price?.monthly}
-                onChange={(value) => {
-                  const newPrice = {
-                    ...plan.price,
-                    monthly: parseFloat(value) || 0,
-                  };
-                  onArrayChange("plans", index, "price", newPrice);
-                }}
+                label="Plan ID"
+                value={plan?.id}
+                onChange={(value) => onArrayChange("plans", index, "id", value)}
                 editing={editing}
-                type="number"
-                min="0"
-                step="0.01"
               />
               <InputField
-                label="Yearly Price"
-                value={plan?.price?.yearly}
-                onChange={(value) => {
-                  const newPrice = {
-                    ...plan.price,
-                    yearly: parseFloat(value) || 0,
-                  };
-                  onArrayChange("plans", index, "price", newPrice);
-                }}
+                label="Plan Name"
+                value={plan?.name}
+                onChange={(value) =>
+                  onArrayChange("plans", index, "name", value)
+                }
                 editing={editing}
-                type="number"
-                min="0"
-                step="0.01"
+              />
+              <InputField
+                label="Description"
+                value={plan?.description}
+                onChange={(value) =>
+                  onArrayChange("plans", index, "description", value)
+                }
+                editing={editing}
+                multiline
+              />
+              <InputField
+                label="Icon"
+                value={plan?.icon}
+                onChange={(value) =>
+                  onArrayChange("plans", index, "icon", value)
+                }
+                editing={editing}
               />
             </div>
-          </div>
 
-          {/* Plan Options */}
-          <div className="mt-4 flex gap-4">
-            <label className="flex items-center">
-              <input
-                type="checkbox"
-                checked={plan?.popular || false}
-                onChange={(e) =>
-                  onArrayChange("plans", index, "popular", e.target.checked)
-                }
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                disabled={!editing}
-              />
-              <span className="ml-2 text-sm text-gray-700">Most Popular</span>
-            </label>
-            <InputField
-              label="Color Theme"
-              value={plan?.color}
-              onChange={(value) =>
-                onArrayChange("plans", index, "color", value)
-              }
-              editing={editing}
-            />
-          </div>
-
-          {/* Features */}
-          <div className="mt-4">
-            <h5 className="text-md font-semibold text-gray-900 mb-3">
-              Features
-            </h5>
-            <div className="space-y-2">
-              {plan?.features?.map((feature, fIndex) => (
-                <div key={fIndex} className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={feature}
-                    onChange={(e) => {
-                      const newFeatures = [...plan.features];
-                      newFeatures[fIndex] = e.target.value;
-                      onArrayChange("plans", index, "features", newFeatures);
-                    }}
-                    className="flex-1 px-3 py-1 border border-gray-300 rounded text-sm"
-                    disabled={!editing}
-                  />
-                  {editing && (
-                    <button
-                      onClick={() => {
-                        const newFeatures = plan.features.filter(
-                          (_, i) => i !== fIndex
-                        );
-                        onArrayChange("plans", index, "features", newFeatures);
-                      }}
-                      className="text-red-600 hover:text-red-800 text-sm"
-                    >
-                      Remove
-                    </button>
+            {/* Simplified Pricing */}
+            <div className="mt-4">
+              <h5 className="text-md font-semibold text-gray-900 mb-3">
+                Pricing
+              </h5>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <InputField
+                  label="Monthly Price ($)"
+                  value={plan?.monthlyPrice}
+                  onChange={(value) => {
+                    onArrayChange(
+                      "plans",
+                      index,
+                      "monthlyPrice",
+                      parseFloat(value) || 0
+                    );
+                  }}
+                  editing={editing}
+                  type="number"
+                  min="0"
+                  step="0.01"
+                />
+                <div className="px-3 py-2 bg-blue-50 border border-blue-200 rounded-md">
+                  <label className="block text-sm font-medium text-blue-700 mb-1">
+                    Auto-calculated Yearly Price
+                  </label>
+                  <div className="text-lg font-semibold text-blue-900">
+                    ${yearlyPrice.toFixed(2)}/year
+                  </div>
+                  <div className="text-sm text-blue-600">
+                    ${monthlyEquivalent.toFixed(2)}/mo when billed yearly
+                  </div>
+                  {data?.yearlyDiscount > 0 && (
+                    <div className="text-xs text-green-600 mt-1">
+                      Save ${(plan.monthlyPrice * 12 - yearlyPrice).toFixed(2)}{" "}
+                      ({data.yearlyDiscount}% off)
+                    </div>
                   )}
                 </div>
-              ))}
-              {editing && (
-                <button
-                  onClick={() => {
-                    const newFeatures = [
-                      ...(plan.features || []),
-                      "New Feature",
-                    ];
-                    onArrayChange("plans", index, "features", newFeatures);
-                  }}
-                  className="text-blue-600 hover:text-blue-800 text-sm"
-                >
-                  + Add Feature
-                </button>
-              )}
+              </div>
             </div>
-          </div>
 
-          {editing && (
-            <button
-              onClick={() => onRemoveItem("plans", index)}
-              className="mt-4 text-red-600 hover:text-red-800 text-sm"
-            >
-              Remove Plan
-            </button>
-          )}
-        </div>
-      ))}
+            {/* Plan Limits */}
+            <div className="mt-4">
+              <h5 className="text-md font-semibold text-gray-900 mb-3">
+                Plan Limits
+              </h5>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <InputField
+                  label="Max Groups"
+                  value={plan?.maxGroups}
+                  onChange={(value) =>
+                    onArrayChange(
+                      "plans",
+                      index,
+                      "maxGroups",
+                      parseInt(value) || 0
+                    )
+                  }
+                  editing={editing}
+                  type="number"
+                  min="0"
+                />
+                <InputField
+                  label="Max Leads"
+                  value={plan?.maxLeads}
+                  onChange={(value) =>
+                    onArrayChange(
+                      "plans",
+                      index,
+                      "maxLeads",
+                      parseInt(value) || 0
+                    )
+                  }
+                  editing={editing}
+                  type="number"
+                  min="0"
+                />
+              </div>
+            </div>
+
+            {/* Plan Options */}
+            <div className="mt-4 flex gap-4">
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={plan?.popular || false}
+                  onChange={(e) =>
+                    onArrayChange("plans", index, "popular", e.target.checked)
+                  }
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  disabled={!editing}
+                />
+                <span className="ml-2 text-sm text-gray-700">Most Popular</span>
+              </label>
+              <InputField
+                label="Color Theme"
+                value={plan?.color}
+                onChange={(value) =>
+                  onArrayChange("plans", index, "color", value)
+                }
+                editing={editing}
+              />
+            </div>
+
+            {/* Features */}
+            <div className="mt-4">
+              <h5 className="text-md font-semibold text-gray-900 mb-3">
+                Features
+              </h5>
+              <div className="space-y-2">
+                {plan?.features?.map((feature, fIndex) => (
+                  <div key={fIndex} className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={feature}
+                      onChange={(e) => {
+                        const newFeatures = [...plan.features];
+                        newFeatures[fIndex] = e.target.value;
+                        onArrayChange("plans", index, "features", newFeatures);
+                      }}
+                      className="flex-1 px-3 py-1 border border-gray-300 rounded text-sm"
+                      disabled={!editing}
+                    />
+                    {editing && (
+                      <button
+                        onClick={() => {
+                          const newFeatures = plan.features.filter(
+                            (_, i) => i !== fIndex
+                          );
+                          onArrayChange(
+                            "plans",
+                            index,
+                            "features",
+                            newFeatures
+                          );
+                        }}
+                        className="text-red-600 hover:text-red-800 text-sm"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                ))}
+                {editing && (
+                  <button
+                    onClick={() => {
+                      const newFeatures = [
+                        ...(plan.features || []),
+                        "New Feature",
+                      ];
+                      onArrayChange("plans", index, "features", newFeatures);
+                    }}
+                    className="text-blue-600 hover:text-blue-800 text-sm"
+                  >
+                    + Add Feature
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {editing && (
+              <button
+                onClick={() => onRemoveItem("plans", index)}
+                className="mt-4 text-red-600 hover:text-red-800 text-sm"
+              >
+                Remove Plan
+              </button>
+            )}
+          </div>
+        );
+      })}
     </div>
 
     {/* FAQ Section */}
