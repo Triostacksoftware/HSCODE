@@ -16,9 +16,9 @@ export const getGlobalLeadsByGroup = async (req, res) => {
       .exec();
 
     // Add isAdminPost field to leads that were posted by admins
-    const leadsWithAdminInfo = leads.map(lead => ({
+    const leadsWithAdminInfo = leads.map((lead) => ({
       ...lead.toObject(),
-      isAdminPost: !!lead.adminId
+      isAdminPost: !!lead.adminId,
     }));
 
     const total = await GlobalApprovedLeads.countDocuments({ groupId });
@@ -68,8 +68,17 @@ export const postGlobalRequestedLead = async (req, res) => {
       (hscode || "").slice(0, 2) ||
       "00"
     ).padStart(2, "0");
-    // For GLOBAL leads use BLG/SLG (Buy Lead Global / Sell Lead Global)
-    const typePrefix = type === "buy" ? "BLG" : "SLG";
+    // For GLOBAL leads use BLG/SLG/HSBLG/HSSLG (Buy Lead Global / Sell Lead Global / High Sea Buy Lead Global / High Sea Sell Lead Global)
+    const typePrefix =
+      type === "buy"
+        ? "BLG"
+        : type === "sell"
+        ? "SLG"
+        : type === "high-sea-buy"
+        ? "HSBLG"
+        : type === "high-sea-sell"
+        ? "HSSLG"
+        : "LG";
     // Count by leadCode prefix so HS code does not affect sequencing
     const leadPrefix = `${typePrefix}-${countryCode}-${chapter}-`;
     const existingRequestedCount = await GlobalRequestedLeads.countDocuments({
@@ -78,7 +87,9 @@ export const postGlobalRequestedLead = async (req, res) => {
     const existingApprovedCount = await GlobalApprovedLeads.countDocuments({
       leadCode: { $regex: `^${leadPrefix}` },
     });
-    const sequence = String(existingRequestedCount + existingApprovedCount + 1).padStart(2, "0");
+    const sequence = String(
+      existingRequestedCount + existingApprovedCount + 1
+    ).padStart(2, "0");
     const leadCode = `${typePrefix}-${countryCode}-${chapter}-${sequence}`;
 
     const newRequestedLead = new GlobalRequestedLeads({
@@ -244,26 +255,26 @@ export const approveRejectGlobalLead = async (req, res) => {
       await savedApprovedLead.populate("userId", "name image");
 
       // Emit socket event to group from backend
-        io.to(
-          `global-group-${requestedLead.groupId._id || requestedLead.groupId}`
-        ).emit("new-approved-global-lead", {
+      io.to(
+        `global-group-${requestedLead.groupId._id || requestedLead.groupId}`
+      ).emit("new-approved-global-lead", {
         _id: savedApprovedLead._id,
         groupId: requestedLead.groupId._id || requestedLead.groupId,
         userId: savedApprovedLead.userId,
-          content: savedApprovedLead.content,
-          type: savedApprovedLead.type,
-          hscode: savedApprovedLead.hscode,
-          description: savedApprovedLead.description,
-          quantity: savedApprovedLead.quantity,
-          packing: savedApprovedLead.packing,
-          targetPrice: savedApprovedLead.targetPrice,
-          negotiable: savedApprovedLead.negotiable,
-          buyerDeliveryLocation: savedApprovedLead.buyerDeliveryLocation,
-          sellerPickupLocation: savedApprovedLead.sellerPickupLocation,
-          specialRequest: savedApprovedLead.specialRequest,
-          remarks: savedApprovedLead.remarks,
-          documents: savedApprovedLead.documents,
-          leadCode: savedApprovedLead.leadCode,
+        content: savedApprovedLead.content,
+        type: savedApprovedLead.type,
+        hscode: savedApprovedLead.hscode,
+        description: savedApprovedLead.description,
+        quantity: savedApprovedLead.quantity,
+        packing: savedApprovedLead.packing,
+        targetPrice: savedApprovedLead.targetPrice,
+        negotiable: savedApprovedLead.negotiable,
+        buyerDeliveryLocation: savedApprovedLead.buyerDeliveryLocation,
+        sellerPickupLocation: savedApprovedLead.sellerPickupLocation,
+        specialRequest: savedApprovedLead.specialRequest,
+        remarks: savedApprovedLead.remarks,
+        documents: savedApprovedLead.documents,
+        leadCode: savedApprovedLead.leadCode,
         createdAt: savedApprovedLead.createdAt,
         updatedAt: savedApprovedLead.updatedAt,
       });

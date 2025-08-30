@@ -6,6 +6,7 @@ import {
   upsertHomeData,
   deleteHomeData,
   saveDummyData,
+  migrateSubscriptionPlans,
 } from "../controllers/homeData.ctrls.js";
 
 const router = express.Router();
@@ -19,5 +20,10 @@ router.post("/admin", adminMiddleware, upsertHomeData);
 router.put("/admin", adminMiddleware, upsertHomeData);
 router.delete("/admin", adminMiddleware, deleteHomeData);
 router.post("/admin/reset", adminMiddleware, saveDummyData);
+router.post(
+  "/admin/migrate-subscription",
+  adminMiddleware,
+  migrateSubscriptionPlans
+);
 
 export default router;

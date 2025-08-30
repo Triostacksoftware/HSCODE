@@ -139,6 +139,32 @@ const UserChatList = ({ user, onChatSelect, selectedChatId }) => {
 
   const formatLastMessage = (message) => {
     if (!message) return "No messages yet";
+
+    // Handle image messages
+    if (message.messageType === "image") {
+      const caption =
+        message.content && message.content !== "📷 Image"
+          ? message.content
+          : "";
+      if (caption) {
+        return caption.length > 30 ? caption.substring(0, 30) + "..." : caption;
+      }
+      return "📷 Image";
+    }
+
+    // Handle document messages
+    if (message.messageType === "file") {
+      const caption =
+        message.content && message.content !== "📄 Document"
+          ? message.content
+          : "";
+      if (caption) {
+        return caption.length > 30 ? caption.substring(0, 30) + "..." : caption;
+      }
+      return "📄 Document";
+    }
+
+    // Handle text messages
     const content = message.content || "";
     if (content.length > 30) {
       return content.substring(0, 30) + "...";
@@ -235,7 +261,6 @@ const UserChatList = ({ user, onChatSelect, selectedChatId }) => {
             <button
               onClick={fetchUserChats}
               className="p-1 hover:bg-gray-200 rounded transition-colors"
-              title="Refresh chats"
               disabled={refreshing}
             >
               {refreshing ? (
@@ -251,7 +276,7 @@ const UserChatList = ({ user, onChatSelect, selectedChatId }) => {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={2}
-                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.001 0 01-15.357-2m15.357 2H15"
                   />
                 </svg>
               )}

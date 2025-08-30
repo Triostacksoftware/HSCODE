@@ -16,7 +16,11 @@ const globalApprovedLeadsSchema = new mongoose.Schema(
     content: { type: String, trim: true, default: null },
     countryCode: { type: String, required: true },
     // structured fields
-    type: { type: String, enum: ["buy", "sell"], required: false },
+    type: {
+      type: String,
+      enum: ["buy", "sell", "high-sea-buy", "high-sea-sell"],
+      required: false,
+    },
     hscode: { type: String },
     description: { type: String },
     quantity: { type: String },

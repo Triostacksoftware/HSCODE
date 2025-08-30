@@ -344,17 +344,31 @@ const ChatWindow = ({
             <HiMegaphone className="w-5 h-5 flex-shrink-0" />
             <div className="flex-1 overflow-hidden">
               <div className="animate-marquee whitespace-nowrap">
-                {broadcastLeads.map((lead, index) => (
-                  <span
-                    key={lead._id}
-                    onClick={() => scrollToLead(lead._id)}
-                    className="inline-block mx-4 cursor-pointer hover:underline font-medium"
-                    title="Click to scroll to this lead"
-                  >
-                    📢 {lead.hscode ? `HS: ${lead.hscode}` : "Lead"}:{" "}
-                    {lead.description || lead.content || "Text message"}
-                  </span>
-                ))}
+                {broadcastLeads.map((lead, index) => {
+                  // Determine background color based on lead type
+                  let bgColor = "bg-gray-600"; // default
+                  if (lead.type === "buy") {
+                    bgColor = "bg-red-600";
+                  } else if (lead.type === "sell") {
+                    bgColor = "bg-green-600";
+                  } else if (lead.type === "high-sea-buy") {
+                    bgColor = "bg-red-700";
+                  } else if (lead.type === "high-sea-sell") {
+                    bgColor = "bg-green-700";
+                  }
+
+                  return (
+                    <span
+                      key={lead._id}
+                      onClick={() => scrollToLead(lead._id)}
+                      className={`inline-block mx-4 cursor-pointer hover:underline font-medium px-3 py-1 rounded-lg ${bgColor} text-white text-xs shadow-sm`}
+                      title="Click to scroll to this lead"
+                    >
+                      📢 {lead.hscode ? `HS: ${lead.hscode}` : "Lead"}:{" "}
+                      {lead.description || lead.content || "Text message"}
+                    </span>
+                  );
+                })}
               </div>
             </div>
             <HiMegaphone className="w-5 h-5 flex-shrink-0" />
@@ -803,6 +817,8 @@ const ChatWindow = ({
           }
         }}
         sending={sending}
+        user={user}
+        groupType="local"
       />
 
       {/* User Profile Sidebar */}

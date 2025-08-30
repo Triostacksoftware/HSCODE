@@ -202,7 +202,15 @@ const BroadcastManager = () => {
                         <div className="flex-shrink-0 w-10 h-10">
                           <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
                             <span className="text-sm font-medium text-gray-700">
-                              {lead.type === "buy" ? "🛒" : "💰"}
+                              {lead.type === "buy"
+                                ? "🛒"
+                                : lead.type === "sell"
+                                ? "💰"
+                                : lead.type === "high-sea-buy"
+                                ? "🚢🛒"
+                                : lead.type === "high-sea-sell"
+                                ? "🚢💰"
+                                : "📝"}
                             </span>
                           </div>
                         </div>
@@ -222,6 +230,10 @@ const BroadcastManager = () => {
                               ? "Buying"
                               : lead.type === "sell"
                               ? "Selling"
+                              : lead.type === "high-sea-buy"
+                              ? "High Sea Buying"
+                              : lead.type === "high-sea-sell"
+                              ? "High Sea Selling"
                               : "General"}
                           </div>
                         </div>
