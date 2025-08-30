@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, Suspense } from "react";
 import { useUserAuth } from "../../utilities/userAuthMiddleware";
 import { useSearchParams } from "next/navigation";
 import UserChatList from "../../component/ChatComponents/UserChatList";
@@ -9,7 +9,8 @@ import axios from "axios";
 import { OnlineUsersContext } from "../../contexts/OnlineUsersContext";
 import toast from "react-hot-toast";
 
-const UserChatPage = ({ onChatOpened }) => {
+// Component that uses useSearchParams
+const UserChatContent = ({ onChatOpened = () => {} }) => {
   const { user } = useUserAuth();
   const [selectedChat, setSelectedChat] = useState(null);
   const [showChatList, setShowChatList] = useState(true);
@@ -103,9 +104,7 @@ const UserChatPage = ({ onChatOpened }) => {
     setShowChatList(false);
 
     // Notify parent that a chat was opened
-    if (onChatOpened) {
-      onChatOpened();
-    }
+    onChatOpened();
   };
 
   const handleBackToList = () => {
@@ -153,9 +152,7 @@ const UserChatPage = ({ onChatOpened }) => {
         );
 
         // Notify parent that a chat was opened
-        if (onChatOpened) {
-          onChatOpened();
-        }
+        onChatOpened();
       }
     } catch (error) {
       console.error("Error switching to chat:", error);
@@ -170,9 +167,7 @@ const UserChatPage = ({ onChatOpened }) => {
       setSelectedChat(selectedChat);
 
       // Notify parent that a chat was opened
-      if (onChatOpened) {
-        onChatOpened();
-      }
+      onChatOpened();
     }
   }, [selectedChat, onChatOpened]);
 
@@ -254,6 +249,24 @@ const UserChatPage = ({ onChatOpened }) => {
         </button>
       )}
     </div>
+  );
+};
+
+// Main component with Suspense boundary
+const UserChatPage = ({ onChatOpened = () => {} }) => {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading...</p>
+          </div>
+        </div>
+      }
+    >
+      <UserChatContent onChatOpened={onChatOpened} />
+    </Suspense>
   );
 };
 
