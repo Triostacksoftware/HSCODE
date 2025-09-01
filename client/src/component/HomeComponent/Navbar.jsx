@@ -3,7 +3,6 @@ import Link from "next/link";
 import React, { useState, useEffect, useRef } from "react";
 import { HiMenu, HiX, HiChevronDown } from "react-icons/hi";
 import { useRouter, usePathname } from "next/navigation";
-import GoogleTranslate from "../GoogleTranslate";
 import useCountryCode from "../../utilities/useCountryCode";
 
 const Navbar = () => {
@@ -17,6 +16,34 @@ const Navbar = () => {
   
   // Get user's country code
   const { countryInfo } = useCountryCode();
+
+  // Initialize Google Translate
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = "//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
+    script.async = true;
+
+    window.googleTranslateElementInit = function() {
+      new window.google.translate.TranslateElement(
+        {
+          pageLanguage: "en",
+          includedLanguages: "en,hi,fr,es,de,it,pt,ru,ja,ko,zh-CN,ar,tr,nl,pl,sv,da,no,fi,cs,hu,ro,sk,sl,bg,hr,el,et,lv,lt,mt,th,vi,id,ms,tl,bn,ta,te,kn,ml,gu,pa,mr,or,as,ne,si,my,km,lo,ka,hy,az,kk,ky,uz,tg,fa,ur,he,am,sw,zu,af,sq,be,bs,ca,cy,eu,fo,gl,is,ga,mk,mn,sr,uk",
+          layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+          autoDisplay: false,
+          multilanguagePage: true,
+        },
+        "google_translate_element"
+      );
+    };
+
+    document.head.appendChild(script);
+
+    return () => {
+      if (script.parentNode) {
+        script.parentNode.removeChild(script);
+      }
+    };
+  }, []);
   
   // Load countries data
   useEffect(() => {
@@ -178,8 +205,6 @@ const Navbar = () => {
 
             {/* Desktop Right Side */}
             <div className="hidden md:flex items-center space-x-4">
-              {/* Google Translate */}
-              <GoogleTranslate />
 
               {/* Live Demo Button */}
               <button className="border bg-white hover:bg-gray-50 px-4 py-2 rounded-md text-sm font-medium flex items-center transition-all duration-200"
@@ -190,11 +215,11 @@ const Navbar = () => {
                 onMouseEnter={(e) => {
                   e.target.style.backgroundColor = 'var(--cobalt-blue)';
                   e.target.style.color = 'var(--brand-white)';
-                } }
+                }}
                 onMouseLeave={(e) => {
                   e.target.style.backgroundColor = 'var(--brand-white)';
                   e.target.style.color = 'var(--cobalt-blue)';
-                } }>
+                }}>
                 <svg
                   className="w-4 h-4 mr-2"
                   fill="currentColor"
@@ -301,10 +326,7 @@ const Navbar = () => {
                 </div>
               </div>
 
-              {/* Mobile Google Translate */}
-              <div className="mt-3 px-3">
-                <GoogleTranslate />
-                </div>
+
 
               <div className="mt-3 px-3">
                 <button className="w-full border border-gray-800 text-gray-800 bg-white hover:bg-gray-50 px-4 py-2 rounded-md text-sm font-medium flex items-center justify-center">
