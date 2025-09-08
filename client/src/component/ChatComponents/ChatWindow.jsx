@@ -25,6 +25,7 @@ const ChatWindow = ({
   groupName,
   groupImage,
   onBack,
+  setActiveTab,
 }) => {
   const { user } = useUserAuth();
   const { onlineUsers, socket } = useContext(OnlineUsersContext);
@@ -256,8 +257,10 @@ const ChatWindow = ({
   };
 
   const handleStartChat = (chat) => {
-    // Navigate to user chat page
-    window.location.href = `/user-chat?chat=${chat._id}`;
+    // Switch to user-chat tab instead of navigating
+    if (setActiveTab) {
+      setActiveTab("user-chat");
+    }
   };
 
   // Filtered leads for search
@@ -828,6 +831,7 @@ const ChatWindow = ({
         onClose={closeUserInfoSidebar}
         currentUser={user}
         onStartChat={handleStartChat}
+        setActiveTab={setActiveTab}
       />
     </div>
   );

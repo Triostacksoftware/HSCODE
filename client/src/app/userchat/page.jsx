@@ -177,9 +177,21 @@ const ChatPage = () => {
   const renderActiveComponent = () => {
     switch (activeTab) {
       case "local":
-        return <DomesticChat user={user} refreshUser={refreshUser} />;
+        return (
+          <DomesticChat
+            user={user}
+            refreshUser={refreshUser}
+            setMainActiveTab={setActiveTab}
+          />
+        );
       case "global":
-        return <GlobalChat user={user} refreshUser={refreshUser} />;
+        return (
+          <GlobalChat
+            user={user}
+            refreshUser={refreshUser}
+            setMainActiveTab={setActiveTab}
+          />
+        );
       case "leads":
         return <RequestedLeads />;
       case "notifications":
@@ -189,7 +201,7 @@ const ChatPage = () => {
       case "user-chat":
         return <UserChatPage onChatOpened={handleChatOpened} />;
       default:
-        return <DomesticChat />;
+        return <DomesticChat setMainActiveTab={setActiveTab} />;
     }
   };
 

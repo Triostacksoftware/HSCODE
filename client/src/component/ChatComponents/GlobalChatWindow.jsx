@@ -25,6 +25,7 @@ const GlobalChatWindow = ({
   groupImage,
   groupData,
   onBack,
+  setActiveTab,
 }) => {
   console.log("GlobalChatWindow props:", {
     chapterNo,
@@ -336,8 +337,10 @@ const GlobalChatWindow = ({
   };
 
   const handleStartChat = (chat) => {
-    // Navigate to user chat page
-    window.location.href = `/user-chat?chat=${chat._id}`;
+    // Switch to user-chat tab instead of navigating
+    if (setActiveTab) {
+      setActiveTab("user-chat");
+    }
   };
 
   // Filtered messages for search
@@ -982,6 +985,7 @@ const GlobalChatWindow = ({
         onClose={closeUserInfoSidebar}
         currentUser={user}
         onStartChat={handleStartChat}
+        setActiveTab={setActiveTab}
       />
       {showMembers && (
         <div className="absolute right-4 top-14 bg-white border border-gray-200 rounded shadow-lg z-20 min-w-[220px] max-h-80 overflow-y-auto">

@@ -77,6 +77,14 @@ const approvedLeadsSchema = new mongoose.Schema(
       ref: "User",
       default: null,
     },
+    broadcastExpiresAt: {
+      type: Date,
+      default: null,
+    },
+    broadcastDuration: {
+      type: Number, // Duration in hours
+      default: null,
+    },
   },
   {
     timestamps: true,

@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { HiCheck, HiEye, HiArrowPath } from "react-icons/hi2";
 import { IoClose } from "react-icons/io5";
+import { FaClock } from "react-icons/fa";
 import toast from "react-hot-toast";
 
 const BroadcastManager = () => {
@@ -11,6 +12,8 @@ const BroadcastManager = () => {
   const [processing, setProcessing] = useState(false);
   const [selectedLead, setSelectedLead] = useState(null);
   const [showLeadDetails, setShowLeadDetails] = useState(false);
+  const [showExpiryModal, setShowExpiryModal] = useState(false);
+  const [expiryHours, setExpiryHours] = useState(24);
 
   useEffect(() => {
     fetchBroadcastLeads();
@@ -33,11 +36,29 @@ const BroadcastManager = () => {
   };
 
   const handleBroadcastAction = async (leadId, action) => {
+    if (action === "approve") {
+      // Show expiry modal for approval
+      setSelectedLead({ _id: leadId });
+      setShowExpiryModal(true);
+    } else {
+      // Direct rejection
+      await performBroadcastAction(leadId, action);
+    }
+  };
+
+  const performBroadcastAction = async (
+    leadId,
+    action,
+    durationHours = null
+  ) => {
     try {
       setProcessing(true);
       const response = await axios.patch(
         `${process.env.NEXT_PUBLIC_BASE_URL}/leads/broadcast/${leadId}`,
-        { action },
+        {
+          action,
+          durationHours: durationHours,
+        },
         { withCredentials: true }
       );
 
@@ -57,6 +78,14 @@ const BroadcastManager = () => {
     }
   };
 
+  const handleExpiryConfirm = async () => {
+    if (selectedLead) {
+      await performBroadcastAction(selectedLead._id, "approve", expiryHours);
+      setShowExpiryModal(false);
+      setSelectedLead(null);
+    }
+  };
+
   const viewLeadDetails = (lead) => {
     setSelectedLead(lead);
     setShowLeadDetails(true);
@@ -65,6 +94,42 @@ const BroadcastManager = () => {
   const closeLeadDetails = () => {
     setShowLeadDetails(false);
     setSelectedLead(null);
+  };
+
+  const getBroadcastExpiryInfo = (lead) => {
+    if (!lead.broadcastExpiresAt) {
+      return null;
+    }
+
+    const now = new Date();
+    const expiresAt = new Date(lead.broadcastExpiresAt);
+    const timeLeft = expiresAt.getTime() - now.getTime();
+
+    if (timeLeft <= 0) {
+      return {
+        expired: true,
+        timeLeft: 0,
+        timeLeftText: "Expired",
+      };
+    }
+
+    const hoursLeft = Math.ceil(timeLeft / (1000 * 60 * 60));
+    const daysLeft = Math.floor(hoursLeft / 24);
+    const remainingHours = hoursLeft % 24;
+
+    let timeLeftText = "";
+    if (daysLeft > 0) {
+      timeLeftText = `${daysLeft}d ${remainingHours}h`;
+    } else {
+      timeLeftText = `${hoursLeft}h`;
+    }
+
+    return {
+      expired: false,
+      timeLeft: timeLeft,
+      timeLeftText: timeLeftText,
+      expiresAt: expiresAt,
+    };
   };
 
   const formatDate = (dateString) => {
@@ -190,6 +255,9 @@ const BroadcastManager = () => {
                     Status
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Expires
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
@@ -268,6 +336,31 @@ const BroadcastManager = () => {
                           ? "Approved"
                           : "None"}
                       </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      {lead.broadcast === "approved" ? (
+                        (() => {
+                          const expiryInfo = getBroadcastExpiryInfo(lead);
+                          return expiryInfo ? (
+                            <div className="flex items-center space-x-1">
+                              <FaClock className="text-gray-400 w-3 h-3" />
+                              <span
+                                className={
+                                  expiryInfo.expired
+                                    ? "text-red-600"
+                                    : "text-gray-600"
+                                }
+                              >
+                                {expiryInfo.timeLeftText}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-gray-400">No expiry</span>
+                          );
+                        })()
+                      ) : (
+                        <span className="text-gray-400">-</span>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex items-center space-x-2">
@@ -472,6 +565,71 @@ const BroadcastManager = () => {
               >
                 Close
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Broadcast Expiry Modal */}
+      {showExpiryModal && (
+        <div className="fixed inset-0 bg-black/30 bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div className="p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Set Broadcast Duration
+              </h3>
+              <p className="text-sm text-gray-600 mb-4">
+                How long should this broadcast remain active?
+              </p>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Duration (hours)
+                  </label>
+                  <select
+                    value={expiryHours}
+                    onChange={(e) => setExpiryHours(Number(e.target.value))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  >
+                    <option value={1}>1 hour</option>
+                    <option value={6}>6 hours</option>
+                    <option value={12}>12 hours</option>
+                    <option value={24}>24 hours</option>
+                    <option value={48}>48 hours</option>
+                    <option value={72}>72 hours</option>
+                    <option value={168}>1 week</option>
+                    <option value={720}>1 month</option>
+                  </select>
+                </div>
+
+                <div className="bg-blue-50 p-3 rounded-md">
+                  <p className="text-sm text-blue-800">
+                    <strong>Note:</strong> The broadcast will automatically be
+                    disabled after {expiryHours} hour
+                    {expiryHours !== 1 ? "s" : ""}.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 mt-6">
+                <button
+                  onClick={() => {
+                    setShowExpiryModal(false);
+                    setSelectedLead(null);
+                  }}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleExpiryConfirm}
+                  disabled={processing}
+                  className="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-md hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {processing ? "Approving..." : "Approve Broadcast"}
+                </button>
+              </div>
             </div>
           </div>
         </div>

@@ -4,6 +4,7 @@ import app from "./app.js";
 import http from "http";
 import { Server as SocketServer } from "socket.io";
 import UserModel from "./models/user.js";
+import { disableExpiredBroadcasts } from "./utilities/broadcastExpiry.util.js";
 
 dotenv.config();
 
@@ -179,9 +180,29 @@ mongoose
 
       // Start the scheduled notifications processor
       startScheduledNotificationsProcessor();
+
+      // Start broadcast expiry checker
+      startBroadcastExpiryChecker();
     });
   })
   .catch((err) => {
     console.log("❌ Database connection error");
     console.error(err.message);
   });
+
+// Function to start broadcast expiry checker
+const startBroadcastExpiryChecker = () => {
+  console.log("🕐 Starting broadcast expiry checker...");
+
+  // Check for expired broadcasts every 5 minutes
+  setInterval(async () => {
+    try {
+      const disabledCount = await disableExpiredBroadcasts();
+      if (disabledCount > 0) {
+        console.log(`✅ Disabled ${disabledCount} expired broadcasts`);
+      }
+    } catch (error) {
+      console.error("❌ Error in broadcast expiry checker:", error);
+    }
+  }, 5 * 60 * 1000); // 5 minutes
+};

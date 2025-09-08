@@ -7,7 +7,7 @@ import GlobalMyGroups from "./GlobalMyGroups";
 import GlobalGroupsList from "./GlobalGroupsList";
 import GlobalChatWindow from "./GlobalChatWindow";
 
-const GlobalChat = ({ user, refreshUser }) => {
+const GlobalChat = ({ user, refreshUser, setMainActiveTab }) => {
   const [activeTab, setActiveTab] = useState("groups");
   const [selectedChapter, setSelectedChapter] = useState(null);
   const [selectedGroup, setSelectedGroup] = useState(null);
@@ -171,6 +171,7 @@ const GlobalChat = ({ user, refreshUser }) => {
             groupImage={selectedGroup.image}
             groupData={selectedGroup}
             onBack={handleBackToGroups}
+            setActiveTab={setMainActiveTab}
           />
         </div>
       ) : (

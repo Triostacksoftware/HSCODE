@@ -6,7 +6,7 @@ import MyGroups from "./MyGroups";
 import GroupsList from "./GroupsList";
 import ChatWindow from "./ChatWindow";
 
-const DomesticChat = ({ user, refreshUser }) => {
+const DomesticChat = ({ user, refreshUser, setMainActiveTab }) => {
   const [activeTab, setActiveTab] = useState("groups");
   const [selectedChapter, setSelectedChapter] = useState(null);
   const [selectedGroup, setSelectedGroup] = useState(null);
@@ -149,6 +149,7 @@ const DomesticChat = ({ user, refreshUser }) => {
             groupImage={selectedGroup.image}
             groupData={selectedGroup}
             onBack={() => setSelectedGroup(null)}
+            setActiveTab={setMainActiveTab}
           />
         </div>
       ) : (

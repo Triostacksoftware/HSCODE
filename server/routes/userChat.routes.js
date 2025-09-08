@@ -9,6 +9,7 @@ import {
   markChatAsRead,
   getChatById,
   sendDocumentMessage,
+  sendLocationMessage,
 } from "../controllers/userChat.ctrls.js";
 import { authMiddleware } from "../middlewares/auth.mdware.js";
 import { premiumMembership } from "../middlewares/membership.mdware.js";
@@ -44,6 +45,9 @@ router.post(
   upload.single("document"),
   sendDocumentMessage
 );
+
+// Send a location message in a chat
+router.post("/:chatId/location", sendLocationMessage);
 
 // Mark chat as read
 router.patch("/:chatId/read", markChatAsRead);
