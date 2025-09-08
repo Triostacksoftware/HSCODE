@@ -117,12 +117,10 @@ const Herosection = ({
                 >
                   {finalCtaButtonText}
                 </a>
-                <button
-                  className="inline-flex items-center justify-center px-8 py-4 border-2 font-semibold rounded-lg transition-colors duration-200 text-lg"
-                  style={{
-                    borderColor: "white",
-                    color: "black",
-                  }}
+                <a
+                  href="/learn-more"
+                  className="inline-flex items-center justify-center px-8 py-4 font-semibold rounded-lg transition-colors bg-white text-black duration-200 text-lg"
+    
                   onMouseEnter={(e) => {
                     e.target.style.backgroundColor = "var(--cobalt-blue)";
                     e.target.style.color = "var(--brand-white)";
@@ -133,7 +131,7 @@ const Herosection = ({
                   }}
                 >
                   Learn More
-                </button>
+                </a>
               </div>
             </div>
 

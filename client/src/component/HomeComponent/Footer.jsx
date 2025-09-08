@@ -102,11 +102,11 @@ const Footer = ({
         <div className="grid grid-cols-1 lg:grid-cols-6  gap-8 lg:gap-12">
           {/* Company Info Section */}
           <div className="lg:col-span-2">
-            <div className="mb-6">
+            <div className="mb-6 bg-white p-8 py-5">
               <img
-                src="/logohome.png"
+                src="/hscode2.jpg"
                 alt="HS CODES - Linking EXIM World"
-                className="h-40 w-auto mb-4"
+                className="h-auto w-auto mb-4"
               />
             </div>
 

@@ -100,13 +100,13 @@ const Navbar = () => {
 
   return (
   <>
-    <div className="h-[5vh] bg-gray-200 w-full flex items-center overflow-hidden">
-      <div className="animate-marquee whitespace-nowrap flex">
-        <span className="mx-4 text-gray-700 font-medium"> Welcome to HS CODES - Linking EXIM World! </span>
-        <span className="mx-4 text-gray-700 font-medium"> Discover Global Trade Opportunities </span>
-        <span className="mx-4 text-gray-700 font-medium"> Access Comprehensive HS Code Database </span>
-        <span className="mx-4 text-gray-700 font-medium"> Connect with International Markets </span>
-        <span className="mx-4 text-gray-700 font-medium"> Professional Import/Export Solutions </span>
+    <div className="h-[5vh] w-full bg-gray-100 flex items-center overflow-hidden">
+      <div className="animate-marquee whitespace-nowrap flex text-orange-500">
+        <span className="mx-4 font-medium"> Welcome to HS CODES - Linking EXIM World! </span>
+        <span className="mx-4 font-medium"> Discover Global Trade Opportunities </span>
+        <span className="mx-4 font-medium"> Access Comprehensive HS Code Database </span>
+        <span className="mx-4 font-medium"> Connect with International Markets </span>
+        <span className="mx-4 font-medium"> Professional Import/Export Solutions </span>
       </div>
     </div>
     <nav className="bg-white border-b border-gray-200 w-full relative z-50" style={{ borderColor: 'var(--cobalt-blue)' }}>
@@ -115,8 +115,8 @@ const Navbar = () => {
             {/* Logo */}
             <Link href="/" className="flex-shrink-0">
               <img
-                className="h-12 w-auto"
-                src="hscode.png"
+                className="h-14 w-auto"
+                src="hscode2.jpg"
                 alt="HSCODE" />
             </Link>
 
