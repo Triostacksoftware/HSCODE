@@ -143,7 +143,7 @@ const AdminPanel = () => {
         {/* Mobile Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200 md:hidden">
           <div className="font-semibold">
-            <img src="/hscode.png" alt="HS CODES" className="h-8 w-auto" />
+            <img src="/hscode2.jpg" alt="HS CODES" className="h-8 w-auto" />
           </div>
           <button
             onClick={() => setSidebarOpen(false)}
@@ -155,7 +155,7 @@ const AdminPanel = () => {
 
         {/* Logo and App Name */}
         <div className="p-4 md:p-6 hidden md:block">
-          <img src="/hscode.png" alt="HS CODES" className="h-10 w-auto" />
+          <img src="/hscode2.jpg" alt="HS CODES" className="h-10 w-auto" />
         </div>
 
         {/* User Profile Section */}
@@ -229,7 +229,7 @@ const AdminPanel = () => {
             <MdMenu className="w-5 h-5" />
           </button>
           <div className="font-semibold">
-            <img src="/hscode.png" alt="HS CODES" className="h-8 w-auto" />
+            <img src="/hscode2.jpg" alt="HS CODES" className="h-8 w-auto" />
           </div>
           <div className="w-10"></div> {/* Spacer for centering */}
         </div>

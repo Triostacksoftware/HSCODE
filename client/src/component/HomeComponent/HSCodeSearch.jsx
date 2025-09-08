@@ -58,6 +58,16 @@ const HSCodeSearch = () => {
   };
 
   return (
+    <>
+    <div className="h-[5vh] bg-orange-500 w-full flex items-center overflow-hidden">
+      <div className="animate-marquee whitespace-nowrap flex text-white">
+        <span className="mx-4 font-medium"> Welcome to HS CODES - Linking EXIM World! </span>
+        <span className="mx-4 font-medium"> Discover Global Trade Opportunities </span>
+        <span className="mx-4 font-medium"> Access Comprehensive HS Code Database </span>
+        <span className="mx-4 font-medium"> Connect with International Markets </span>
+        <span className="mx-4 font-medium"> Professional Import/Export Solutions </span>
+      </div>
+    </div>
     <div className="w-full mx-auto px-4 py-8 bg-[#ffffffcf]">
       {/* Search Input */}
       <div className="relative mb-6 flex flex-col items-center">
@@ -199,6 +209,7 @@ const HSCodeSearch = () => {
         </div>
       )}
     </div>
+    </>
   );
 };
 
