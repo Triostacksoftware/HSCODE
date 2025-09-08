@@ -205,7 +205,7 @@ const HSCodeSearch = () => {
       {/* Stats */}
       {!loading && hasData && (
         <div className="mt-8 text-center text-sm text-gray-500">
-          <p>Loaded {totalCount.toLocaleString()} HS codes from {effectiveCountry?.name || userCountry}</p>
+          <p>Loaded {totalCount.toLocaleString()} HS codes from {effectiveCountry?.name || userCountry} and Standard HSCODES</p>
         </div>
       )}
     </div>

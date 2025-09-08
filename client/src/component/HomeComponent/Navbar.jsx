@@ -115,7 +115,7 @@ const Navbar = () => {
             {/* Logo */}
             <Link href="/" className="flex-shrink-0">
               <img
-                className="h-12 w-auto"
+                className="h-14 w-auto"
                 src="hscode2.jpg"
                 alt="HSCODE" />
             </Link>
