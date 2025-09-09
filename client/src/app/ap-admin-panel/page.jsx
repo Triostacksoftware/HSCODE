@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
-import { useAuth } from "../../utilities/authMiddleware";
+import { useAuth, withAuth } from "../../utilities/authMiddleware";
 import { Toaster } from "react-hot-toast";
 import Dashboard from "@/component/adminPanelComponent/Dashboard";
 import HomeContent from "@/component/adminPanelComponent/HomeContent";
@@ -242,4 +242,5 @@ const AdminPanel = () => {
   );
 };
 
-export default AdminPanel;
+// Export the protected version
+export default withAuth(AdminPanel);

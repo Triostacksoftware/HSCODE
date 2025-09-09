@@ -362,9 +362,18 @@ const GlobalChatWindow = ({
             <span className="text-base font-semibold text-gray-900 truncate">
               {groupName || "Group Chat"}
             </span>
-            <span className="text-xs text-gray-500">
-              {onlineCounts[selectedGroupId] || 0} online
-            </span>
+            <div className="text-xs text-gray-600 truncate">
+              {Array.isArray(onlineUsers[selectedGroupId]) &&
+              onlineUsers[selectedGroupId].length > 0
+                ? onlineUsers[selectedGroupId]
+                    .slice(0, 4)
+                    .map((u) => u.name)
+                    .join(", ") +
+                  (onlineUsers[selectedGroupId].length > 4
+                    ? ` +${onlineUsers[selectedGroupId].length - 4} more online`
+                    : "")
+                : "No one online"}
+            </div>
           </div>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">

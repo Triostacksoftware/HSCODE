@@ -48,7 +48,14 @@ const notificationSchema = new mongoose.Schema(
     },
     category: {
       type: String,
-      enum: ["announcement", "update", "reminder", "alert", "news"],
+      enum: [
+        "announcement",
+        "update",
+        "reminder",
+        "alert",
+        "news",
+        "lead_approval",
+      ],
       default: "announcement",
     },
     actionUrl: {

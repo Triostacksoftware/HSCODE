@@ -6,6 +6,7 @@ import { BsGlobeAmericas, BsSendArrowUp } from "react-icons/bs";
 import { MdHomeMax } from "react-icons/md";
 import { FiBell } from "react-icons/fi";
 import { FaComments } from "react-icons/fa";
+import axios from "axios";
 
 const Sidebar = ({
   onTabChange,
@@ -13,14 +14,44 @@ const Sidebar = ({
   notificationCount = 0,
   user,
   unreadChatCount = 0,
+  onNotificationsRead,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+
+  // Debug logging
+  console.log("🔔 Sidebar notificationCount:", notificationCount);
+  console.log(
+    "🔔 Sidebar badge condition:",
+    notificationCount > 0 ? notificationCount : null
+  );
 
   const toggleSidebar = () => {
     setIsOpen(!isOpen);
   };
 
-  const handleTabClick = (tab) => {
+  const handleTabClick = async (tab) => {
+    // If notifications tab is clicked, mark all notifications as read
+    if (tab === "notifications" && notificationCount > 0) {
+      try {
+        console.log("🔔 Marking all notifications as read...");
+        await axios.put(
+          `${process.env.NEXT_PUBLIC_BASE_URL}/notifications/user/read-all`,
+          {},
+          {
+            withCredentials: true,
+          }
+        );
+        console.log("🔔 All notifications marked as read");
+
+        // Call the callback to update the notification count
+        if (onNotificationsRead) {
+          onNotificationsRead();
+        }
+      } catch (error) {
+        console.error("🔔 Error marking notifications as read:", error);
+      }
+    }
+
     onTabChange(tab);
   };
 
@@ -87,6 +118,13 @@ const Sidebar = ({
             return null;
           }
 
+          // Debug logging for each menu item
+          console.log(`🔔 Menu item ${item.id}:`, {
+            label: item.label,
+            badge: item.badge,
+            hasBadge: !!item.badge,
+          });
+
           return (
             <div
               key={item.id}
@@ -108,7 +146,7 @@ const Sidebar = ({
                   {item.icon}
                   {/* Notification Badge */}
                   {item.badge && (
-                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[18px] h-[18px] flex items-center justify-center">
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[18px] h-[18px] flex items-center justify-center z-10 shadow-lg border-2 border-white">
                       {item.badge > 99 ? "99+" : item.badge}
                     </span>
                   )}

@@ -2,6 +2,8 @@ import RequestedLeads from "../models/RequestedLeads.js";
 import ApprovedLeads from "../models/ApprovedLeads.js";
 import UserModel from "../models/user.js";
 import { io } from "../server.js";
+import { sendLeadApprovalNotification } from "../utilities/leadNotification.util.js";
+import LocalGroup from "../models/LocalGroup.js";
 
 // Post new requested lead (user submits for approval)
 export const postRequestedLead = async (req, res) => {
@@ -53,7 +55,11 @@ export const postRequestedLead = async (req, res) => {
     ).padStart(2, "0");
     const typePrefix = (type === "buy" ? "BLD" : "SLD");
     // Find sequence for this day and chapter + country + type
-    const seqBase = { type, hscode: { $regex: `^${chapter}` }, documents: { $exists: true } };
+    const seqBase = {
+      type,
+      hscode: { $regex: `^${chapter}` },
+      documents: { $exists: true },
+    };
     // Count existing leads for chapter and country to generate next sequence
     const existingRequestedCount = await RequestedLeads.countDocuments({
       type,
@@ -65,7 +71,9 @@ export const postRequestedLead = async (req, res) => {
       hscode: { $regex: `^${chapter}` },
       // domestic scope uses user's country; optional filter by user country if stored
     });
-    const sequence = String(existingRequestedCount + existingApprovedCount + 1).padStart(2, "0");
+    const sequence = String(
+      existingRequestedCount + existingApprovedCount + 1
+    ).padStart(2, "0");
     const leadCode = `${typePrefix}-${countryCode}-${chapter}-${sequence}`;
 
     const newRequestedLead = new RequestedLeads({
@@ -84,7 +92,10 @@ export const postRequestedLead = async (req, res) => {
             address: buyerDeliveryAddress,
             geo:
               buyerLng && buyerLat
-                ? { type: "Point", coordinates: [Number(buyerLng), Number(buyerLat)] }
+                ? {
+                    type: "Point",
+                    coordinates: [Number(buyerLng), Number(buyerLat)],
+                  }
                 : undefined,
           }
         : undefined,
@@ -93,7 +104,10 @@ export const postRequestedLead = async (req, res) => {
             address: sellerPickupAddress,
             geo:
               sellerLng && sellerLat
-                ? { type: "Point", coordinates: [Number(sellerLng), Number(sellerLat)] }
+                ? {
+                    type: "Point",
+                    coordinates: [Number(sellerLng), Number(sellerLat)],
+                  }
                 : undefined,
           }
         : undefined,
@@ -106,8 +120,9 @@ export const postRequestedLead = async (req, res) => {
 
     // Check if user is an admin of the same country
     const user = await UserModel.findById(userId);
-    const isAdmin = user && user.role === "admin" && user.countryCode === countryCode;
-    
+    const isAdmin =
+      user && user.role === "admin" && user.countryCode === countryCode;
+
     if (isAdmin) {
       // Admin posting lead - automatically approve and move to approved leads
       const newApprovedLead = new ApprovedLeads({
@@ -126,7 +141,10 @@ export const postRequestedLead = async (req, res) => {
               address: buyerDeliveryAddress,
               geo:
                 buyerLng && buyerLat
-                  ? { type: "Point", coordinates: [Number(buyerLng), Number(buyerLat)] }
+                  ? {
+                      type: "Point",
+                      coordinates: [Number(buyerLng), Number(buyerLat)],
+                    }
                   : undefined,
             }
           : undefined,
@@ -135,7 +153,10 @@ export const postRequestedLead = async (req, res) => {
               address: sellerPickupAddress,
               geo:
                 sellerLng && sellerLat
-                  ? { type: "Point", coordinates: [Number(sellerLng), Number(sellerLat)] }
+                  ? {
+                      type: "Point",
+                      coordinates: [Number(sellerLng), Number(sellerLat)],
+                    }
                   : undefined,
             }
           : undefined,
@@ -180,7 +201,7 @@ export const postRequestedLead = async (req, res) => {
       res.status(201).json({
         message: "Lead auto-approved and posted directly to approved leads",
         lead: savedApprovedLead,
-        autoApproved: true
+        autoApproved: true,
       });
     } else {
       // Regular user posting lead - save as requested lead for approval
@@ -189,7 +210,7 @@ export const postRequestedLead = async (req, res) => {
       res.status(201).json({
         message: "Lead posted for approval",
         lead: savedLead,
-        autoApproved: false
+        autoApproved: false,
       });
     }
   } catch (error) {
@@ -314,6 +335,31 @@ export const approveRejectLead = async (req, res) => {
       });
       const savedApprovedLead = await newApprovedLead.save();
       await savedApprovedLead.populate("userId", "name image");
+
+      // Send notification to all group members about the approved lead
+      try {
+        await sendLeadApprovalNotification(savedApprovedLead, "local");
+        console.log("🔔 Lead approval notification sent successfully");
+
+        // Emit socket event to update notification counts for all group members
+        const localGroup = await LocalGroup.findById(
+          requestedLead.groupId._id || requestedLead.groupId
+        ).populate("members", "_id");
+        if (localGroup && localGroup.members) {
+          localGroup.members.forEach((member) => {
+            io.to(`user-${member._id}`).emit("notification-count-update", {
+              type: "increment",
+              count: 1,
+            });
+          });
+        }
+      } catch (notificationError) {
+        console.error(
+          "🔔 Error sending lead approval notification:",
+          notificationError
+        );
+      }
+
       // Emit socket event to group from backend
       io.to(`group-${requestedLead.groupId._id || requestedLead.groupId}`).emit(
         "new-approved-lead",
@@ -358,12 +404,17 @@ export const resendRequestedLead = async (req, res) => {
     const userId = req.user.id;
 
     const lead = await RequestedLeads.findById(leadId);
-    if (!lead) return res.status(404).json({ message: "Requested lead not found" });
+    if (!lead)
+      return res.status(404).json({ message: "Requested lead not found" });
     if (String(lead.userId) !== String(userId)) {
-      return res.status(403).json({ message: "You can only edit your own lead" });
+      return res
+        .status(403)
+        .json({ message: "You can only edit your own lead" });
     }
     if (lead.status !== "rejected") {
-      return res.status(400).json({ message: "Only rejected leads can be resent" });
+      return res
+        .status(400)
+        .json({ message: "Only rejected leads can be resent" });
     }
 
     // Parse retained docs coming from client
@@ -392,7 +443,10 @@ export const resendRequestedLead = async (req, res) => {
     ];
     fields.forEach((key) => {
       if (typeof req.body[key] !== "undefined") {
-        lead[key] = key === "negotiable" ? (req.body[key] === "true" || req.body[key] === true) : req.body[key];
+        lead[key] =
+          key === "negotiable"
+            ? req.body[key] === "true" || req.body[key] === true
+            : req.body[key];
       }
     });
 
@@ -406,7 +460,10 @@ export const resendRequestedLead = async (req, res) => {
             address: buyerAddr,
             geo:
               buyerLng && buyerLat
-                ? { type: "Point", coordinates: [Number(buyerLng), Number(buyerLat)] }
+                ? {
+                    type: "Point",
+                    coordinates: [Number(buyerLng), Number(buyerLat)],
+                  }
                 : undefined,
           }
         : undefined;
@@ -420,7 +477,10 @@ export const resendRequestedLead = async (req, res) => {
             address: sellerAddr,
             geo:
               sellerLng && sellerLat
-                ? { type: "Point", coordinates: [Number(sellerLng), Number(sellerLat)] }
+                ? {
+                    type: "Point",
+                    coordinates: [Number(sellerLng), Number(sellerLat)],
+                  }
                 : undefined,
           }
         : undefined;

@@ -46,6 +46,10 @@ const NotificationTab = ({ onNotificationRead }) => {
       setNotifications(data.data);
       setTotalPages(data.pagination.totalPages);
       setUnreadCount(data.unreadCount);
+      // Update parent component with notification count
+      if (onNotificationCountChange) {
+        onNotificationCountChange(data.unreadCount);
+      }
     } catch (error) {
       console.error("Error fetching notifications:", error);
       toast.error("Failed to fetch notifications");
@@ -107,6 +111,10 @@ const NotificationTab = ({ onNotificationRead }) => {
         setUnreadCount((prev) => Math.max(0, prev - 1));
         toast.success("Marked as read");
         onNotificationRead(); // Call the callback to update the parent
+        // Update parent component with new notification count
+        if (onNotificationCountChange) {
+          onNotificationCountChange(Math.max(0, unreadCount - 1));
+        }
       }
     } catch (error) {
       console.error("Error marking as read:", error);
@@ -124,13 +132,17 @@ const NotificationTab = ({ onNotificationRead }) => {
         }
       );
 
-      if (response.ok) {
+      if (response.data.success) {
         setNotifications((prev) =>
           prev.map((notif) => ({ ...notif, status: "read" }))
         );
         setUnreadCount(0);
         toast.success("All notifications marked as read");
         onNotificationRead(); // Call the callback to update the parent
+        // Update parent component with new notification count
+        if (onNotificationCountChange) {
+          onNotificationCountChange(0);
+        }
       }
     } catch (error) {
       console.error("Error marking all as read:", error);
