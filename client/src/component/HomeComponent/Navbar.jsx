@@ -207,27 +207,17 @@ const Navbar = () => {
             <div className="hidden md:flex items-center space-x-4">
 
               {/* Live Demo Button */}
-              <button className="border bg-white hover:bg-gray-50 px-4 py-2 rounded-md text-sm font-medium flex items-center transition-all duration-200"
-                style={{
-                  borderColor: 'var(--cobalt-blue)',
-                  color: 'var(--cobalt-blue)'
-                }}
-                onMouseEnter={(e) => {
-                  e.target.style.backgroundColor = 'var(--cobalt-blue)';
-                  e.target.style.color = 'var(--brand-white)';
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.backgroundColor = 'var(--brand-white)';
-                  e.target.style.color = 'var(--cobalt-blue)';
-                }}>
+              <button className="border bg-white px-4 py-2 rounded-md text-sm font-medium flex items-center transition-all duration-200 hover:text-white hover:bg-blue-800 hover:border-blue-800"
+                >
+
+                <Link href="/auth" className="flex items-center">                
                 <svg
                   className="w-4 h-4 mr-2"
                   fill="currentColor"
                   viewBox="0 0 20 20"
                 >
                   <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
-                </svg>
-                <Link href="/auth">Login / Signup</Link>
+                </svg>Login / Signup</Link>
               </button>
             </div>
 
@@ -337,8 +327,8 @@ const Navbar = () => {
                   >
                     <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
                   </svg>
-                  <Link href="/auth">Login / Signup</Link>
                 </button>
+                <Link href="/auth">Login / Signup</Link>
               </div>
             </div>
           </div>
