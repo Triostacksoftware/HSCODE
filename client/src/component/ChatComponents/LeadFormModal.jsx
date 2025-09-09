@@ -47,6 +47,15 @@ const LeadFormModal = ({
     initial?.documents || []
   );
 
+  // Location sharing states
+  const [sharingLocation, setSharingLocation] = useState(false);
+  const [locationError, setLocationError] = useState("");
+  const [showLocationModal, setShowLocationModal] = useState(false);
+    const [currentLocation, setCurrentLocation] = useState(null);
+    const [selectedLocation, setSelectedLocation] = useState(null);
+    const [addressSearch, setAddressSearch] = useState("");
+    const [searchingAddress, setSearchingAddress] = useState(false);
+
   // Check user membership and determine available lead types
   const isPremiumUser =
     user && (user.membership === "premium" || user.role === "admin");
@@ -477,6 +486,154 @@ const LeadFormModal = ({
     setRetainDocuments((prev) => prev.filter((_, i) => i !== idx));
   };
 
+  // Get current location using geolocation API
+  const getCurrentLocation = () => {
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error("Geolocation is not supported by this browser"));
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          resolve({ latitude, longitude });
+        },
+        (error) => {
+          let errorMessage = "Unable to retrieve your location";
+          switch (error.code) {
+            case error.PERMISSION_DENIED:
+              errorMessage = "Location access denied by user";
+              break;
+            case error.POSITION_UNAVAILABLE:
+              errorMessage = "Location information is unavailable";
+              break;
+            case error.TIMEOUT:
+              errorMessage = "Location request timed out";
+              break;
+            default:
+              errorMessage =
+                "An unknown error occurred while retrieving location";
+              break;
+          }
+          reject(new Error(errorMessage));
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 300000, // 5 minutes
+        }
+      );
+    });
+  };
+
+  // Handle location sharing with confirmation modal
+  const handleLocationShare = async () => {
+    try {
+      setLocationError("");
+      setSharingLocation(true);
+
+      const location = await getCurrentLocation();
+      setCurrentLocation(location);
+      setShowLocationModal(true);
+    } catch (error) {
+      console.error("Error getting location:", error);
+      if (error.message === "Geolocation is not supported by this browser") {
+        setLocationError("Location sharing is not supported by your browser.");
+      } else if (error.code === 1) {
+        setLocationError(
+          "Location access denied. Please enable location permissions."
+        );
+      } else if (error.code === 2) {
+        setLocationError(
+          "Location unavailable. Please check your GPS settings."
+        );
+      } else if (error.code === 3) {
+        setLocationError("Location request timed out. Please try again.");
+      } else {
+        setLocationError("Failed to get your location. Please try again.");
+      }
+    } finally {
+      setSharingLocation(false);
+    }
+  };
+
+  // Search for address using OpenStreetMap Nominatim API
+  const searchAddress = async (query) => {
+    if (!query.trim()) return;
+    
+    try {
+      setSearchingAddress(true);
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1`
+      );
+      const results = await response.json();
+      
+      if (results.length > 0) {
+        const firstResult = results[0];
+        const newLocation = {
+          latitude: parseFloat(firstResult.lat),
+          longitude: parseFloat(firstResult.lon)
+        };
+        setCurrentLocation(newLocation);
+        setAddressSearch(firstResult.display_name);
+        setLocationError(""); // Clear any previous errors
+        
+        // Show success message
+        console.log(`Found location: ${firstResult.display_name} at ${firstResult.lat}, ${firstResult.lon}`);
+      } else {
+        setLocationError("Address not found. Please try a different search term.");
+      }
+    } catch (error) {
+      console.error("Error searching address:", error);
+      setLocationError("Failed to search address. Please try again.");
+    } finally {
+      setSearchingAddress(false);
+    }
+  };
+
+  // Confirm and set location
+  const confirmLocationShare = async () => {
+    if (!currentLocation) return;
+
+    try {
+      setSharingLocation(true);
+      setLocationError("");
+
+      // Set the location coordinates
+      setSelectedLocation({
+        latitude: currentLocation.latitude,
+        longitude: currentLocation.longitude,
+      });
+
+      // Get the location name (address) from search or use coordinates as fallback
+      const locationName = addressSearch || `Location: ${currentLocation.latitude.toFixed(6)}, ${currentLocation.longitude.toFixed(6)}`;
+      
+      if (leadType === "buy") {
+        // Remove any existing location info and add new one
+        const cleanAddress = buyerDeliveryAddress.replace(/ \(Location: [^)]+\)$/, '').replace(/ \([^)]+\)$/, '');
+        setBuyerDeliveryAddress(`${cleanAddress} (${locationName})`);
+        setBuyerLat(currentLocation.latitude.toString());
+        setBuyerLng(currentLocation.longitude.toString());
+      } else {
+        // Remove any existing location info and add new one
+        const cleanAddress = sellerPickupAddress.replace(/ \(Location: [^)]+\)$/, '').replace(/ \([^)]+\)$/, '');
+        setSellerPickupAddress(`${cleanAddress} (${locationName})`);
+        setSellerLat(currentLocation.latitude.toString());
+        setSellerLng(currentLocation.longitude.toString());
+      }
+
+      setShowLocationModal(false);
+      setCurrentLocation(null);
+      setAddressSearch("");
+    } catch (error) {
+      console.error("Error setting location:", error);
+      setLocationError("Failed to set location. Please try again.");
+    } finally {
+      setSharingLocation(false);
+    }
+  };
+
   const submitHandler = (e) => {
     e.preventDefault();
 
@@ -517,7 +674,7 @@ const LeadFormModal = ({
         className="absolute inset-0 bg-black/50 animate-fade-in-overlay"
         onClick={onClose}
       />
-      <div className="relative bg-white w-full md:w-[900px] h-1/2 md:h-auto rounded-t-xl md:rounded animate-slide-up-modal">
+      <div className="relative bg-white w-full md:w-[900px] max-h-[90vh] rounded-t-xl md:rounded animate-slide-up-modal flex flex-col">
         <div className="flex items-center justify-between px-8 py-4 border-b border-gray-200">
           <div className="font-semibold text-xl">
             {initial ? "Edit & Resend Lead" : "Create Lead"}
@@ -526,10 +683,11 @@ const LeadFormModal = ({
             Close
           </button>
         </div>
-        <form
-          onSubmit={submitHandler}
-          className="p-4 px-8 space-y-3 text-gray-600 text-sm"
-        >
+        <div className="flex-1 overflow-y-auto">
+          <form
+            onSubmit={submitHandler}
+            className="p-4 px-8 space-y-3 text-gray-600 text-sm"
+          >
           {/* Type toggle */}
           <div>
             <div className="text-xs text-gray-500 mb-1">Select lead type</div>
@@ -852,24 +1010,60 @@ const LeadFormModal = ({
                 <label className="text-[.8em] font-medium">
                   Delivery address<span className="text-red-500">*</span>
                 </label>
-                <input
-                  className="mt-1 w-full border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 rounded text-sm"
-                  value={buyerDeliveryAddress}
-                  onChange={(e) => setBuyerDeliveryAddress(e.target.value)}
-                  required
-                />
+                <div className="flex gap-2">
+                  <input
+                    className="mt-1 flex-1 border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 rounded text-sm"
+                    value={buyerDeliveryAddress}
+                    onChange={(e) => setBuyerDeliveryAddress(e.target.value)}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={handleLocationShare}
+                    disabled={sharingLocation}
+                    className="mt-1 px-3 py-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-gray-200"
+                    title="Add current location"
+                  >
+                    {sharingLocation ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                    ) : (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="md:col-span-2">
                 <label className="text-[.8em] font-medium">
                   Pickup address <span className="text-red-500">*</span>
                 </label>
-                <input
-                  className="mt-1 w-full border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 rounded text-sm"
-                  value={sellerPickupAddress}
-                  onChange={(e) => setSellerPickupAddress(e.target.value)}
-                  required
-                />
+                <div className="flex gap-2">
+                  <input
+                    className="mt-1 flex-1 border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 rounded text-sm"
+                    value={sellerPickupAddress}
+                    onChange={(e) => setSellerPickupAddress(e.target.value)}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={handleLocationShare}
+                    disabled={sharingLocation}
+                    className="mt-1 px-3 py-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-gray-200"
+                    title="Add current location"
+                  >
+                    {sharingLocation ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                    ) : (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -963,8 +1157,219 @@ const LeadFormModal = ({
                 : "Submit for approval"}
             </button>
           </div>
-        </form>
+          </form>
+        </div>
       </div>
+
+      {/* Location Confirmation Modal */}
+      {showLocationModal && currentLocation && (
+        <div className="fixed inset-0 bg-black/30 bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-hidden">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                <svg className="w-5 h-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                Add Location
+              </h3>
+              <button
+                onClick={() => {
+                  setShowLocationModal(false);
+                  setCurrentLocation(null);
+                }}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Modal Content */}
+              <div className="p-4">
+                <p className="text-sm text-gray-600 mb-4">
+                  Search for an address or use your current GPS location.
+                </p>
+
+                {/* Address Search */}
+                <div className="mb-4">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={addressSearch}
+                      onChange={(e) => setAddressSearch(e.target.value)}
+                      placeholder="Search for an address (e.g., '123 Main St, New York')"
+                      className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          searchAddress(addressSearch);
+                        }
+                      }}
+                    />
+                    <button
+                      onClick={() => searchAddress(addressSearch)}
+                      disabled={searchingAddress || !addressSearch.trim()}
+                      className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2 font-medium"
+                    >
+                      {searchingAddress ? (
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      ) : (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                      )}
+                      Search
+                    </button>
+                  </div>
+                </div>
+
+              {/* Map Preview */}
+              <div className="relative bg-gray-100 rounded-lg overflow-hidden shadow-sm border border-gray-200 mb-4">
+                <div className="relative w-full h-48 bg-gray-100 rounded-t-lg overflow-hidden">
+                  {/* Real Map Image */}
+                  <img
+                    src={`https://tile.openstreetmap.org/15/${Math.floor(
+                      ((parseFloat(currentLocation.longitude) + 180) / 360) *
+                        Math.pow(2, 15)
+                    )}/${Math.floor(
+                      ((1 -
+                        Math.log(
+                          Math.tan(
+                            (parseFloat(currentLocation.latitude) * Math.PI) /
+                              180
+                          ) +
+                            1 /
+                              Math.cos(
+                                (parseFloat(currentLocation.latitude) *
+                                  Math.PI) /
+                                  180
+                              )
+                        ) /
+                          Math.PI) /
+                        2) *
+                        Math.pow(2, 15)
+                    )}.png`}
+                    alt="Location Map"
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      // Fallback to a simple map placeholder
+                      e.target.style.display = "none";
+                      e.target.nextSibling.style.display = "flex";
+                    }}
+                  />
+
+                  {/* Fallback map placeholder */}
+                  <div className="hidden w-full h-full bg-gradient-to-br from-blue-50 to-green-50 items-center justify-center">
+                    <div className="text-center">
+                      <svg className="w-12 h-12 text-red-500 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      <p className="text-sm text-gray-600">Location Map</p>
+                    </div>
+                  </div>
+
+                  {/* Map Pin */}
+                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                    <div className="relative">
+                      <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center shadow-lg">
+                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                      </div>
+                      <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-red-500"></div>
+                    </div>
+                  </div>
+
+                  {/* Overlay with location info */}
+                  <div className="absolute top-2 left-2 bg-white bg-opacity-95 px-2 py-1 rounded text-xs font-medium text-gray-700 shadow-sm">
+                    📍 Your Location
+                  </div>
+                </div>
+
+                 {/* Coordinates display */}
+                 <div className="p-3 bg-gray-50 border-t border-gray-200">
+                   <p className="text-xs text-gray-600 text-center">
+                     {currentLocation.latitude.toFixed(6)},{" "}
+                     {currentLocation.longitude.toFixed(6)}
+                   </p>
+                   <p className="text-xs text-blue-600 text-center mt-1 font-medium">
+                     {addressSearch ? "📍 Searched Location" : "📍 GPS Location"}
+                   </p>
+                 </div>
+               </div>
+
+               {/* GPS Location Button */}
+               <div className="mt-2 flex justify-center">
+                 <button
+                   onClick={async () => {
+                     try {
+                       const location = await getCurrentLocation();
+                       setCurrentLocation(location);
+                       setAddressSearch(""); // Clear search when using GPS
+                       setLocationError(""); // Clear any errors
+                       console.log(`Using current GPS location: ${location.latitude}, ${location.longitude}`);
+                     } catch (error) {
+                       console.error("Error getting current location:", error);
+                       setLocationError("Failed to get current location. Please try again.");
+                     }
+                   }}
+                   className="bg-green-500 text-white px-4 py-2 rounded text-sm hover:bg-green-600 transition-colors flex items-center gap-2"
+                 >
+                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                   </svg>
+                   Use My Current GPS Location
+                 </button>
+               </div>
+
+              {/* Error Message */}
+              {locationError && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-sm text-red-600">{locationError}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex items-center justify-end gap-3 p-4 border-t border-gray-200 bg-gray-50">
+              <button
+                onClick={() => {
+                  setShowLocationModal(false);
+                  setCurrentLocation(null);
+                }}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmLocationShare}
+                disabled={sharingLocation}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+              >
+                {sharingLocation ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    Adding...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    Add Location
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

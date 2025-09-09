@@ -40,6 +40,14 @@ export const postGlobalRequestedLead = async (req, res) => {
   try {
     const userId = req.user.id;
     const countryCode = req.user.countryCode;
+    
+    // Validate countryCode is present
+    if (!countryCode) {
+      return res.status(400).json({ 
+        message: "User country code is required. Please update your profile with country information." 
+      });
+    }
+    
     const {
       groupId,
       type,

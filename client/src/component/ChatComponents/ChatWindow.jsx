@@ -18,6 +18,7 @@ import { IoArrowBack } from "react-icons/io5";
 import { HiMegaphone } from "react-icons/hi2";
 import UserProfileSidebar from "./UserProfileSidebar";
 import LeadFormModal from "./LeadFormModal";
+import ClickableAddress from "../ClickableAddress";
 
 const ChatWindow = ({
   chapterNo,
@@ -677,15 +678,30 @@ const ChatWindow = ({
                               </div>
                               <div className="text-xs text-gray-700 space-y-1">
                                 {lead.buyerDeliveryLocation?.address && (
-                                  <div>
-                                    Delivery:{" "}
-                                    {lead.buyerDeliveryLocation.address}
-                                  </div>
+                                  <ClickableAddress
+                                    address={lead.buyerDeliveryLocation.address}
+                                    coordinates={lead.buyerDeliveryLocation.geo?.coordinates && 
+                                      Array.isArray(lead.buyerDeliveryLocation.geo.coordinates) && 
+                                      lead.buyerDeliveryLocation.geo.coordinates.length >= 2 ? {
+                                        latitude: lead.buyerDeliveryLocation.geo.coordinates[1],
+                                        longitude: lead.buyerDeliveryLocation.geo.coordinates[0]
+                                      } : null}
+                                    label="Delivery"
+                                    className="text-xs"
+                                  />
                                 )}
                                 {lead.sellerPickupLocation?.address && (
-                                  <div>
-                                    Pickup: {lead.sellerPickupLocation.address}
-                                  </div>
+                                  <ClickableAddress
+                                    address={lead.sellerPickupLocation.address}
+                                    coordinates={lead.sellerPickupLocation.geo?.coordinates && 
+                                      Array.isArray(lead.sellerPickupLocation.geo.coordinates) && 
+                                      lead.sellerPickupLocation.geo.coordinates.length >= 2 ? {
+                                        latitude: lead.sellerPickupLocation.geo.coordinates[1],
+                                        longitude: lead.sellerPickupLocation.geo.coordinates[0]
+                                      } : null}
+                                    label="Pickup"
+                                    className="text-xs"
+                                  />
                                 )}
                                 {lead.specialRequest && (
                                   <div>
@@ -777,6 +793,19 @@ const ChatWindow = ({
           try {
             setSending(true);
             setError("");
+            
+            // Debug: Check user countryCode
+            console.log("User countryCode:", user?.countryCode);
+            console.log("ChapterNo:", chapterNo);
+            console.log("Vals:", vals);
+            
+            // Check if user has countryCode
+            if (!user?.countryCode) {
+              toast.error("Please update your profile with country information before creating leads.");
+              setError("Country information required");
+              return;
+            }
+            
             const form = new FormData();
             form.append("groupId", selectedGroupId);
             form.append("type", vals.leadType);
@@ -814,7 +843,10 @@ const ChatWindow = ({
             toast.success("Your lead has been submitted for approval!");
           } catch (err) {
             console.error("Error sending lead:", err);
-            setError("Failed to send lead");
+            console.error("Error response:", err.response?.data);
+            const errorMessage = err.response?.data?.message || "Failed to send lead";
+            setError(errorMessage);
+            toast.error(errorMessage);
           } finally {
             setSending(false);
           }

@@ -14,6 +14,7 @@ import { IoMdClose } from "react-icons/io";
 import { FaRegPaperPlane } from "react-icons/fa";
 import UserProfileSidebar from "./UserProfileSidebar";
 import MapPicker from "./MapPicker";
+import ClickableAddress from "../ClickableAddress";
 import socket from "../../utilities/socket";
 import { OnlineUsersContext } from "../../contexts/OnlineUsersContext";
 import toast from "react-hot-toast";
@@ -219,6 +220,18 @@ const GlobalChatWindow = ({
     try {
       setSending(true);
       setError("");
+      
+      // Debug: Check user countryCode and chapterNo
+      console.log("User countryCode:", user?.countryCode);
+      console.log("ChapterNo:", chapterNo);
+      
+      // Check if user has countryCode
+      if (!user?.countryCode) {
+        toast.error("Please update your profile with country information before creating leads.");
+        setError("Country information required");
+        return;
+      }
+      
       const form = new FormData();
       form.append("groupId", selectedGroupId);
       form.append("type", leadType);
@@ -267,7 +280,10 @@ const GlobalChatWindow = ({
       toast.success("Your lead has been submitted for approval!");
     } catch (error) {
       console.error("Error sending global lead:", error);
-      setError("Failed to send lead");
+      console.error("Error response:", error.response?.data);
+      const errorMessage = error.response?.data?.message || "Failed to send lead";
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setSending(false);
     }
@@ -625,15 +641,30 @@ const GlobalChatWindow = ({
                               </div>
                               <div className="text-xs text-gray-700 space-y-1">
                                 {msg.buyerDeliveryLocation?.address && (
-                                  <div>
-                                    Delivery:{" "}
-                                    {msg.buyerDeliveryLocation.address}
-                                  </div>
+                                  <ClickableAddress
+                                    address={msg.buyerDeliveryLocation.address}
+                                    coordinates={msg.buyerDeliveryLocation.geo?.coordinates && 
+                                      Array.isArray(msg.buyerDeliveryLocation.geo.coordinates) && 
+                                      msg.buyerDeliveryLocation.geo.coordinates.length >= 2 ? {
+                                        latitude: msg.buyerDeliveryLocation.geo.coordinates[1],
+                                        longitude: msg.buyerDeliveryLocation.geo.coordinates[0]
+                                      } : null}
+                                    label="Delivery"
+                                    className="text-xs"
+                                  />
                                 )}
                                 {msg.sellerPickupLocation?.address && (
-                                  <div>
-                                    Pickup: {msg.sellerPickupLocation.address}
-                                  </div>
+                                  <ClickableAddress
+                                    address={msg.sellerPickupLocation.address}
+                                    coordinates={msg.sellerPickupLocation.geo?.coordinates && 
+                                      Array.isArray(msg.sellerPickupLocation.geo.coordinates) && 
+                                      msg.sellerPickupLocation.geo.coordinates.length >= 2 ? {
+                                        latitude: msg.sellerPickupLocation.geo.coordinates[1],
+                                        longitude: msg.sellerPickupLocation.geo.coordinates[0]
+                                      } : null}
+                                    label="Pickup"
+                                    className="text-xs"
+                                  />
                                 )}
                               </div>
                               {Array.isArray(msg.documents) &&
