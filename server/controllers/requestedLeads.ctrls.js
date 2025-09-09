@@ -32,14 +32,28 @@ export const postRequestedLead = async (req, res) => {
     if (!groupId) {
       return res.status(400).json({ message: "groupId is required" });
     }
+    console.log(req.user)
 
     const documents = (req.files || []).map((f) => f.filename);
 
     // Build leadCode
     // Prefix: BLD for buy, SLD for sell; scope: domestic; country from user
-    const countryCode = req.user.countryCode || "";
-    const chapter = req.body.chapterNo;
-    const typePrefix = type === "buy" ? "BLD" : "SLD";
+    const countryCode = req.user.countryCode;
+    
+    // Validate countryCode is present
+    if (!countryCode) {
+      return res.status(400).json({ 
+        message: "User country code is required. Please update your profile with country information." 
+      });
+    }
+    
+    // Prefer chapterNo from client. Fallback to HS slice. Normalize to 2 digits
+    const chapter = (
+      (req.body.chapterNo && String(req.body.chapterNo)) ||
+      (hscode || "").slice(0, 2) ||
+      "00"
+    ).padStart(2, "0");
+    const typePrefix = (type === "buy" ? "BLD" : "SLD");
     // Find sequence for this day and chapter + country + type
     const seqBase = {
       type,

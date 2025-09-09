@@ -42,6 +42,14 @@ export const postGlobalRequestedLead = async (req, res) => {
   try {
     const userId = req.user.id;
     const countryCode = req.user.countryCode;
+    
+    // Validate countryCode is present
+    if (!countryCode) {
+      return res.status(400).json({ 
+        message: "User country code is required. Please update your profile with country information." 
+      });
+    }
+    
     const {
       groupId,
       type,
@@ -52,7 +60,11 @@ export const postGlobalRequestedLead = async (req, res) => {
       targetPrice,
       negotiable,
       buyerDeliveryAddress,
+      buyerLat,
+      buyerLng,
       sellerPickupAddress,
+      sellerLat,
+      sellerLng,
       specialRequest,
       remarks,
       content,
@@ -70,16 +82,16 @@ export const postGlobalRequestedLead = async (req, res) => {
       (hscode || "").slice(0, 2) ||
       "00"
     ).padStart(2, "0");
-    // For GLOBAL leads use BLG/SLG/HSBLG/HSSLG (Buy Lead Global / Sell Lead Global / High Sea Buy Lead Global / High Sea Sell Lead Global)
+    // For GLOBAL leads use BLG/SLG/HBLG/HSLG (Buy Lead Global / Sell Lead Global / High Sea Buy Lead Global / High Sea Sell Lead Global)
     const typePrefix =
       type === "buy"
         ? "BLG"
         : type === "sell"
         ? "SLG"
         : type === "high-sea-buy"
-        ? "HSBLG"
+        ? "HBLG"
         : type === "high-sea-sell"
-        ? "HSSLG"
+        ? "HSLG"
         : "LG";
     // Count by leadCode prefix so HS code does not affect sequencing
     const leadPrefix = `${typePrefix}-${countryCode}-${chapter}-`;
@@ -107,10 +119,22 @@ export const postGlobalRequestedLead = async (req, res) => {
       targetPrice,
       negotiable: negotiable === "true" || negotiable === true,
       buyerDeliveryLocation: buyerDeliveryAddress
-        ? { address: buyerDeliveryAddress }
+        ? {
+            address: buyerDeliveryAddress,
+            geo: (buyerLat && buyerLng) ? {
+              type: "Point",
+              coordinates: [parseFloat(buyerLng), parseFloat(buyerLat)]
+            } : undefined
+          }
         : undefined,
       sellerPickupLocation: sellerPickupAddress
-        ? { address: sellerPickupAddress }
+        ? {
+            address: sellerPickupAddress,
+            geo: (sellerLat && sellerLng) ? {
+              type: "Point",
+              coordinates: [parseFloat(sellerLng), parseFloat(sellerLat)]
+            } : undefined
+          }
         : undefined,
       specialRequest,
       remarks,

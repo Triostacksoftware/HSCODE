@@ -228,7 +228,7 @@ export const signup = async (req, res) => {
     await newUser.save();
 
     // Generate JWT with user._id
-    const authToken = generateToken({ id: newUser._id, role: "user" }, "7d");
+    const authToken = generateToken({ id: newUser._id, role: "user", countryCode: newUser.countryCode }, "7d");
 
     // Set JWT in HTTP-only cookie
     setCookie(res, "auth_token", authToken); // 7d
@@ -333,7 +333,7 @@ export const emailVerification = async (req, res) => {
     await newUser.save();
 
     // 5. Generate JWT with user._id
-    const authToken = generateToken({ id: newUser._id, role: "user" }, "24h");
+    const authToken = generateToken({ id: newUser._id, role: "user", countryCode: newUser.countryCode }, "24h");
 
     // 6. Set JWT in HTTP-only cookie
     res.cookie("auth_token", authToken, {
@@ -1068,7 +1068,7 @@ export const userLogin = async (req, res) => {
     }
 
     // Generate JWT token
-    const authToken = generateToken({ id: user._id, role: "user" }, "7d");
+    const authToken = generateToken({ id: user._id, role: "user", countryCode: user.countryCode }, "7d");
 
     // Set JWT in HTTP-only cookie
     setCookie(res, "auth_token", authToken);

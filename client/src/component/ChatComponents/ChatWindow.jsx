@@ -18,6 +18,7 @@ import { IoArrowBack } from "react-icons/io5";
 import { HiMegaphone } from "react-icons/hi2";
 import UserProfileSidebar from "./UserProfileSidebar";
 import LeadFormModal from "./LeadFormModal";
+import ClickableAddress from "../ClickableAddress";
 
 const ChatWindow = ({
   chapterNo,
@@ -399,7 +400,7 @@ const ChatWindow = ({
                 src={
                   groupImage.includes("https")
                     ? groupImage
-                    : `${process.env.NEXT_PUBLIC_BASE_URL}/uploads/${groupImage}`
+                    : `${process.env.NEXT_PUBLIC_BASE_URL}/upload/${groupImage}`
                 }
                 className="w-full h-full object-cover rounded-full"
                 alt={groupName}
@@ -606,123 +607,223 @@ const ChatWindow = ({
                         </div>
                       )}
                       <div
-                        className={`max-w-[75%] sm:max-w-xs lg:max-w-md ${
+                        className={`max-w-[85%] sm:max-w-lg lg:max-w-2xl ${
                           isOwnMessage ? "order-2" : "order-1"
                         }`}
                       >
-                        <div
-                          className={`rounded-xl px-3 md:px-4 py-2 shadow-sm border ${
+                        {lead.hscode || lead.description ? (
+                          <div className={`rounded-lg shadow-sm border overflow-hidden ${
                             lead.type === "buy"
-                              ? "bg-blue-50 border-blue-100 text-gray-900"
+                              ? "bg-blue-50 border-blue-200"
                               : lead.type === "sell"
-                              ? "bg-green-50 border-green-100 text-gray-900"
-                              : "bg-white border-gray-200 text-gray-900"
-                          }`}
-                        >
-                          {lead.hscode || lead.description ? (
-                            <div className="text-sm space-y-2">
-                              <div className="flex items-center gap-2">
-                                {lead.isAdminPost && (
-                                  <span className="px-2 py-0.5 rounded-full text-[11px] bg-violet-100 text-violet-700">
-                                    ADMIN
+                              ? "bg-green-50 border-green-200"
+                              : "bg-white border-gray-200"
+                          }`}>
+                            {/* Header with badges */}
+                            <div className={`px-3 py-2 border-b ${
+                              lead.type === "buy"
+                                ? "bg-blue-100 border-blue-200"
+                                : lead.type === "sell"
+                                ? "bg-green-100 border-green-200"
+                                : "bg-gray-50 border-gray-200"
+                            }`}>
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span
+                                    className={`px-2 py-0.5 rounded text-xs font-medium ${
+                                      lead.type === "buy"
+                                        ? "bg-blue-200 text-blue-800"
+                                        : lead.type === "sell"
+                                        ? "bg-green-200 text-green-800"
+                                        : "bg-gray-200 text-gray-800"
+                                    }`}
+                                  >
+                                    {lead.type === "buy" ? "BUY" : lead.type === "sell" ? "SELL" : "LEAD"}
                                   </span>
-                                )}
-                                <span
-                                  className={`px-2 py-0.5 rounded-full text-[11px] ${
-                                    lead.type === "buy"
-                                      ? "bg-blue-100 text-blue-700"
-                                      : "bg-green-100 text-green-700"
-                                  }`}
-                                >
-                                  {(lead.type || "Lead").toUpperCase()}
-                                </span>
-                                {lead.hscode && (
-                                  <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-[11px]">
-                                    HS: {lead.hscode}
-                                  </span>
-                                )}
-                                {/* Broadcast Status Badge */}
-                                {lead.broadcast === "approved" && (
-                                  <span className="px-2 py-0.5 rounded-full text-[11px] bg-green-100 text-green-700 flex items-center gap-1">
-                                    <HiMegaphone className="w-3 h-3" />
-                                    BROADCAST
-                                  </span>
-                                )}
-                                {lead.broadcast === "pending" && (
-                                  <span className="px-2 py-0.5 rounded-full text-[11px] bg-yellow-100 text-yellow-700 flex items-center gap-1">
-                                    <HiMegaphone className="w-3 h-3" />
-                                    PENDING
-                                  </span>
-                                )}
+                                  {lead.hscode && (
+                                    <span className="px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">
+                                      HS: {lead.hscode}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                  {/* Admin Badge */}
+                                  {lead.isAdminPost && (
+                                    <span className="px-2 py-0.5 rounded text-xs font-medium text-violet-700">
+                                      ~ Admin
+                                    </span>
+                                  )}
+                                  {/* Broadcast Status Badge */}
+                                  {lead.broadcast === "approved" && (
+                                    <span className="px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700 flex items-center gap-1">
+                                      <HiMegaphone className="w-3 h-3" />
+                                      BROADCAST
+                                    </span>
+                                  )}
+                                  {lead.broadcast === "pending" && (
+                                    <span className="px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-700 flex items-center gap-1">
+                                      <HiMegaphone className="w-3 h-3" />
+                                      PENDING
+                                    </span>
+                                  )}
+                                </div>
                               </div>
+                            </div>
+
+                            {/* Main Content */}
+                            <div className="p-3 space-y-3">
+                              {/* Description */}
                               {lead.description && (
-                                <div className="text-gray-800 font-medium leading-6">
-                                  {lead.description}
+                                <div className="bg-white rounded p-2 border border-gray-200">
+                                  <h3 className="text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wide">
+                                    Description
+                                  </h3>
+                                  <p className="text-sm text-gray-800 leading-relaxed">
+                                    {lead.description}
+                                  </p>
                                 </div>
                               )}
-                              <div className="flex flex-wrap gap-2 text-[11px] text-gray-700">
-                                {lead.quantity && (
-                                  <div>Qty: {lead.quantity}</div>
-                                )}
-                                {lead.packing && (
-                                  <div>Packing: {lead.packing}</div>
-                                )}
-                                {(lead.targetPrice ||
-                                  lead.negotiable !== undefined) && (
-                                  <div>
-                                    Target: {lead.targetPrice || "-"}{" "}
-                                    {lead.negotiable ? "(Negotiable)" : ""}
+
+                              {/* Product Details Grid */}
+                              {(lead.quantity || lead.packing || lead.targetPrice || lead.negotiable !== undefined) && (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                                  {lead.quantity && (
+                                    <div className="bg-white rounded p-2 border border-gray-200">
+                                      <div className="text-xs font-semibold text-blue-600 mb-1 uppercase tracking-wide">Quantity</div>
+                                      <div className="text-sm text-gray-800 font-medium">{lead.quantity}</div>
+                                    </div>
+                                  )}
+                                  {lead.packing && (
+                                    <div className="bg-white rounded p-2 border border-gray-200">
+                                      <div className="text-xs font-semibold text-green-600 mb-1 uppercase tracking-wide">Packing</div>
+                                      <div className="text-sm text-gray-800 font-medium">{lead.packing}</div>
+                                    </div>
+                                  )}
+                                  {(lead.targetPrice || lead.negotiable !== undefined) && (
+                                    <div className="bg-white rounded p-2 border border-gray-200">
+                                      <div className="text-xs font-semibold text-yellow-600 mb-1 uppercase tracking-wide">Price</div>
+                                      <div className="text-sm text-gray-800 font-medium">
+                                        {lead.targetPrice || "Not specified"}
+                                        {lead.negotiable && (
+                                          <span className="ml-1 text-xs bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded">
+                                            Negotiable
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+
+                              {/* Location Information */}
+                              {(lead.buyerDeliveryLocation?.address || lead.sellerPickupLocation?.address) && (
+                                <div className="space-y-2">
+                                  <h3 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                                    Location Details
+                                  </h3>
+                                  <div className="grid gap-2">
+                                    {lead.buyerDeliveryLocation?.address && (
+                                      <div className="bg-white rounded p-2 border border-gray-200">
+                                        <div className="text-xs font-semibold text-red-600 mb-1 uppercase tracking-wide">
+                                          Delivery Location
+                                        </div>
+                                        <ClickableAddress
+                                          address={lead.buyerDeliveryLocation.address}
+                                          coordinates={lead.buyerDeliveryLocation.geo?.coordinates && 
+                                            Array.isArray(lead.buyerDeliveryLocation.geo.coordinates) && 
+                                            lead.buyerDeliveryLocation.geo.coordinates.length >= 2 ? {
+                                              latitude: lead.buyerDeliveryLocation.geo.coordinates[1],
+                                              longitude: lead.buyerDeliveryLocation.geo.coordinates[0]
+                                            } : null}
+                                          label=""
+                                          showLabel={false}
+                                          className="w-full"
+                                        />
+                                      </div>
+                                    )}
+                                    {lead.sellerPickupLocation?.address && (
+                                      <div className="bg-white rounded p-2 border border-gray-200">
+                                        <div className="text-xs font-semibold text-green-600 mb-1 uppercase tracking-wide">
+                                          Pickup Location
+                                        </div>
+                                        <ClickableAddress
+                                          address={lead.sellerPickupLocation.address}
+                                          coordinates={lead.sellerPickupLocation.geo?.coordinates && 
+                                            Array.isArray(lead.sellerPickupLocation.geo.coordinates) && 
+                                            lead.sellerPickupLocation.geo.coordinates.length >= 2 ? {
+                                              latitude: lead.sellerPickupLocation.geo.coordinates[1],
+                                              longitude: lead.sellerPickupLocation.geo.coordinates[0]
+                                            } : null}
+                                          label=""
+                                          showLabel={false}
+                                          className="w-full"
+                                        />
+                                      </div>
+                                    )}
                                   </div>
-                                )}
-                              </div>
-                              <div className="text-xs text-gray-700 space-y-1">
-                                {lead.buyerDeliveryLocation?.address && (
-                                  <div>
-                                    Delivery:{" "}
-                                    {lead.buyerDeliveryLocation.address}
+                                </div>
+                              )}
+
+                              {/* Additional Information */}
+                              {(lead.specialRequest || lead.remarks) && (
+                                <div className="space-y-2">
+                                  <h3 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                                    Additional Information
+                                  </h3>
+                                  <div className="space-y-1.5">
+                                    {lead.specialRequest && (
+                                      <div className="bg-white rounded p-2 border border-gray-200">
+                                        <div className="text-xs font-semibold text-purple-600 mb-1 uppercase tracking-wide">Special Request</div>
+                                        <p className="text-sm text-gray-800">{lead.specialRequest}</p>
+                                      </div>
+                                    )}
+                                    {lead.remarks && (
+                                      <div className="bg-white rounded p-2 border border-gray-200">
+                                        <div className="text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wide">Notes</div>
+                                        <p className="text-sm text-gray-800">{lead.remarks}</p>
+                                      </div>
+                                    )}
                                   </div>
-                                )}
-                                {lead.sellerPickupLocation?.address && (
-                                  <div>
-                                    Pickup: {lead.sellerPickupLocation.address}
-                                  </div>
-                                )}
-                                {lead.specialRequest && (
-                                  <div>
-                                    Special request: {lead.specialRequest}
-                                  </div>
-                                )}
-                                {lead.remarks && (
-                                  <div>Notes: {lead.remarks}</div>
-                                )}
-                              </div>
-                              {Array.isArray(lead.documents) &&
-                                lead.documents.length > 0 && (
-                                  <div className="mt-2 flex flex-wrap gap-2">
+                                </div>
+                              )}
+
+                              {/* Documents */}
+                              {Array.isArray(lead.documents) && lead.documents.length > 0 && (
+                                <div className="space-y-1.5">
+                                  <h3 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                                    Attachments ({lead.documents.length})
+                                  </h3>
+                                  <div className="flex flex-wrap gap-1.5">
                                     {lead.documents.map((doc, i) => (
                                       <a
                                         key={i}
                                         href={`${process.env.NEXT_PUBLIC_BASE_URL}/leadDocuments/${doc}`}
                                         target="_blank"
                                         rel="noreferrer"
-                                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-blue-700 hover:bg-gray-200 text-[11px]"
+                                        className="inline-flex items-center gap-1.5 px-2 py-1.5 rounded bg-white text-blue-700 hover:bg-blue-50 border border-gray-200 transition-colors text-xs font-medium"
                                       >
-                                        <span>📄</span>
-                                        <span className="truncate max-w-[140px]">
+                                        <span className="text-xs">DOC</span>
+                                        <span className="truncate max-w-[120px]">
                                           {doc}
+                                        </span>
+                                        <span className="text-xs bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">
+                                          View
                                         </span>
                                       </a>
                                     ))}
                                   </div>
-                                )}
+                                </div>
+                              )}
                             </div>
-                          ) : (
-                            <p className="text-sm break-words">
+                          </div>
+                        ) : (
+                          <div className="bg-white rounded-2xl px-4 py-3 shadow-sm border border-gray-200">
+                            <p className="text-sm break-words text-gray-800">
                               {lead.content}
                             </p>
-                          )}
-                        </div>
-                        <div className="flex items-center justify-between mt-1">
+                          </div>
+                        )}
+                        <div className="flex items-center justify-between mt-2 px-1">
                           <div
                             className={`text-xs text-gray-500 ${
                               isOwnMessage ? "text-right" : "text-left"
@@ -736,7 +837,7 @@ const ChatWindow = ({
                               <button
                                 onClick={() => handleBroadcastRequest(lead._id)}
                                 disabled={processingBroadcast[lead._id]}
-                                className="flex items-center gap-1 px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200 transition-colors disabled:opacity-50"
+                                className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 title="Request broadcast for this lead"
                               >
                                 <HiMegaphone className="w-3 h-3" />
@@ -777,6 +878,19 @@ const ChatWindow = ({
           try {
             setSending(true);
             setError("");
+            
+            // Debug: Check user countryCode
+            console.log("User countryCode:", user?.countryCode);
+            console.log("ChapterNo:", chapterNo);
+            console.log("Vals:", vals);
+            
+            // Check if user has countryCode
+            if (!user?.countryCode) {
+              toast.error("Please update your profile with country information before creating leads.");
+              setError("Country information required");
+              return;
+            }
+            
             const form = new FormData();
             form.append("groupId", selectedGroupId);
             form.append("type", vals.leadType);
@@ -814,7 +928,10 @@ const ChatWindow = ({
             toast.success("Your lead has been submitted for approval!");
           } catch (err) {
             console.error("Error sending lead:", err);
-            setError("Failed to send lead");
+            console.error("Error response:", err.response?.data);
+            const errorMessage = err.response?.data?.message || "Failed to send lead";
+            setError(errorMessage);
+            toast.error(errorMessage);
           } finally {
             setSending(false);
           }
