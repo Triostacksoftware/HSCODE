@@ -7,6 +7,7 @@ import {
   FaImage,
   FaTimes,
   FaFile,
+  FaMapMarkerAlt,
 } from "react-icons/fa";
 import axios from "axios";
 import { OnlineUsersContext } from "../../contexts/OnlineUsersContext";
@@ -34,6 +35,12 @@ const IndividualUserChat = ({ chat, user, onBack, onMessageSent }) => {
   const [selectedDocument, setSelectedDocument] = useState(null);
   const [documentCaption, setDocumentCaption] = useState("");
   const [uploadingDocument, setUploadingDocument] = useState(false);
+
+  // Location sharing states
+  const [sharingLocation, setSharingLocation] = useState(false);
+  const [locationError, setLocationError] = useState("");
+  const [showLocationModal, setShowLocationModal] = useState(false);
+  const [currentLocation, setCurrentLocation] = useState(null);
 
   // Image modal states
   const [selectedImageModal, setSelectedImageModal] = useState(null);
@@ -625,6 +632,161 @@ const IndividualUserChat = ({ chat, user, onBack, onMessageSent }) => {
     setSelectedImageModal(null);
   };
 
+  // Get current location using geolocation API
+  const getCurrentLocation = () => {
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error("Geolocation is not supported by this browser"));
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          resolve({ latitude, longitude });
+        },
+        (error) => {
+          let errorMessage = "Unable to retrieve your location";
+          switch (error.code) {
+            case error.PERMISSION_DENIED:
+              errorMessage = "Location access denied by user";
+              break;
+            case error.POSITION_UNAVAILABLE:
+              errorMessage = "Location information is unavailable";
+              break;
+            case error.TIMEOUT:
+              errorMessage = "Location request timed out";
+              break;
+            default:
+              errorMessage =
+                "An unknown error occurred while retrieving location";
+              break;
+          }
+          reject(new Error(errorMessage));
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 300000, // 5 minutes
+        }
+      );
+    });
+  };
+
+  // Handle location sharing with confirmation modal
+  const handleLocationShare = async () => {
+    if (!chat?._id) return;
+
+    try {
+      setLocationError("");
+      setSharingLocation(true);
+
+      const location = await getCurrentLocation();
+      setCurrentLocation(location);
+      setShowLocationModal(true);
+    } catch (error) {
+      console.error("Error getting location:", error);
+      if (error.message === "Geolocation is not supported by this browser") {
+        setLocationError("Location sharing is not supported by your browser.");
+      } else if (error.code === 1) {
+        setLocationError(
+          "Location access denied. Please enable location permissions."
+        );
+      } else if (error.code === 2) {
+        setLocationError(
+          "Location unavailable. Please check your GPS settings."
+        );
+      } else if (error.code === 3) {
+        setLocationError("Location request timed out. Please try again.");
+      } else {
+        setLocationError("Failed to get your location. Please try again.");
+      }
+      toast.error(`Failed to get location: ${error.message}`);
+    } finally {
+      setSharingLocation(false);
+    }
+  };
+
+  // Confirm and send location
+  const confirmLocationShare = async () => {
+    if (!currentLocation || !chat?._id) return;
+
+    try {
+      setSharingLocation(true);
+      setLocationError("");
+
+      // Send location to backend
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/user-chat/${chat._id}/location`,
+        {
+          latitude: currentLocation.latitude,
+          longitude: currentLocation.longitude,
+        },
+        { withCredentials: true }
+      );
+
+      if (response.data.success) {
+        // Add message to local state
+        setMessages((prev) => [...prev, response.data.message]);
+
+        // Emit message to socket for other users to receive
+        if (socket) {
+          socket.emit("user-message", {
+            chatId: chat._id,
+            message: response.data.message,
+            receiverId: chat.otherUser._id,
+          });
+
+          // Emit event to update chat list with new last message
+          socket.emit("user-message-sent", {
+            chatId: chat._id,
+            message: response.data.message,
+          });
+
+          // Also emit a chat-update event for immediate local update
+          socket.emit("chat-update", {
+            chatId: chat._id,
+            message: response.data.message,
+          });
+        }
+
+        // Directly update the chat list if the function is available
+        if (typeof window !== "undefined" && window.updateChatLastMessage) {
+          window.updateChatLastMessage(
+            chat._id,
+            response.data.message.content,
+            response.data.message.createdAt
+          );
+        }
+
+        // Force refresh the entire chat list
+        if (typeof window !== "undefined" && window.refreshChatList) {
+          window.refreshChatList();
+        }
+
+        // Scroll to bottom after sending message
+        setTimeout(() => {
+          scrollToBottomImmediate();
+        }, 50);
+
+        // Notify parent that message was sent
+        if (onMessageSent) {
+          onMessageSent();
+        }
+
+        toast.success("Location shared successfully!");
+      }
+    } catch (error) {
+      console.error("Error sending location:", error);
+      setLocationError("Failed to send location. Please try again.");
+      toast.error(`Failed to send location: ${error.message}`);
+    } finally {
+      setSharingLocation(false);
+      setShowLocationModal(false);
+      setCurrentLocation(null);
+    }
+  };
+
   const sendDocument = async () => {
     if (!selectedDocument || !chat?._id) return;
 
@@ -733,9 +895,9 @@ const IndividualUserChat = ({ chat, user, onBack, onMessageSent }) => {
         className={`flex ${isOwnMessage ? "justify-end" : "justify-start"}`}
       >
         <div
-          className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+          className={`max-w-xs lg:max-w-md px-2 py-2 rounded-lg ${
             isOwnMessage
-              ? "bg-purple-600 text-white"
+              ? "bg-gray-500 text-white"
               : "bg-gray-200 text-gray-900"
           }`}
         >
@@ -788,6 +950,90 @@ const IndividualUserChat = ({ chat, user, onBack, onMessageSent }) => {
               {message.content && message.content !== "📄 Document" && (
                 <p className="text-sm mb-2">{message.content}</p>
               )}
+            </div>
+          ) : message.messageType === "location" ? (
+            <div>
+              <a
+                href={`https://www.google.com/maps?q=${message.latitude},${message.longitude}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <div className="relative bg-white rounded-lg overflow-hidden shadow-sm border border-gray-200">
+                  {/* Map Container */}
+                  <div className="relative w-full h-35 bg-gray-100 rounded-t-lg overflow-hidden">
+                    {/* Real Map Image using a simple static map service */}
+                    <img
+                      src={`https://tile.openstreetmap.org/15/${Math.floor(
+                        ((parseFloat(message.longitude) + 180) / 360) *
+                          Math.pow(2, 15)
+                      )}/${Math.floor(
+                        ((1 -
+                          Math.log(
+                            Math.tan(
+                              (parseFloat(message.latitude) * Math.PI) / 180
+                            ) +
+                              1 /
+                                Math.cos(
+                                  (parseFloat(message.latitude) * Math.PI) / 180
+                                )
+                          ) /
+                            Math.PI) /
+                          2) *
+                          Math.pow(2, 15)
+                      )}.png`}
+                      alt="Location Map"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        // Fallback to a simple map placeholder
+                        e.target.style.display = "none";
+                        e.target.nextSibling.style.display = "flex";
+                      }}
+                    />
+
+                    {/* Fallback map placeholder */}
+                    <div className="hidden w-full h-full bg-gradient-to-br from-blue-50 to-green-50 items-center justify-center">
+                      <div className="text-center">
+                        <FaMapMarkerAlt className="text-4xl text-red-500 mx-auto mb-2" />
+                        <p className="text-sm text-gray-600">Location Map</p>
+                      </div>
+                    </div>
+
+                    {/* Map Pin */}
+                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                      <div className="relative">
+                        <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center shadow-lg">
+                          <FaMapMarkerAlt className="text-white text-lg" />
+                        </div>
+                        <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-red-500"></div>
+                      </div>
+                    </div>
+
+                    {/* Overlay with location info */}
+                    <div className="absolute top-2 left-2 bg-white bg-opacity-95 px-2 py-1 rounded text-xs font-medium text-gray-700 shadow-sm">
+                      📍 Shared Location
+                    </div>
+
+                    {/* Map Attribution */}
+                    <div className="absolute bottom-1 left-1 text-xs text-gray-400">
+                      Google Maps
+                    </div>
+                  </div>
+
+                  {/* Coordinates display */}
+                  <div className="p-2 bg-gray-50 border-t border-gray-200">
+                    <p className="text-xs text-gray-600 text-center">
+                      {message.latitude && message.longitude
+                        ? `${message.latitude.toFixed(
+                            6
+                          )}, ${message.longitude.toFixed(6)}`
+                        : "Location shared"}
+                    </p>
+                  </div>
+                </div>
+                {message.content && message.content !== "📍 Location" && (
+                  <p className="text-sm mb-2 mt-2">{message.content}</p>
+                )}
+              </a>
             </div>
           ) : (
             <p className="text-sm">{message.content}</p>
@@ -1020,6 +1266,20 @@ const IndividualUserChat = ({ chat, user, onBack, onMessageSent }) => {
             <FaFile className="w-5 h-5" />
           </button>
 
+          {/* Location sharing button */}
+          <button
+            onClick={handleLocationShare}
+            disabled={sharingLocation}
+            className="px-3 py-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Share current location"
+          >
+            {sharingLocation ? (
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-red-600"></div>
+            ) : (
+              <FaMapMarkerAlt className="w-5 h-5" />
+            )}
+          </button>
+
           <div className="flex-1 relative">
             <input
               type="text"
@@ -1059,11 +1319,15 @@ const IndividualUserChat = ({ chat, user, onBack, onMessageSent }) => {
               (!newMessage.trim() && !selectedImage && !selectedDocument) ||
               sending ||
               uploadingImage ||
-              uploadingDocument
+              uploadingDocument ||
+              sharingLocation
             }
             className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {sending || uploadingImage || uploadingDocument ? (
+            {sending ||
+            uploadingImage ||
+            uploadingDocument ||
+            sharingLocation ? (
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
             ) : (
               <FaPaperPlane />
@@ -1092,6 +1356,143 @@ const IndividualUserChat = ({ chat, user, onBack, onMessageSent }) => {
               className="max-w-[90vw] max-h-[70vh] object-contain"
               onClick={(e) => e.stopPropagation()}
             />
+          </div>
+        </div>
+      )}
+
+      {/* Location Confirmation Modal */}
+      {showLocationModal && currentLocation && (
+        <div className="fixed inset-0 bg-black/30 bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-hidden">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                <FaMapMarkerAlt className="text-red-500 mr-2" />
+                Share Location
+              </h3>
+              <button
+                onClick={() => {
+                  setShowLocationModal(false);
+                  setCurrentLocation(null);
+                }}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <FaTimes className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-4">
+              <p className="text-sm text-gray-600 mb-4">
+                Do you want to share your current location with{" "}
+                {chat?.otherUser?.name || "this user"}?
+              </p>
+
+              {/* Map Preview */}
+              <div className="relative bg-gray-100 rounded-lg overflow-hidden shadow-sm border border-gray-200 mb-4">
+                <div className="relative w-full h-48 bg-gray-100 rounded-t-lg overflow-hidden">
+                  {/* Real Map Image */}
+                  <img
+                    src={`https://tile.openstreetmap.org/15/${Math.floor(
+                      ((parseFloat(currentLocation.longitude) + 180) / 360) *
+                        Math.pow(2, 15)
+                    )}/${Math.floor(
+                      ((1 -
+                        Math.log(
+                          Math.tan(
+                            (parseFloat(currentLocation.latitude) * Math.PI) /
+                              180
+                          ) +
+                            1 /
+                              Math.cos(
+                                (parseFloat(currentLocation.latitude) *
+                                  Math.PI) /
+                                  180
+                              )
+                        ) /
+                          Math.PI) /
+                        2) *
+                        Math.pow(2, 15)
+                    )}.png`}
+                    alt="Location Map"
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      // Fallback to a simple map placeholder
+                      e.target.style.display = "none";
+                      e.target.nextSibling.style.display = "flex";
+                    }}
+                  />
+
+                  {/* Fallback map placeholder */}
+                  <div className="hidden w-full h-full bg-gradient-to-br from-blue-50 to-green-50 items-center justify-center">
+                    <div className="text-center">
+                      <FaMapMarkerAlt className="text-4xl text-red-500 mx-auto mb-2" />
+                      <p className="text-sm text-gray-600">Location Map</p>
+                    </div>
+                  </div>
+
+                  {/* Map Pin */}
+                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                    <div className="relative">
+                      <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center shadow-lg">
+                        <FaMapMarkerAlt className="text-white text-lg" />
+                      </div>
+                      <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-red-500"></div>
+                    </div>
+                  </div>
+
+                  {/* Overlay with location info */}
+                  <div className="absolute top-2 left-2 bg-white bg-opacity-95 px-2 py-1 rounded text-xs font-medium text-gray-700 shadow-sm">
+                    📍 Your Location
+                  </div>
+                </div>
+
+                {/* Coordinates display */}
+                <div className="p-3 bg-gray-50 border-t border-gray-200">
+                  <p className="text-xs text-gray-600 text-center">
+                    {currentLocation.latitude.toFixed(6)},{" "}
+                    {currentLocation.longitude.toFixed(6)}
+                  </p>
+                </div>
+              </div>
+
+              {/* Error Message */}
+              {locationError && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-sm text-red-600">{locationError}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex items-center justify-end gap-3 p-4 border-t border-gray-200 bg-gray-50">
+              <button
+                onClick={() => {
+                  setShowLocationModal(false);
+                  setCurrentLocation(null);
+                }}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmLocationShare}
+                disabled={sharingLocation}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+              >
+                {sharingLocation ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    Sharing...
+                  </>
+                ) : (
+                  <>
+                    <FaMapMarkerAlt className="w-4 h-4" />
+                    Share Location
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}

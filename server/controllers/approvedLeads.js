@@ -175,7 +175,7 @@ export const getBroadcastRequests = async (req, res) => {
 export const updateBroadcastStatus = async (req, res) => {
   try {
     const { leadId } = req.params;
-    const { action } = req.body;
+    const { action, durationHours } = req.body;
     const { user } = req;
 
     // Check if user is admin
@@ -205,9 +205,19 @@ export const updateBroadcastStatus = async (req, res) => {
       lead.broadcast = "approved";
       lead.broadcastApprovedAt = new Date();
       lead.broadcastApprovedBy = user.id;
+
+      // Set broadcast expiration if duration is provided
+      if (durationHours && durationHours > 0) {
+        lead.broadcastDuration = durationHours;
+        lead.broadcastExpiresAt = new Date(
+          Date.now() + durationHours * 60 * 60 * 1000
+        );
+      }
     } else {
       lead.broadcast = "none";
       lead.broadcastRequestedAt = null;
+      lead.broadcastExpiresAt = null;
+      lead.broadcastDuration = null;
     }
 
     await lead.save();

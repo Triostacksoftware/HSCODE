@@ -19,7 +19,7 @@ const messageSchema = new mongoose.Schema(
     },
     messageType: {
       type: String,
-      enum: ["text", "image", "file"],
+      enum: ["text", "image", "file", "location"],
       default: "text",
     },
     fileUrl: {
@@ -28,6 +28,14 @@ const messageSchema = new mongoose.Schema(
     },
     fileName: {
       type: String,
+      default: null,
+    },
+    latitude: {
+      type: Number,
+      default: null,
+    },
+    longitude: {
+      type: Number,
       default: null,
     },
     isRead: {

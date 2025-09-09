@@ -17,6 +17,7 @@ const UserProfileSidebar = ({
   onClose,
   currentUser,
   onStartChat,
+  setActiveTab,
 }) => {
   const [startingChat, setStartingChat] = useState(false);
 
@@ -39,7 +40,10 @@ const UserProfileSidebar = ({
       );
 
       if (response.data.success) {
-        onStartChat(response.data.chat);
+        // Switch to user-chat tab instead of calling onStartChat
+        if (setActiveTab) {
+          setActiveTab("user-chat");
+        }
         onClose();
       }
     } catch (error) {
@@ -55,6 +59,10 @@ const UserProfileSidebar = ({
   };
 
   const canStartChat =
+    currentUser &&
+    (currentUser.membership === "premium" || currentUser.role === "admin");
+
+  const isPremium =
     currentUser &&
     (currentUser.membership === "premium" || currentUser.role === "admin");
 
@@ -95,8 +103,30 @@ const UserProfileSidebar = ({
         </div>
 
         {/* Contact Information */}
-        <div className="space-y-4">
-          {user.email && (
+        <div className={`space-y-4 ${!isPremium ? "relative" : ""}`}>
+          <div className="flex items-center space-x-3">
+            <FaEnvelope className="text-gray-400 flex-shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-gray-900">Email</p>
+              <p className="text-sm text-gray-600">Email:XXXXXXXXX</p>
+            </div>
+          </div>
+          <div className="flex items-center space-x-3">
+            <FaPhone className="text-gray-400 flex-shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-gray-900">Phone</p>
+              <p className="text-sm text-gray-600">Phone:XXXXXXXXX</p>
+            </div>
+          </div>
+          <div className="flex items-center space-x-3">
+            <FaMapMarkerAlt className="text-gray-400 flex-shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-gray-900">Country</p>
+              <p className="text-sm text-gray-600">Country:XX</p>
+            </div>
+          </div>
+
+          {user.email && isPremium && (
             <div className="flex items-center space-x-3">
               <FaEnvelope className="text-gray-400 flex-shrink-0" />
               <div>
@@ -106,7 +136,7 @@ const UserProfileSidebar = ({
             </div>
           )}
 
-          {user.phone && (
+          {user.phone && isPremium && (
             <div className="flex items-center space-x-3">
               <FaPhone className="text-gray-400 flex-shrink-0" />
               <div>
@@ -116,7 +146,7 @@ const UserProfileSidebar = ({
             </div>
           )}
 
-          {user.countryCode && (
+          {user.countryCode && isPremium && (
             <div className="flex items-center space-x-3">
               <FaMapMarkerAlt className="text-gray-400 flex-shrink-0" />
               <div>
@@ -126,7 +156,7 @@ const UserProfileSidebar = ({
             </div>
           )}
 
-          {user.companyWebsite && (
+          {user.companyWebsite && isPremium && (
             <div className="flex items-center space-x-3">
               <FaGlobe className="text-gray-400 flex-shrink-0" />
               <div>
@@ -143,7 +173,7 @@ const UserProfileSidebar = ({
             </div>
           )}
 
-          {user.about && (
+          {user.about && isPremium && (
             <div className="pt-4 border-t border-gray-200">
               <h4 className="text-sm font-medium text-gray-900 mb-2">About</h4>
               <p className="text-sm text-gray-600">{user.about}</p>
@@ -176,16 +206,21 @@ const UserProfileSidebar = ({
 
         {!canStartChat && (
           <div className="mt-8 pt-6 border-t border-gray-200 text-center">
-            <div className="bg-gray-50 rounded-lg p-4">
-              <FaComments className="text-2xl text-gray-400 mx-auto mb-2" />
-              <p className="text-sm text-gray-600 mb-2">
-                Upgrade to premium to start chatting
+            <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-6 border border-purple-200">
+              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <FaComments className="text-2xl text-purple-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Premium Feature
+              </h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Upgrade to premium to start chatting and view contact details
               </p>
               <button
                 onClick={() => window.open("/subscription", "_blank")}
-                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm"
+                className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium shadow-lg hover:shadow-xl"
               >
-                Upgrade Now
+                Upgrade to Premium
               </button>
             </div>
           </div>

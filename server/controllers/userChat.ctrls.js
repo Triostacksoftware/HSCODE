@@ -397,6 +397,84 @@ export const sendDocumentMessage = async (req, res) => {
   }
 };
 
+// Send a location message
+export const sendLocationMessage = async (req, res) => {
+  try {
+    const { chatId } = req.params;
+    const currentUserId = req.user.id;
+    const { latitude, longitude } = req.body;
+
+    // Validate location data
+    if (!latitude || !longitude) {
+      return res
+        .status(400)
+        .json({ message: "Latitude and longitude are required" });
+    }
+
+    // Validate latitude and longitude ranges
+    if (latitude < -90 || latitude > 90) {
+      return res.status(400).json({ message: "Invalid latitude" });
+    }
+    if (longitude < -180 || longitude > 180) {
+      return res.status(400).json({ message: "Invalid longitude" });
+    }
+
+    // Verify user is part of this chat
+    const chat = await UserChatModel.findOne({
+      _id: chatId,
+      participants: currentUserId,
+      isActive: true,
+    });
+
+    if (!chat) {
+      return res.status(404).json({ message: "Chat not found" });
+    }
+
+    // Get the other participant
+    const otherParticipant = chat.participants.find(
+      (p) => p.toString() !== currentUserId
+    );
+
+    // Create location message
+    const message = new MessageModel({
+      senderId: currentUserId,
+      receiverId: otherParticipant,
+      content: "📍 Location",
+      messageType: "location",
+      latitude: parseFloat(latitude),
+      longitude: parseFloat(longitude),
+    });
+
+    await message.save();
+
+    // Update chat
+    chat.lastMessage = message._id;
+    chat.lastMessageAt = new Date();
+    await chat.incrementUnreadCount(otherParticipant);
+
+    // Populate sender info
+    await message.populate("senderId", "name image");
+
+    res.json({
+      success: true,
+      message: {
+        _id: message._id,
+        content: message.content,
+        messageType: message.messageType,
+        latitude: message.latitude,
+        longitude: message.longitude,
+        senderId: message.senderId,
+        receiverId: message.receiverId,
+        createdAt: message.createdAt,
+        isRead: message.isRead,
+      },
+    });
+  } catch (error) {
+    console.error("Error sending location message:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 // Get unread message count for current user
 export const getUnreadCount = async (req, res) => {
   try {
