@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { HomeCountryProvider } from "@/contexts/HomeCountryContext";
 import { HSCodeProvider } from "@/contexts/HSCodeContext";
 import { OnlineUsersProvider } from "@/contexts/OnlineUsersContext";
-import FloatingTranslate from "@/component/FloatingTranslate";
+import DraggableTranslator from "@/component/DraggableTranslator";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -25,7 +25,7 @@ export default function RootLayout({ children }) {
           <HSCodeProvider>
             <OnlineUsersProvider>
               <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>
-              <FloatingTranslate />
+              <DraggableTranslator />
             </OnlineUsersProvider>
           </HSCodeProvider>
         </HomeCountryProvider>
