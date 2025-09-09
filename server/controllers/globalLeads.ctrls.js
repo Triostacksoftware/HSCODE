@@ -1,6 +1,8 @@
 import GlobalRequestedLeads from "../models/GlobalRequestedLeads.js";
 import GlobalApprovedLeads from "../models/GlobalApprovedLeads.js";
 import { io } from "../server.js";
+import { sendLeadApprovalNotification } from "../utilities/leadNotification.util.js";
+import GlobalGroup from "../models/GlobalGroup.js";
 
 // Get global leads by groupId (approved leads only)
 export const getGlobalLeadsByGroup = async (req, res) => {
@@ -253,6 +255,30 @@ export const approveRejectGlobalLead = async (req, res) => {
       });
       const savedApprovedLead = await newApprovedLead.save();
       await savedApprovedLead.populate("userId", "name image");
+
+      // Send notification to all group members about the approved global lead
+      try {
+        await sendLeadApprovalNotification(savedApprovedLead, "global");
+        console.log("🔔 Global lead approval notification sent successfully");
+
+        // Emit socket event to update notification counts for all group members
+        const globalGroup = await GlobalGroup.findById(
+          requestedLead.groupId._id || requestedLead.groupId
+        ).populate("members", "_id");
+        if (globalGroup && globalGroup.members) {
+          globalGroup.members.forEach((member) => {
+            io.to(`user-${member._id}`).emit("notification-count-update", {
+              type: "increment",
+              count: 1,
+            });
+          });
+        }
+      } catch (notificationError) {
+        console.error(
+          "🔔 Error sending global lead approval notification:",
+          notificationError
+        );
+      }
 
       // Emit socket event to group from backend
       io.to(

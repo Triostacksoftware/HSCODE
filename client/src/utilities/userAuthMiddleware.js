@@ -5,7 +5,7 @@ import axios from "axios";
 import toast from "react-hot-toast";
 
 export const useUserAuth = () => {
-  // const router = useRouter();
+  const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState(null);
@@ -19,10 +19,10 @@ export const useUserAuth = () => {
         }
       );
 
-        if (response.data.authenticated) {
-          setIsAuthenticated(true);
-          setUser(response.data.user);
-        }
+      if (response.data.authenticated) {
+        setIsAuthenticated(true);
+        setUser(response.data.user);
+      }
     } catch (error) {
       console.error("User refresh failed:", error);
     }
@@ -48,7 +48,7 @@ export const useUserAuth = () => {
             position: "top-right",
           });
           setTimeout(() => {
-            // router.push("/auth");
+            router.push("/auth");
           }, 1000); // Redirect after 1 second
         }
       } catch (error) {
@@ -58,7 +58,7 @@ export const useUserAuth = () => {
           position: "top-right",
         });
         setTimeout(() => {
-          // router.push("/auth");
+          router.push("/auth");
         }, 1000); // Redirect after 1 second
       } finally {
         setIsLoading(false);
@@ -66,7 +66,7 @@ export const useUserAuth = () => {
     };
 
     checkAuth();
-  }, []);
+  }, [router]);
 
   return { isAuthenticated, isLoading, user, refreshUser };
 };

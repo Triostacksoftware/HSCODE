@@ -1,6 +1,7 @@
 import UserNotification from "../models/UserNotification.js";
 import Notification from "../models/Notification.js";
 import User from "../models/user.js";
+import { io } from "../server.js";
 
 // Get user notifications
 const getUserNotifications = async (req, res) => {
@@ -130,6 +131,17 @@ const markAllNotificationsAsRead = async (req, res) => {
     for (const notificationId of notificationIds) {
       await Notification.findByIdAndUpdate(notificationId, {
         $inc: { "deliveryStats.read": 1 },
+      });
+    }
+
+    // Emit socket event to update notification count
+    if (result.modifiedCount > 0) {
+      console.log(
+        `🔔 Emitting notification-count-update to user-${userId} (set to 0)`
+      );
+      io.to(`user-${userId}`).emit("notification-count-update", {
+        type: "set",
+        count: 0,
       });
     }
 

@@ -2,7 +2,10 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
-import { useSuperadminAuth } from "../../utilities/superadminAuthMiddleware";
+import {
+  useSuperadminAuth,
+  withSuperadminAuth,
+} from "../../utilities/superadminAuthMiddleware";
 import SuperDashboard from "@/component/superadminPanelComponent/SuperDashboard";
 import SuperCategories from "@/component/superadminPanelComponent/SuperCategories";
 import SuperSettings from "@/component/superadminPanelComponent/SuperSettings";
@@ -234,4 +237,5 @@ const SuperAdminPanel = () => {
   );
 };
 
-export default SuperAdminPanel;
+// Export the protected version
+export default withSuperadminAuth(SuperAdminPanel);

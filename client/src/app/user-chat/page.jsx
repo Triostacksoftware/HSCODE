@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useContext, Suspense } from "react";
-import { useUserAuth } from "../../utilities/userAuthMiddleware";
+import { useUserAuth, withUserAuth } from "../../utilities/userAuthMiddleware";
 import { useSearchParams } from "next/navigation";
 import UserChatList from "../../component/ChatComponents/UserChatList";
 import IndividualUserChat from "../../component/ChatComponents/IndividualUserChat";
@@ -270,4 +270,5 @@ const UserChatPage = ({ onChatOpened = () => {} }) => {
   );
 };
 
-export default UserChatPage;
+// Export the protected version
+export default withUserAuth(UserChatPage);

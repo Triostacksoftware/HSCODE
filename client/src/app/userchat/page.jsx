@@ -7,7 +7,10 @@ import RequestedLeads from "../../component/ChatComponents/RequestedLeads";
 import UserChatSettings from "../../component/ChatComponents/UserChatSettings";
 import NotificationTab from "../../component/ChatComponents/NotificationTab";
 import UserChatPage from "../user-chat/page";
-import { useUserAuth } from "../../utilities/userAuthMiddleware.js";
+import {
+  useUserAuth,
+  withUserAuth,
+} from "../../utilities/userAuthMiddleware.js";
 import { connectUserSocket } from "../../utilities/socket";
 import { OnlineUsersContext } from "../../contexts/OnlineUsersContext";
 import axios from "axios";
@@ -24,17 +27,24 @@ const ChatPage = () => {
   // Fetch notification count
   const fetchNotificationCount = async () => {
     try {
+      console.log("🔔 Fetching notification count...");
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_BASE_URL}/notifications/user/count`,
         {
           withCredentials: true,
         }
       );
-      if (response.data?.data?.unread) {
+      console.log("🔔 Notification count response:", response.data);
+      if (response.data?.data?.unread !== undefined) {
         setNotificationCount(response.data.data.unread);
+        console.log("🔔 Set notification count to:", response.data.data.unread);
+      } else {
+        console.log("🔔 No unread count in response, setting to 0");
+        setNotificationCount(0);
       }
     } catch (error) {
-      console.error("Error fetching notification count:", error);
+      console.error("🔔 Error fetching notification count:", error);
+      setNotificationCount(0);
     }
   };
 
@@ -144,6 +154,51 @@ const ChatPage = () => {
     };
   }, [socket, user, activeTab]);
 
+  // Listen for notification count updates via socket
+  useEffect(() => {
+    if (!socket || !user) return;
+
+    const handleSocketNotification = (data) => {
+      console.log("New notification received via socket:", data);
+      setNotificationCount((prev) => prev + 1);
+    };
+
+    // Listen for notification count updates
+    const handleNotificationCountUpdate = (data) => {
+      console.log("🔔 Notification count update received:", data);
+      console.log(
+        "🔔 Current notification count before update:",
+        notificationCount
+      );
+      if (data.type === "increment") {
+        setNotificationCount((prev) => {
+          const newCount = prev + data.count;
+          console.log("🔔 Incrementing count from", prev, "to", newCount);
+          return newCount;
+        });
+      } else if (data.type === "decrement") {
+        setNotificationCount((prev) => {
+          const newCount = Math.max(0, prev - data.count);
+          console.log("🔔 Decrementing count from", prev, "to", newCount);
+          return newCount;
+        });
+      } else if (data.type === "set") {
+        console.log("🔔 Setting count to", data.count);
+        setNotificationCount(data.count);
+      }
+    };
+
+    socket.on("notification", handleSocketNotification);
+    socket.on("new_notification", handleSocketNotification);
+    socket.on("notification-count-update", handleNotificationCountUpdate);
+
+    return () => {
+      socket.off("notification", handleSocketNotification);
+      socket.off("new_notification", handleSocketNotification);
+      socket.off("notification-count-update", handleNotificationCountUpdate);
+    };
+  }, [socket, user, notificationCount]);
+
   // Periodic refresh of notification count
   useEffect(() => {
     if (!user) return;
@@ -195,7 +250,12 @@ const ChatPage = () => {
       case "leads":
         return <RequestedLeads />;
       case "notifications":
-        return <NotificationTab onNotificationRead={fetchNotificationCount} />;
+        return (
+          <NotificationTab
+            onNotificationRead={fetchNotificationCount}
+            onNotificationCountChange={setNotificationCount}
+          />
+        );
       case "settings":
         return <UserChatSettings />;
       case "user-chat":
@@ -204,6 +264,10 @@ const ChatPage = () => {
         return <DomesticChat setMainActiveTab={setActiveTab} />;
     }
   };
+
+  // Debug logging
+  console.log("🔔 Main chat page notificationCount:", notificationCount);
+  console.log("🔔 Main chat page user:", user);
 
   return (
     <OnlineUsersContext.Provider value={{ onlineCounts, onlineUsers, socket }}>
@@ -214,6 +278,7 @@ const ChatPage = () => {
           notificationCount={notificationCount}
           user={user}
           unreadChatCount={unreadChatCount}
+          onNotificationsRead={fetchNotificationCount}
         />
         <div className="flex-1 overflow-auto">
           <div className="h-full">{renderActiveComponent()}</div>
@@ -223,4 +288,5 @@ const ChatPage = () => {
   );
 };
 
-export default ChatPage;
+// Export the protected version
+export default withUserAuth(ChatPage);
