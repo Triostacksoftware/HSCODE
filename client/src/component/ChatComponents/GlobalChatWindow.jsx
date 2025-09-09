@@ -13,7 +13,7 @@ import { LiaSearchSolid } from "react-icons/lia";
 import { IoMdClose } from "react-icons/io";
 import { FaRegPaperPlane } from "react-icons/fa";
 import UserProfileSidebar from "./UserProfileSidebar";
-import MapPicker from "./MapPicker";
+import LeadFormModal from "./LeadFormModal";
 import ClickableAddress from "../ClickableAddress";
 import socket from "../../utilities/socket";
 import { OnlineUsersContext } from "../../contexts/OnlineUsersContext";
@@ -38,21 +38,6 @@ const GlobalChatWindow = ({
   const { user } = useUserAuth();
   const { onlineCounts, onlineUsers } = useContext(OnlineUsersContext);
   const [messages, setMessages] = useState([]);
-  // Lead form state
-  const [leadType, setLeadType] = useState("buy");
-  const [hscode, setHscode] = useState("");
-  const [description, setDescription] = useState("");
-  const [quantity, setQuantity] = useState("");
-  const [packing, setPacking] = useState("");
-  const [targetPrice, setTargetPrice] = useState("");
-  const [negotiable, setNegotiable] = useState(false);
-  const [buyerDeliveryAddress, setBuyerDeliveryAddress] = useState("");
-  const [sellerPickupAddress, setSellerPickupAddress] = useState("");
-  const [specialRequest, setSpecialRequest] = useState("");
-  const [remarks, setRemarks] = useState("");
-  const [documents, setDocuments] = useState([]);
-  const [docPreviews, setDocPreviews] = useState([]);
-  const [mapPicker, setMapPicker] = useState({ open: false, role: "buyer" });
   const [leadModalOpen, setLeadModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [groupMembers, setGroupMembers] = useState([]);
@@ -68,32 +53,6 @@ const GlobalChatWindow = ({
   const [showMembers, setShowMembers] = useState(false);
   const messagesEndRef = useRef(null);
 
-  // Check user membership and determine available lead types
-  const isPremiumUser =
-    user && (user.membership === "premium" || user.role === "admin");
-
-  // Define available lead types based on user membership
-  const getAvailableLeadTypes = () => {
-    if (!isPremiumUser) {
-      // Free users can only post buy leads
-      return [{ value: "buy", label: "Buy" }];
-    } else {
-      // Premium users can post all types in global groups
-      return [
-        { value: "buy", label: "Buy" },
-        { value: "sell", label: "Sell" },
-        { value: "high-sea-buy", label: "High Sea Buy" },
-        { value: "high-sea-sell", label: "High Sea Sell" },
-      ];
-    }
-  };
-
-  // Set initial lead type based on user membership
-  useEffect(() => {
-    if (!isPremiumUser && leadType !== "buy") {
-      setLeadType("buy");
-    }
-  }, [isPremiumUser, leadType]);
 
   const fetchGroupMembers = useCallback(async () => {
     if (!selectedGroupId) {
@@ -205,18 +164,7 @@ const GlobalChatWindow = ({
     }
   };
 
-  const handleSendMessage = async (e) => {
-    e.preventDefault();
-    if (
-      !hscode.trim() ||
-      !description.trim() ||
-      !quantity.trim() ||
-      !packing.trim() ||
-      !targetPrice.trim()
-    ) {
-      toast.error("Please fill required fields");
-      return;
-    }
+  const handleSendMessage = async (vals) => {
     try {
       setSending(true);
       setError("");
@@ -224,6 +172,7 @@ const GlobalChatWindow = ({
       // Debug: Check user countryCode and chapterNo
       console.log("User countryCode:", user?.countryCode);
       console.log("ChapterNo:", chapterNo);
+      console.log("Vals:", vals);
       
       // Check if user has countryCode
       if (!user?.countryCode) {
@@ -234,25 +183,30 @@ const GlobalChatWindow = ({
       
       const form = new FormData();
       form.append("groupId", selectedGroupId);
-      form.append("type", leadType);
+      form.append("type", vals.leadType);
       if (chapterNo) {
         form.append("chapterNo", chapterNo);
       }
-      form.append("hscode", hscode.trim());
-      form.append("description", description.trim());
-      form.append("quantity", quantity);
-      form.append("packing", packing);
-      form.append("targetPrice", targetPrice);
-      form.append("negotiable", negotiable);
-      if (leadType === "buy") {
-        form.append("buyerDeliveryAddress", buyerDeliveryAddress);
-      } else {
-        form.append("sellerPickupAddress", sellerPickupAddress);
+      form.append("hscode", vals.hscode.trim());
+      form.append("description", vals.description.trim());
+      form.append("quantity", vals.quantity);
+      form.append("packing", vals.packing);
+      form.append("targetPrice", vals.targetPrice);
+      form.append("negotiable", vals.negotiable);
+      form.append("buyerDeliveryAddress", vals.buyerDeliveryAddress);
+      if (vals.buyerLat && vals.buyerLng) {
+        form.append("buyerLat", vals.buyerLat);
+        form.append("buyerLng", vals.buyerLng);
       }
-      form.append("specialRequest", specialRequest);
-      form.append("remarks", remarks);
-      if (documents && documents.length > 0) {
-        documents.forEach((file) => form.append("documents", file));
+      form.append("sellerPickupAddress", vals.sellerPickupAddress);
+      if (vals.sellerLat && vals.sellerLng) {
+        form.append("sellerLat", vals.sellerLat);
+        form.append("sellerLng", vals.sellerLng);
+      }
+      form.append("specialRequest", vals.specialRequest);
+      form.append("remarks", vals.remarks);
+      if (vals.documents && vals.documents.length > 0) {
+        vals.documents.forEach((file) => form.append("documents", file));
       }
       await axios.post(
         `${process.env.NEXT_PUBLIC_BASE_URL}/global-leads/requested`,
@@ -262,20 +216,6 @@ const GlobalChatWindow = ({
           headers: { "Content-Type": "multipart/form-data" },
         }
       );
-      // reset
-      setLeadType("buy");
-      setHscode("");
-      setDescription("");
-      setQuantity("");
-      setPacking("");
-      setTargetPrice("");
-      setNegotiable(false);
-      setBuyerDeliveryAddress("");
-      setSellerPickupAddress("");
-      setSpecialRequest("");
-      setRemarks("");
-      setDocuments([]);
-      setDocPreviews([]);
       setLeadModalOpen(false);
       toast.success("Your lead has been submitted for approval!");
     } catch (error) {
@@ -289,38 +229,6 @@ const GlobalChatWindow = ({
     }
   };
 
-  // file previews
-  useEffect(() => {
-    const previews = (documents || []).map((file) => ({
-      name: file.name,
-      type: file.type,
-      url: file.type?.startsWith("image/") ? URL.createObjectURL(file) : null,
-    }));
-    setDocPreviews((old) => {
-      old?.forEach((p) => p.url && URL.revokeObjectURL(p.url));
-      return previews;
-    });
-    return () => {
-      previews.forEach((p) => p.url && URL.revokeObjectURL(p.url));
-    };
-  }, [documents]);
-
-  const appendDocuments = (fileList) => {
-    const incoming = Array.from(fileList || []);
-    setDocuments((prev) => {
-      const dedupeMap = new Map(
-        (prev || []).map((f) => [`${f.name}-${f.size}-${f.lastModified}`, f])
-      );
-      incoming.forEach((f) =>
-        dedupeMap.set(`${f.name}-${f.size}-${f.lastModified}`, f)
-      );
-      return Array.from(dedupeMap.values());
-    });
-  };
-
-  const removeDocumentAt = (indexToRemove) => {
-    setDocuments((prev) => prev.filter((_, idx) => idx !== indexToRemove));
-  };
 
   const formatTime = (timestamp) => {
     const date = new Date(timestamp);
@@ -441,7 +349,7 @@ const GlobalChatWindow = ({
                 src={
                   groupImage.includes("https")
                     ? groupImage
-                    : `${process.env.NEXT_PUBLIC_BASE_URL}/uploads/${groupImage}`
+                    : `${process.env.NEXT_PUBLIC_BASE_URL}/upload/${groupImage}`
                 }
                 className="w-full h-full object-cover rounded-full"
                 alt={groupName}
@@ -568,126 +476,206 @@ const GlobalChatWindow = ({
                         </div>
                       )}
                       <div
-                        className={`max-w-[75%] sm:max-w-xs lg:max-w-md ${
+                        className={`max-w-[85%] sm:max-w-lg lg:max-w-2xl ${
                           isOwnMessage ? "order-2" : "order-1"
                         }`}
                       >
-                        <div
-                          className={`rounded-xl px-3 md:px-4 py-2 shadow-sm border ${
-                            msg.isAdminPost
-                              ? "bg-violet-100 border-violet-200 text-gray-900"
-                              : msg.type === "buy"
-                              ? "bg-blue-50 border-blue-100 text-gray-900"
+                        {msg.hscode || msg.description ? (
+                          <div className={`rounded-lg shadow-sm border overflow-hidden ${
+                            msg.type === "buy"
+                              ? "bg-blue-50 border-blue-200"
                               : msg.type === "sell"
-                              ? "bg-green-50 border-green-100 text-gray-900"
+                              ? "bg-green-50 border-green-200"
                               : msg.type === "high-sea-buy"
-                              ? "bg-indigo-50 border-indigo-100 text-gray-900"
+                              ? "bg-indigo-50 border-indigo-200"
                               : msg.type === "high-sea-sell"
-                              ? "bg-purple-50 border-purple-100 text-gray-900"
-                              : "bg-white border-gray-200 text-gray-900"
-                          }`}
-                        >
-                          {msg.hscode || msg.description ? (
-                            <div className="text-sm space-y-2">
-                              <div className="flex items-center gap-2">
-                                {msg.isAdminPost && (
-                                  <span className="px-2 py-0.5 rounded-full text-[11px] bg-violet-100 text-violet-700">
-                                    ADMIN
+                              ? "bg-purple-50 border-purple-200"
+                              : "bg-white border-gray-200"
+                          }`}>
+                            {/* Header with badges */}
+                            <div className={`px-3 py-2 border-b ${
+                              msg.type === "buy"
+                                ? "bg-blue-100 border-blue-200"
+                                : msg.type === "sell"
+                                ? "bg-green-100 border-green-200"
+                                : msg.type === "high-sea-buy"
+                                ? "bg-indigo-100 border-indigo-200"
+                                : msg.type === "high-sea-sell"
+                                ? "bg-purple-100 border-purple-200"
+                                : "bg-gray-50 border-gray-200"
+                            }`}>
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span
+                                    className={`px-2 py-0.5 rounded text-xs font-medium ${
+                                      msg.type === "buy"
+                                        ? "bg-blue-200 text-blue-800"
+                                        : msg.type === "sell"
+                                        ? "bg-green-200 text-green-800"
+                                        : msg.type === "high-sea-buy"
+                                        ? "bg-indigo-200 text-indigo-800"
+                                        : msg.type === "high-sea-sell"
+                                        ? "bg-purple-200 text-purple-800"
+                                        : "bg-gray-200 text-gray-800"
+                                    }`}
+                                  >
+                                    {msg.type === "buy" ? "BUY" : 
+                                     msg.type === "sell" ? "SELL" : 
+                                     msg.type === "high-sea-buy" ? "HIGH SEA BUY" :
+                                     msg.type === "high-sea-sell" ? "HIGH SEA SELL" : "LEAD"}
                                   </span>
-                                )}
-                                <span
-                                  className={`px-2 py-0.5 rounded-full text-[11px] ${
-                                    msg.type === "buy"
-                                      ? "bg-blue-100 text-blue-700"
-                                      : msg.type === "sell"
-                                      ? "bg-green-100 text-green-700"
-                                      : msg.type === "high-sea-buy"
-                                      ? "bg-indigo-100 text-indigo-700"
-                                      : msg.type === "high-sea-sell"
-                                      ? "bg-purple-100 text-purple-700"
-                                      : "bg-gray-100 text-gray-700"
-                                  }`}
-                                >
-                                  {(msg.type || "Lead").toUpperCase()}
-                                </span>
-                                {msg.hscode && (
-                                  <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-[11px]">
-                                    HS: {msg.hscode}
-                                  </span>
-                                )}
-                                {msg.leadCode && (
-                                  <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-[11px]">
-                                    ID: {msg.leadCode}
-                                  </span>
-                                )}
+                                  {msg.hscode && (
+                                    <span className="px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">
+                                      HS: {msg.hscode}
+                                    </span>
+                                  )}
+                                  {msg.leadCode && (
+                                    <span className="px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">
+                                      ID: {msg.leadCode}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                  {/* Admin Badge */}
+                                  {msg.isAdminPost && (
+                                    <span className="px-2 py-0.5 rounded text-xs font-medium text-violet-700">
+                                      ~ Admin
+                                    </span>
+                                  )}
+                                </div>
                               </div>
+                            </div>
+
+                            {/* Main Content */}
+                            <div className="p-3 space-y-3">
+                              {/* Description */}
                               {msg.description && (
-                                <div className="text-gray-800 font-medium leading-6">
-                                  {msg.description}
+                                <div className="bg-white rounded p-2 border border-gray-200">
+                                  <h3 className="text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wide">
+                                    Description
+                                  </h3>
+                                  <p className="text-sm text-gray-800 leading-relaxed">
+                                    {msg.description}
+                                  </p>
                                 </div>
                               )}
-                              <div className="flex flex-wrap gap-2 text-[11px] text-gray-700">
-                                {msg.quantity && <div>Qty: {msg.quantity}</div>}
-                                {msg.packing && (
-                                  <div>Packing: {msg.packing}</div>
-                                )}
-                                {(msg.targetPrice ||
-                                  msg.negotiable !== undefined) && (
-                                  <div>
-                                    Target: {msg.targetPrice || "-"}{" "}
-                                    {msg.negotiable ? "(Negotiable)" : ""}
+
+                              {/* Product Details Grid */}
+                              {(msg.quantity || msg.packing || msg.targetPrice || msg.negotiable !== undefined) && (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                                  {msg.quantity && (
+                                    <div className="bg-white rounded p-2 border border-gray-200">
+                                      <div className="text-xs font-semibold text-blue-600 mb-1 uppercase tracking-wide">Quantity</div>
+                                      <div className="text-sm text-gray-800 font-medium">{msg.quantity}</div>
+                                    </div>
+                                  )}
+                                  {msg.packing && (
+                                    <div className="bg-white rounded p-2 border border-gray-200">
+                                      <div className="text-xs font-semibold text-green-600 mb-1 uppercase tracking-wide">Packing</div>
+                                      <div className="text-sm text-gray-800 font-medium">{msg.packing}</div>
+                                    </div>
+                                  )}
+                                  {(msg.targetPrice || msg.negotiable !== undefined) && (
+                                    <div className="bg-white rounded p-2 border border-gray-200">
+                                      <div className="text-xs font-semibold text-yellow-600 mb-1 uppercase tracking-wide">Price</div>
+                                      <div className="text-sm text-gray-800 font-medium">
+                                        {msg.targetPrice || "Not specified"}
+                                        {msg.negotiable && (
+                                          <span className="ml-1 text-xs bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded">
+                                            Negotiable
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+
+                              {/* Location Information */}
+                              {(msg.buyerDeliveryLocation?.address || msg.sellerPickupLocation?.address) && (
+                                <div className="space-y-2">
+                                  <h3 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                                    Location Details
+                                  </h3>
+                                  <div className="grid gap-2">
+                                    {msg.buyerDeliveryLocation?.address && (
+                                      <div className="bg-white rounded p-2 border border-gray-200">
+                                        <div className="text-xs font-semibold text-red-600 mb-1 uppercase tracking-wide">
+                                          Delivery Location
+                                        </div>
+                                        <ClickableAddress
+                                          address={msg.buyerDeliveryLocation.address}
+                                          coordinates={msg.buyerDeliveryLocation.geo?.coordinates && 
+                                            Array.isArray(msg.buyerDeliveryLocation.geo.coordinates) && 
+                                            msg.buyerDeliveryLocation.geo.coordinates.length >= 2 ? {
+                                              latitude: msg.buyerDeliveryLocation.geo.coordinates[1],
+                                              longitude: msg.buyerDeliveryLocation.geo.coordinates[0]
+                                            } : null}
+                                          label=""
+                                          showLabel={false}
+                                          className="w-full"
+                                        />
+                                      </div>
+                                    )}
+                                    {msg.sellerPickupLocation?.address && (
+                                      <div className="bg-white rounded p-2 border border-gray-200">
+                                        <div className="text-xs font-semibold text-green-600 mb-1 uppercase tracking-wide">
+                                          Pickup Location
+                                        </div>
+                                        <ClickableAddress
+                                          address={msg.sellerPickupLocation.address}
+                                          coordinates={msg.sellerPickupLocation.geo?.coordinates && 
+                                            Array.isArray(msg.sellerPickupLocation.geo.coordinates) && 
+                                            msg.sellerPickupLocation.geo.coordinates.length >= 2 ? {
+                                              latitude: msg.sellerPickupLocation.geo.coordinates[1],
+                                              longitude: msg.sellerPickupLocation.geo.coordinates[0]
+                                            } : null}
+                                          label=""
+                                          showLabel={false}
+                                          className="w-full"
+                                        />
+                                      </div>
+                                    )}
                                   </div>
-                                )}
-                              </div>
-                              <div className="text-xs text-gray-700 space-y-1">
-                                {msg.buyerDeliveryLocation?.address && (
-                                  <ClickableAddress
-                                    address={msg.buyerDeliveryLocation.address}
-                                    coordinates={msg.buyerDeliveryLocation.geo?.coordinates && 
-                                      Array.isArray(msg.buyerDeliveryLocation.geo.coordinates) && 
-                                      msg.buyerDeliveryLocation.geo.coordinates.length >= 2 ? {
-                                        latitude: msg.buyerDeliveryLocation.geo.coordinates[1],
-                                        longitude: msg.buyerDeliveryLocation.geo.coordinates[0]
-                                      } : null}
-                                    label="Delivery"
-                                    className="text-xs"
-                                  />
-                                )}
-                                {msg.sellerPickupLocation?.address && (
-                                  <ClickableAddress
-                                    address={msg.sellerPickupLocation.address}
-                                    coordinates={msg.sellerPickupLocation.geo?.coordinates && 
-                                      Array.isArray(msg.sellerPickupLocation.geo.coordinates) && 
-                                      msg.sellerPickupLocation.geo.coordinates.length >= 2 ? {
-                                        latitude: msg.sellerPickupLocation.geo.coordinates[1],
-                                        longitude: msg.sellerPickupLocation.geo.coordinates[0]
-                                      } : null}
-                                    label="Pickup"
-                                    className="text-xs"
-                                  />
-                                )}
-                              </div>
-                              {Array.isArray(msg.documents) &&
-                                msg.documents.length > 0 && (
-                                  <div className="mt-2 flex flex-col gap-1">
+                                </div>
+                              )}
+
+                              {/* Documents */}
+                              {Array.isArray(msg.documents) && msg.documents.length > 0 && (
+                                <div className="space-y-1.5">
+                                  <h3 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                                    Attachments ({msg.documents.length})
+                                  </h3>
+                                  <div className="flex flex-wrap gap-1.5">
                                     {msg.documents.map((doc, i) => (
                                       <a
                                         key={i}
                                         href={`${process.env.NEXT_PUBLIC_BASE_URL}/leadDocuments/${doc}`}
                                         target="_blank"
                                         rel="noreferrer"
-                                        className="text-xs text-blue-700 underline break-all"
+                                        className="inline-flex items-center gap-1.5 px-2 py-1.5 rounded bg-white text-blue-700 hover:bg-blue-50 border border-gray-200 transition-colors text-xs font-medium"
                                       >
-                                        {doc}
+                                        <span className="text-xs">DOC</span>
+                                        <span className="truncate max-w-[120px]">
+                                          {doc}
+                                        </span>
+                                        <span className="text-xs bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">
+                                          View
+                                        </span>
                                       </a>
                                     ))}
                                   </div>
-                                )}
+                                </div>
+                              )}
                             </div>
-                          ) : (
-                            <p className="text-sm break-words">{msg.content}</p>
-                          )}
-                        </div>
+                          </div>
+                        ) : (
+                          <div className="bg-white rounded-2xl px-4 py-3 shadow-sm border border-gray-200">
+                            <p className="text-sm break-words text-gray-800">
+                              {msg.content}
+                            </p>
+                          </div>
+                        )}
                         <div
                           className={`text-xs text-gray-500 mt-1 ${
                             isOwnMessage ? "text-right" : "text-left"
@@ -718,296 +706,13 @@ const GlobalChatWindow = ({
         </button>
       </div>
 
-      {/* Lead Form Modal */}
-      {leadModalOpen && (
-        <div className="absolute inset-0 z-50 flex items-end md:items-center justify-center">
-          <div
-            className="absolute inset-0 bg-black/50 animate-fade-in-overlay"
-            onClick={() => setLeadModalOpen(false)}
-          />
-          <div className="relative bg-white w-full md:w-[900px] h-1/2 md:h-auto rounded-t-2xl md:rounded-xl shadow-xl animate-slide-up-modal">
-            <div className="flex items-center justify-between px-8 py-4 border-b border-gray-200">
-              <div className="font-semibold text-xl">Create Lead</div>
-              <button
-                className="text-sm text-gray-600"
-                onClick={() => setLeadModalOpen(false)}
-              >
-                Close
-              </button>
-            </div>
-            <form
-              onSubmit={handleSendMessage}
-              className="p-4 px-8 space-y-3 text-gray-600 text-sm"
-            >
-              <div>
-                <div className="text-xs text-gray-500 mb-1">
-                  Select lead type
-                </div>
-                <select
-                  value={leadType}
-                  onChange={(e) => setLeadType(e.target.value)}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-gray-700 focus:border-gray-700"
-                >
-                  {getAvailableLeadTypes().map((type) => (
-                    <option key={type.value} value={type.value}>
-                      {type.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div className="md:col-span-1">
-                  <label className="text-[.8em] font-medium">
-                    HS Code<span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    className="mt-1 w-full border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 rounded text-sm"
-                    placeholder="e.g. 7099900"
-                    value={hscode}
-                    onChange={(e) => setHscode(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="text-[.8em] font-medium">
-                    Product / Item Description
-                    <span className="text-red-500">*</span>
-                  </label>
-                  <textarea
-                    className="mt-1 w-full border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 rounded text-sm"
-                    rows={2}
-                    placeholder="Brief details to help others understand your need/offer"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                <div>
-                  <label className="text-[.8em] font-medium">
-                    Quantity<span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    className="mt-1 w-full border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 rounded text-sm"
-                    placeholder="e.g. 5 kg or 12 pcs"
-                    value={quantity}
-                    onChange={(e) => setQuantity(e.target.value)}
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="text-[.8em] font-medium">
-                    Packing<span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    className="mt-1 w-full border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 rounded text-sm"
-                    placeholder="e.g. 25 kg bags"
-                    value={packing}
-                    onChange={(e) => setPacking(e.target.value)}
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="text-[.8em] font-medium">
-                    Target / Expected Price
-                    <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    className="mt-1 w-full border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 rounded text-sm"
-                    placeholder="e.g. 100 USD/MT"
-                    value={targetPrice}
-                    onChange={(e) => setTargetPrice(e.target.value)}
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="text-[.8em] font-medium">
-                    Price Negotiable
-                  </label>
-                  <label className="mt-1 inline-flex border-gray-200 items-center gap-2 text-sm w-full border rounded p-2 justify-center cursor-pointer select-none focus-within:ring-1 focus-within:ring-gray-700">
-                    <input
-                      type="checkbox"
-                      checked={negotiable}
-                      onChange={(e) => setNegotiable(e.target.checked)}
-                    />
-                    Negotiable
-                  </label>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {leadType === "buy" ? (
-                  <div className="md:col-span-2">
-                    <label className="text-[.8em] font-medium">
-                      Delivery address
-                    </label>
-                    <input
-                      className="mt-1 w-full border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 rounded text-sm"
-                      placeholder="Type full address or pick from map"
-                      value={buyerDeliveryAddress}
-                      onChange={(e) => setBuyerDeliveryAddress(e.target.value)}
-                    />
-                    <div className="flex items-center gap-3 mt-2">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setMapPicker({ open: true, role: "buyer" })
-                        }
-                        className="text-xs underline text-blue-700"
-                      >
-                        Pick on map
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="md:col-span-2">
-                    <label className="text-[.8em] font-medium">
-                      Pickup address
-                    </label>
-                    <input
-                      className="mt-1 w-full border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 rounded text-sm"
-                      placeholder="Type full address or pick from map"
-                      value={sellerPickupAddress}
-                      onChange={(e) => setSellerPickupAddress(e.target.value)}
-                    />
-                    <div className="flex items-center gap-3 mt-2">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setMapPicker({ open: true, role: "seller" })
-                        }
-                        className="text-xs underline text-blue-700"
-                      >
-                        Pick on map
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div>
-                  <label className="text-[.8em] font-medium">
-                    Any special request
-                  </label>
-                  <textarea
-                    className="mt-1 w-full border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 rounded text-sm"
-                    rows={2}
-                    value={specialRequest}
-                    onChange={(e) => setSpecialRequest(e.target.value)}
-                    placeholder="Optional notes like delivery schedule, quality, specs, etc."
-                  />
-                </div>
-                <div>
-                  <label className="text-[.8em] font-medium">
-                    Remarks / Notes
-                  </label>
-                  <textarea
-                    className="mt-1 w-full border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 rounded text-sm"
-                    rows={2}
-                    value={remarks}
-                    onChange={(e) => setRemarks(e.target.value)}
-                    placeholder="Anything else to add."
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="text-[.8em] font-medium">
-                  Upload supported documents
-                </label>
-                <div className="mt-1 grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <div className="md:col-span-1">
-                    <div className="flex items-center gap-2">
-                      <input
-                        key={documents.length}
-                        type="file"
-                        accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt"
-                        onChange={(e) => appendDocuments(e.target.files)}
-                        className="w-fit border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 file:bg-gray-600 file:text-white file:px-2 file:rounded-md file:py-1 rounded text-sm"
-                      />
-                    </div>
-                    <p className="text-[11px] text-gray-500 mt-1">
-                      Attach specs, brochures, lab reports, etc. Images will
-                      show previews.
-                    </p>
-                  </div>
-                  <div className="border border-gray-200 rounded p-2 max-h-28 overflow-auto text-xs grid grid-cols-4 gap-2 md:col-span-2">
-                    {docPreviews?.length ? (
-                      docPreviews.map((p, idx) => (
-                        <div
-                          key={idx}
-                          className="border border-gray-300 rounded p-1 flex flex-col items-center justify-center relative"
-                        >
-                          <button
-                            type="button"
-                            className="absolute -top-2 -right-2 bg-black/70 text-white rounded-full w-5 h-5 text-[10px]"
-                            onClick={() => removeDocumentAt(idx)}
-                          >
-                            ×
-                          </button>
-                          {p.url ? (
-                            <img
-                              src={p.url}
-                              alt={p.name}
-                              className="h-14 w-full object-cover rounded"
-                            />
-                          ) : (
-                            <div className="h-14 w-full bg-gray-100 text-[10px] text-gray-600 flex items-center justify-center rounded break-words p-1">
-                              {p.name}
-                            </div>
-                          )}
-                          <div className="mt-1 truncate w-full" title={p.name}>
-                            {p.name}
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="text-gray-500 col-span-4">
-                        No files selected
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex justify-between items-end">
-                <p className="text-xs text-gray-500">
-                  Leads are reviewed by admins before appearing in the chat.
-                </p>
-                <button
-                  suppressHydrationWarning={true}
-                  type="submit"
-                  disabled={sending}
-                  className="px-4 py-2 bg-gray-900 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {sending ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  ) : (
-                    <span>Submit for approval</span>
-                  )}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Map Picker Modal */}
-      <MapPicker
-        isOpen={mapPicker.open}
-        onClose={() => setMapPicker({ open: false, role: "buyer" })}
-        onPick={({ lat, lng }) => {
-          if (mapPicker.role === "buyer") {
-            setBuyerDeliveryAddress("Selected on map");
-          } else {
-            setSellerPickupAddress("Selected on map");
-          }
-        }}
-        initial={{ lat: 20, lng: 78 }}
+      <LeadFormModal
+        isOpen={leadModalOpen}
+        onClose={() => setLeadModalOpen(false)}
+        onSubmit={handleSendMessage}
+        sending={sending}
+        user={user}
+        groupType="global"
       />
       {/* User Profile Sidebar */}
       <UserProfileSidebar
