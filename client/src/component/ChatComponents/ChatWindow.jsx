@@ -612,21 +612,25 @@ const ChatWindow = ({
                         }`}
                       >
                         {lead.hscode || lead.description ? (
-                          <div className={`rounded-lg shadow-sm border overflow-hidden ${
-                            lead.type === "buy"
-                              ? "bg-blue-50 border-blue-200"
-                              : lead.type === "sell"
-                              ? "bg-green-50 border-green-200"
-                              : "bg-white border-gray-200"
-                          }`}>
-                            {/* Header with badges */}
-                            <div className={`px-3 py-2 border-b ${
+                          <div
+                            className={`rounded-lg shadow-sm border overflow-hidden ${
                               lead.type === "buy"
-                                ? "bg-blue-100 border-blue-200"
+                                ? "bg-blue-50 border-blue-200"
                                 : lead.type === "sell"
-                                ? "bg-green-100 border-green-200"
-                                : "bg-gray-50 border-gray-200"
-                            }`}>
+                                ? "bg-green-50 border-green-200"
+                                : "bg-white border-gray-200"
+                            }`}
+                          >
+                            {/* Header with badges */}
+                            <div
+                              className={`px-3 py-2 border-b ${
+                                lead.type === "buy"
+                                  ? "bg-blue-100 border-blue-200"
+                                  : lead.type === "sell"
+                                  ? "bg-green-100 border-green-200"
+                                  : "bg-gray-50 border-gray-200"
+                              }`}
+                            >
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-1.5 flex-wrap">
                                   <span
@@ -638,7 +642,11 @@ const ChatWindow = ({
                                         : "bg-gray-200 text-gray-800"
                                     }`}
                                   >
-                                    {lead.type === "buy" ? "BUY" : lead.type === "sell" ? "SELL" : "LEAD"}
+                                    {lead.type === "buy"
+                                      ? "BUY"
+                                      : lead.type === "sell"
+                                      ? "SELL"
+                                      : "LEAD"}
                                   </span>
                                   {lead.hscode && (
                                     <span className="px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">
@@ -685,23 +693,37 @@ const ChatWindow = ({
                               )}
 
                               {/* Product Details Grid */}
-                              {(lead.quantity || lead.packing || lead.targetPrice || lead.negotiable !== undefined) && (
+                              {(lead.quantity ||
+                                lead.packing ||
+                                lead.targetPrice ||
+                                lead.negotiable !== undefined) && (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                                   {lead.quantity && (
                                     <div className="bg-white rounded p-2 border border-gray-200">
-                                      <div className="text-xs font-semibold text-blue-600 mb-1 uppercase tracking-wide">Quantity</div>
-                                      <div className="text-sm text-gray-800 font-medium">{lead.quantity}</div>
+                                      <div className="text-xs font-semibold text-blue-600 mb-1 uppercase tracking-wide">
+                                        Quantity
+                                      </div>
+                                      <div className="text-sm text-gray-800 font-medium">
+                                        {lead.quantity}
+                                      </div>
                                     </div>
                                   )}
                                   {lead.packing && (
                                     <div className="bg-white rounded p-2 border border-gray-200">
-                                      <div className="text-xs font-semibold text-green-600 mb-1 uppercase tracking-wide">Packing</div>
-                                      <div className="text-sm text-gray-800 font-medium">{lead.packing}</div>
+                                      <div className="text-xs font-semibold text-green-600 mb-1 uppercase tracking-wide">
+                                        Packing
+                                      </div>
+                                      <div className="text-sm text-gray-800 font-medium">
+                                        {lead.packing}
+                                      </div>
                                     </div>
                                   )}
-                                  {(lead.targetPrice || lead.negotiable !== undefined) && (
+                                  {(lead.targetPrice ||
+                                    lead.negotiable !== undefined) && (
                                     <div className="bg-white rounded p-2 border border-gray-200">
-                                      <div className="text-xs font-semibold text-yellow-600 mb-1 uppercase tracking-wide">Price</div>
+                                      <div className="text-xs font-semibold text-yellow-600 mb-1 uppercase tracking-wide">
+                                        Price
+                                      </div>
                                       <div className="text-sm text-gray-800 font-medium">
                                         {lead.targetPrice || "Not specified"}
                                         {lead.negotiable && (
@@ -716,7 +738,8 @@ const ChatWindow = ({
                               )}
 
                               {/* Location Information */}
-                              {(lead.buyerDeliveryLocation?.address || lead.sellerPickupLocation?.address) && (
+                              {(lead.buyerDeliveryLocation?.address ||
+                                lead.sellerPickupLocation?.address) && (
                                 <div className="space-y-2">
                                   <h3 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
                                     Location Details
@@ -728,13 +751,28 @@ const ChatWindow = ({
                                           Delivery Location
                                         </div>
                                         <ClickableAddress
-                                          address={lead.buyerDeliveryLocation.address}
-                                          coordinates={lead.buyerDeliveryLocation.geo?.coordinates && 
-                                            Array.isArray(lead.buyerDeliveryLocation.geo.coordinates) && 
-                                            lead.buyerDeliveryLocation.geo.coordinates.length >= 2 ? {
-                                              latitude: lead.buyerDeliveryLocation.geo.coordinates[1],
-                                              longitude: lead.buyerDeliveryLocation.geo.coordinates[0]
-                                            } : null}
+                                          address={
+                                            lead.buyerDeliveryLocation.address
+                                          }
+                                          coordinates={
+                                            lead.buyerDeliveryLocation.geo
+                                              ?.coordinates &&
+                                            Array.isArray(
+                                              lead.buyerDeliveryLocation.geo
+                                                .coordinates
+                                            ) &&
+                                            lead.buyerDeliveryLocation.geo
+                                              .coordinates.length >= 2
+                                              ? {
+                                                  latitude:
+                                                    lead.buyerDeliveryLocation
+                                                      .geo.coordinates[1],
+                                                  longitude:
+                                                    lead.buyerDeliveryLocation
+                                                      .geo.coordinates[0],
+                                                }
+                                              : null
+                                          }
                                           label=""
                                           showLabel={false}
                                           className="w-full"
@@ -747,13 +785,28 @@ const ChatWindow = ({
                                           Pickup Location
                                         </div>
                                         <ClickableAddress
-                                          address={lead.sellerPickupLocation.address}
-                                          coordinates={lead.sellerPickupLocation.geo?.coordinates && 
-                                            Array.isArray(lead.sellerPickupLocation.geo.coordinates) && 
-                                            lead.sellerPickupLocation.geo.coordinates.length >= 2 ? {
-                                              latitude: lead.sellerPickupLocation.geo.coordinates[1],
-                                              longitude: lead.sellerPickupLocation.geo.coordinates[0]
-                                            } : null}
+                                          address={
+                                            lead.sellerPickupLocation.address
+                                          }
+                                          coordinates={
+                                            lead.sellerPickupLocation.geo
+                                              ?.coordinates &&
+                                            Array.isArray(
+                                              lead.sellerPickupLocation.geo
+                                                .coordinates
+                                            ) &&
+                                            lead.sellerPickupLocation.geo
+                                              .coordinates.length >= 2
+                                              ? {
+                                                  latitude:
+                                                    lead.sellerPickupLocation
+                                                      .geo.coordinates[1],
+                                                  longitude:
+                                                    lead.sellerPickupLocation
+                                                      .geo.coordinates[0],
+                                                }
+                                              : null
+                                          }
                                           label=""
                                           showLabel={false}
                                           className="w-full"
@@ -773,14 +826,53 @@ const ChatWindow = ({
                                   <div className="space-y-1.5">
                                     {lead.specialRequest && (
                                       <div className="bg-white rounded p-2 border border-gray-200">
-                                        <div className="text-xs font-semibold text-purple-600 mb-1 uppercase tracking-wide">Special Request</div>
-                                        <p className="text-sm text-gray-800">{lead.specialRequest}</p>
+                                        <div className="text-xs font-semibold text-purple-600 mb-1 uppercase tracking-wide">
+                                          Special Request
+                                        </div>
+                                        <p className="text-sm text-gray-800">
+                                          {lead.specialRequest}
+                                        </p>
                                       </div>
                                     )}
                                     {lead.remarks && (
                                       <div className="bg-white rounded p-2 border border-gray-200">
-                                        <div className="text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wide">Notes</div>
-                                        <p className="text-sm text-gray-800">{lead.remarks}</p>
+                                        <div className="text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wide">
+                                          Notes
+                                        </div>
+                                        <p className="text-sm text-gray-800">
+                                          {lead.remarks}
+                                        </p>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Administrative Information */}
+                              {(lead.leadCode || lead.adminComment) && (
+                                <div className="space-y-2">
+                                  <h3 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                                    Lead Information
+                                  </h3>
+                                  <div className="space-y-1.5">
+                                    {lead.leadCode && (
+                                      <div className="bg-white rounded p-2 border border-gray-200">
+                                        <div className="text-xs font-semibold text-indigo-600 mb-1 uppercase tracking-wide">
+                                          Lead ID
+                                        </div>
+                                        <p className="text-sm text-gray-800 font-mono">
+                                          {lead.leadCode}
+                                        </p>
+                                      </div>
+                                    )}
+                                    {lead.adminComment && (
+                                      <div className="bg-white rounded p-2 border border-gray-200">
+                                        <div className="text-xs font-semibold text-orange-600 mb-1 uppercase tracking-wide">
+                                          Admin Comment
+                                        </div>
+                                        <p className="text-sm text-gray-800">
+                                          {lead.adminComment}
+                                        </p>
                                       </div>
                                     )}
                                   </div>
@@ -788,32 +880,33 @@ const ChatWindow = ({
                               )}
 
                               {/* Documents */}
-                              {Array.isArray(lead.documents) && lead.documents.length > 0 && (
-                                <div className="space-y-1.5">
-                                  <h3 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                                    Attachments ({lead.documents.length})
-                                  </h3>
-                                  <div className="flex flex-wrap gap-1.5">
-                                    {lead.documents.map((doc, i) => (
-                                      <a
-                                        key={i}
-                                        href={`${process.env.NEXT_PUBLIC_BASE_URL}/leadDocuments/${doc}`}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="inline-flex items-center gap-1.5 px-2 py-1.5 rounded bg-white text-blue-700 hover:bg-blue-50 border border-gray-200 transition-colors text-xs font-medium"
-                                      >
-                                        <span className="text-xs">DOC</span>
-                                        <span className="truncate max-w-[120px]">
-                                          {doc}
-                                        </span>
-                                        <span className="text-xs bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">
-                                          View
-                                        </span>
-                                      </a>
-                                    ))}
+                              {Array.isArray(lead.documents) &&
+                                lead.documents.length > 0 && (
+                                  <div className="space-y-1.5">
+                                    <h3 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                                      Attachments ({lead.documents.length})
+                                    </h3>
+                                    <div className="flex flex-wrap gap-1.5">
+                                      {lead.documents.map((doc, i) => (
+                                        <a
+                                          key={i}
+                                          href={`${process.env.NEXT_PUBLIC_BASE_URL}/leadDocuments/${doc}`}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          className="inline-flex items-center gap-1.5 px-2 py-1.5 rounded bg-white text-blue-700 hover:bg-blue-50 border border-gray-200 transition-colors text-xs font-medium"
+                                        >
+                                          <span className="text-xs">DOC</span>
+                                          <span className="truncate max-w-[120px]">
+                                            {doc}
+                                          </span>
+                                          <span className="text-xs bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">
+                                            View
+                                          </span>
+                                        </a>
+                                      ))}
+                                    </div>
                                   </div>
-                                </div>
-                              )}
+                                )}
                             </div>
                           </div>
                         ) : (
@@ -878,19 +971,16 @@ const ChatWindow = ({
           try {
             setSending(true);
             setError("");
-            
-            // Debug: Check user countryCode
-            console.log("User countryCode:", user?.countryCode);
-            console.log("ChapterNo:", chapterNo);
-            console.log("Vals:", vals);
-            
+
             // Check if user has countryCode
             if (!user?.countryCode) {
-              toast.error("Please update your profile with country information before creating leads.");
+              toast.error(
+                "Please update your profile with country information before creating leads."
+              );
               setError("Country information required");
               return;
             }
-            
+
             const form = new FormData();
             form.append("groupId", selectedGroupId);
             form.append("type", vals.leadType);
@@ -927,9 +1017,8 @@ const ChatWindow = ({
             setLeadModalOpen(false);
             toast.success("Your lead has been submitted for approval!");
           } catch (err) {
-            console.error("Error sending lead:", err);
-            console.error("Error response:", err.response?.data);
-            const errorMessage = err.response?.data?.message || "Failed to send lead";
+            const errorMessage =
+              err.response?.data?.message || "Failed to send lead";
             setError(errorMessage);
             toast.error(errorMessage);
           } finally {

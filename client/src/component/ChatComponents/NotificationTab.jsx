@@ -41,7 +41,6 @@ const NotificationTab = ({ onNotificationRead }) => {
           withCredentials: true,
         }
       );
-      console.log("respons all", response);
       const data = await response.data;
       setNotifications(data.data);
       setTotalPages(data.pagination.totalPages);
@@ -66,7 +65,6 @@ const NotificationTab = ({ onNotificationRead }) => {
           withCredentials: true,
         }
       );
-      console.log("response", response);
       const data = await response.data;
       setUnreadCount(data.data.unread);
     } catch (error) {

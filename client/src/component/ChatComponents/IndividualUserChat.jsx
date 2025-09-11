@@ -85,7 +85,6 @@ const IndividualUserChat = ({ chat, user, onBack, onMessageSent }) => {
         {},
         { withCredentials: true }
       );
-      console.log("Unread count cleared for chat:", chat._id);
     } catch (error) {
       console.error("Error clearing unread count:", error);
     }
@@ -94,20 +93,16 @@ const IndividualUserChat = ({ chat, user, onBack, onMessageSent }) => {
   // Socket event handling
   useEffect(() => {
     if (socket && chat?._id) {
-      console.log(`Joining user chat room: ${chat._id}`);
-
       // Join chat room
       socket.emit("join-user-chat", { chatId: chat._id });
 
       // Listen for new messages
       const handleNewMessageEvent = (data) => {
-        console.log("Received new message event:", data);
         handleNewMessage(data);
       };
 
       // Listen for typing indicators
       const handleTypingEvent = (data) => {
-        console.log("Received typing event:", data);
         if (data.chatId === chat._id && data.userId !== user._id) {
           setOtherUserTyping(true);
           // Clear typing indicator after 3 seconds
@@ -119,7 +114,6 @@ const IndividualUserChat = ({ chat, user, onBack, onMessageSent }) => {
       socket.on("user-typing", handleTypingEvent);
 
       return () => {
-        console.log(`Leaving user chat room: ${chat._id}`);
         socket.emit("leave-user-chat", { chatId: chat._id });
         socket.off("new-user-message", handleNewMessageEvent);
         socket.off("user-typing", handleTypingEvent);
@@ -132,20 +126,16 @@ const IndividualUserChat = ({ chat, user, onBack, onMessageSent }) => {
     if (!socket || !user || !chat) return;
 
     const handleOtherUserMessage = (data) => {
-      console.log("Message received while in chat:", data);
-
       // SIMPLE RULE: If you're in a chat with someone, don't show notifications from them
       const currentChatUserId = chat.otherUser?._id;
       const messageSenderId = data.sender?._id || data.senderId;
 
       // Don't show notification if message is from the user you're currently chatting with
       if (currentChatUserId === messageSenderId) {
-        console.log("No notification - message from current chat user");
         return;
       }
 
       // Show notification for messages from other users
-      console.log("Showing notification - message from different user");
       const senderName = data.sender?.name || data.senderName || "Someone";
 
       setOtherUserMessageNotification({
@@ -229,7 +219,6 @@ const IndividualUserChat = ({ chat, user, onBack, onMessageSent }) => {
           messagesContainer.scrollTop = messagesContainer.scrollHeight;
           // Hide scroll button when scrolling to bottom
           setShowScrollButton(false);
-          console.log("Scrolled to bottom immediately");
         });
       } else {
         // Fallback with constrained scrollIntoView
@@ -241,7 +230,6 @@ const IndividualUserChat = ({ chat, user, onBack, onMessageSent }) => {
           });
           // Hide scroll button when scrolling to bottom
           setShowScrollButton(false);
-          console.log("Scrolled to bottom with fallback");
         });
       }
     }
@@ -329,17 +317,9 @@ const IndividualUserChat = ({ chat, user, onBack, onMessageSent }) => {
           const { scrollTop, scrollHeight, clientHeight } =
             messagesContainerRef.current;
           const isNearBottom = scrollTop + clientHeight >= scrollHeight - 100; // 100px threshold
-          console.log("Scroll check:", {
-            scrollTop,
-            scrollHeight,
-            clientHeight,
-            isNearBottom,
-          });
           if (isNearBottom) {
-            console.log("User near bottom, scrolling to bottom");
             scrollToBottomImmediate();
           } else {
-            console.log("User not near bottom, showing scroll button");
             // Show scroll button and notification if user is not near bottom
             setShowScrollButton(true);
             setNewMessageNotification(true);
@@ -621,13 +601,11 @@ const IndividualUserChat = ({ chat, user, onBack, onMessageSent }) => {
   };
 
   const openImageModal = (imageUrl, fileName) => {
-    console.log("Opening image modal:", { imageUrl, fileName });
     setSelectedImageModal({ url: imageUrl, fileName });
     setIsImageModalOpen(true);
   };
 
   const closeImageModal = () => {
-    console.log("Closing image modal");
     setIsImageModalOpen(false);
     setSelectedImageModal(null);
   };

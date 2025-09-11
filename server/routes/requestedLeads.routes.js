@@ -1,5 +1,6 @@
 import express from "express";
 import { authMiddleware } from "../middlewares/auth.mdware.js";
+import { translateLeadMiddleware } from "../middlewares/translation.mdware.js";
 import {
   postRequestedLead,
   getUserRequestedLeads,
@@ -17,6 +18,7 @@ router.post(
   "/",
   authMiddleware,
   leadDocsUpload.array("documents", 10),
+  translateLeadMiddleware,
   postRequestedLead
 );
 router.get("/user", authMiddleware, getUserRequestedLeads);
@@ -24,6 +26,7 @@ router.post(
   "/user/:leadId/resend",
   authMiddleware,
   leadDocsUpload.array("documents", 10),
+  translateLeadMiddleware,
   resendRequestedLead
 );
 

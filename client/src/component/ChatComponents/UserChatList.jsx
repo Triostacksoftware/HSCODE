@@ -27,8 +27,6 @@ const UserChatList = ({ user, onChatSelect, selectedChatId }) => {
     if (!socket || !user) return;
 
     const handleNewMessage = (data) => {
-      console.log("New message received:", data);
-
       // Update the specific chat's unread count and last message
       setChats((prevChats) => {
         const updatedChats = prevChats.map((chat) => {

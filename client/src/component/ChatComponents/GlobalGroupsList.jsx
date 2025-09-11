@@ -61,7 +61,6 @@ const GlobalGroupsList = ({
           withCredentials: true,
         }
       );
-      console.log("response", response);
 
       setGroups(response.data || []);
     } catch (error) {

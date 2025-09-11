@@ -1,5 +1,10 @@
 import express from "express";
-import { adminMiddleware, authMiddleware, superadminMiddleware } from "../middlewares/auth.mdware.js";
+import {
+  adminMiddleware,
+  authMiddleware,
+  superadminMiddleware,
+} from "../middlewares/auth.mdware.js";
+import { translateLeadMiddleware } from "../middlewares/translation.mdware.js";
 import {
   getGlobalLeadsByGroup,
   postGlobalRequestedLead,
@@ -17,6 +22,7 @@ router.post(
   "/requested",
   authMiddleware,
   leadDocsUpload.array("documents", 10),
+  translateLeadMiddleware,
   postGlobalRequestedLead
 ); // User submits for approval
 router.get("/user/requested", authMiddleware, getUserGlobalRequestedLeads); // User views their leads

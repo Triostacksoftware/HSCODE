@@ -594,11 +594,6 @@ const LeadFormModal = ({
         setCurrentLocation(newLocation);
         setAddressSearch(firstResult.display_name);
         setLocationError(""); // Clear any previous errors
-
-        // Show success message
-        console.log(
-          `Found location: ${firstResult.display_name} at ${firstResult.lat}, ${firstResult.lon}`
-        );
       } else {
         setLocationError(
           "Address not found. Please try a different search term."
@@ -1440,9 +1435,6 @@ const LeadFormModal = ({
                       setCurrentLocation(location);
                       setAddressSearch(""); // Clear search when using GPS
                       setLocationError(""); // Clear any errors
-                      console.log(
-                        `Using current GPS location: ${location.latitude}, ${location.longitude}`
-                      );
                     } catch (error) {
                       console.error("Error getting current location:", error);
                       setLocationError(

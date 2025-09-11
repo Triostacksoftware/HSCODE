@@ -28,13 +28,6 @@ const GlobalChatWindow = ({
   onBack,
   setActiveTab,
 }) => {
-  console.log("GlobalChatWindow props:", {
-    chapterNo,
-    selectedGroupId,
-    groupName,
-    groupImage,
-    groupData,
-  });
   const { user } = useUserAuth();
   const { onlineCounts, onlineUsers } = useContext(OnlineUsersContext);
   const [messages, setMessages] = useState([]);
@@ -52,7 +45,6 @@ const GlobalChatWindow = ({
   const [selectedUser, setSelectedUser] = useState(null);
   const [showMembers, setShowMembers] = useState(false);
   const messagesEndRef = useRef(null);
-
 
   const fetchGroupMembers = useCallback(async () => {
     if (!selectedGroupId) {
@@ -168,19 +160,16 @@ const GlobalChatWindow = ({
     try {
       setSending(true);
       setError("");
-      
-      // Debug: Check user countryCode and chapterNo
-      console.log("User countryCode:", user?.countryCode);
-      console.log("ChapterNo:", chapterNo);
-      console.log("Vals:", vals);
-      
+
       // Check if user has countryCode
       if (!user?.countryCode) {
-        toast.error("Please update your profile with country information before creating leads.");
+        toast.error(
+          "Please update your profile with country information before creating leads."
+        );
         setError("Country information required");
         return;
       }
-      
+
       const form = new FormData();
       form.append("groupId", selectedGroupId);
       form.append("type", vals.leadType);
@@ -219,16 +208,14 @@ const GlobalChatWindow = ({
       setLeadModalOpen(false);
       toast.success("Your lead has been submitted for approval!");
     } catch (error) {
-      console.error("Error sending global lead:", error);
-      console.error("Error response:", error.response?.data);
-      const errorMessage = error.response?.data?.message || "Failed to send lead";
+      const errorMessage =
+        error.response?.data?.message || "Failed to send lead";
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {
       setSending(false);
     }
   };
-
 
   const formatTime = (timestamp) => {
     const date = new Date(timestamp);
@@ -490,29 +477,33 @@ const GlobalChatWindow = ({
                         }`}
                       >
                         {msg.hscode || msg.description ? (
-                          <div className={`rounded-lg shadow-sm border overflow-hidden ${
-                            msg.type === "buy"
-                              ? "bg-blue-50 border-blue-200"
-                              : msg.type === "sell"
-                              ? "bg-green-50 border-green-200"
-                              : msg.type === "high-sea-buy"
-                              ? "bg-indigo-50 border-indigo-200"
-                              : msg.type === "high-sea-sell"
-                              ? "bg-purple-50 border-purple-200"
-                              : "bg-white border-gray-200"
-                          }`}>
-                            {/* Header with badges */}
-                            <div className={`px-3 py-2 border-b ${
+                          <div
+                            className={`rounded-lg shadow-sm border overflow-hidden ${
                               msg.type === "buy"
-                                ? "bg-blue-100 border-blue-200"
+                                ? "bg-blue-50 border-blue-200"
                                 : msg.type === "sell"
-                                ? "bg-green-100 border-green-200"
+                                ? "bg-green-50 border-green-200"
                                 : msg.type === "high-sea-buy"
-                                ? "bg-indigo-100 border-indigo-200"
+                                ? "bg-indigo-50 border-indigo-200"
                                 : msg.type === "high-sea-sell"
-                                ? "bg-purple-100 border-purple-200"
-                                : "bg-gray-50 border-gray-200"
-                            }`}>
+                                ? "bg-purple-50 border-purple-200"
+                                : "bg-white border-gray-200"
+                            }`}
+                          >
+                            {/* Header with badges */}
+                            <div
+                              className={`px-3 py-2 border-b ${
+                                msg.type === "buy"
+                                  ? "bg-blue-100 border-blue-200"
+                                  : msg.type === "sell"
+                                  ? "bg-green-100 border-green-200"
+                                  : msg.type === "high-sea-buy"
+                                  ? "bg-indigo-100 border-indigo-200"
+                                  : msg.type === "high-sea-sell"
+                                  ? "bg-purple-100 border-purple-200"
+                                  : "bg-gray-50 border-gray-200"
+                              }`}
+                            >
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-1.5 flex-wrap">
                                   <span
@@ -528,10 +519,15 @@ const GlobalChatWindow = ({
                                         : "bg-gray-200 text-gray-800"
                                     }`}
                                   >
-                                    {msg.type === "buy" ? "BUY" : 
-                                     msg.type === "sell" ? "SELL" : 
-                                     msg.type === "high-sea-buy" ? "HIGH SEA BUY" :
-                                     msg.type === "high-sea-sell" ? "HIGH SEA SELL" : "LEAD"}
+                                    {msg.type === "buy"
+                                      ? "BUY"
+                                      : msg.type === "sell"
+                                      ? "SELL"
+                                      : msg.type === "high-sea-buy"
+                                      ? "HIGH SEA BUY"
+                                      : msg.type === "high-sea-sell"
+                                      ? "HIGH SEA SELL"
+                                      : "LEAD"}
                                   </span>
                                   {msg.hscode && (
                                     <span className="px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">
@@ -570,23 +566,37 @@ const GlobalChatWindow = ({
                               )}
 
                               {/* Product Details Grid */}
-                              {(msg.quantity || msg.packing || msg.targetPrice || msg.negotiable !== undefined) && (
+                              {(msg.quantity ||
+                                msg.packing ||
+                                msg.targetPrice ||
+                                msg.negotiable !== undefined) && (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                                   {msg.quantity && (
                                     <div className="bg-white rounded p-2 border border-gray-200">
-                                      <div className="text-xs font-semibold text-blue-600 mb-1 uppercase tracking-wide">Quantity</div>
-                                      <div className="text-sm text-gray-800 font-medium">{msg.quantity}</div>
+                                      <div className="text-xs font-semibold text-blue-600 mb-1 uppercase tracking-wide">
+                                        Quantity
+                                      </div>
+                                      <div className="text-sm text-gray-800 font-medium">
+                                        {msg.quantity}
+                                      </div>
                                     </div>
                                   )}
                                   {msg.packing && (
                                     <div className="bg-white rounded p-2 border border-gray-200">
-                                      <div className="text-xs font-semibold text-green-600 mb-1 uppercase tracking-wide">Packing</div>
-                                      <div className="text-sm text-gray-800 font-medium">{msg.packing}</div>
+                                      <div className="text-xs font-semibold text-green-600 mb-1 uppercase tracking-wide">
+                                        Packing
+                                      </div>
+                                      <div className="text-sm text-gray-800 font-medium">
+                                        {msg.packing}
+                                      </div>
                                     </div>
                                   )}
-                                  {(msg.targetPrice || msg.negotiable !== undefined) && (
+                                  {(msg.targetPrice ||
+                                    msg.negotiable !== undefined) && (
                                     <div className="bg-white rounded p-2 border border-gray-200">
-                                      <div className="text-xs font-semibold text-yellow-600 mb-1 uppercase tracking-wide">Price</div>
+                                      <div className="text-xs font-semibold text-yellow-600 mb-1 uppercase tracking-wide">
+                                        Price
+                                      </div>
                                       <div className="text-sm text-gray-800 font-medium">
                                         {msg.targetPrice || "Not specified"}
                                         {msg.negotiable && (
@@ -601,7 +611,8 @@ const GlobalChatWindow = ({
                               )}
 
                               {/* Location Information */}
-                              {(msg.buyerDeliveryLocation?.address || msg.sellerPickupLocation?.address) && (
+                              {(msg.buyerDeliveryLocation?.address ||
+                                msg.sellerPickupLocation?.address) && (
                                 <div className="space-y-2">
                                   <h3 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
                                     Location Details
@@ -613,13 +624,28 @@ const GlobalChatWindow = ({
                                           Delivery Location
                                         </div>
                                         <ClickableAddress
-                                          address={msg.buyerDeliveryLocation.address}
-                                          coordinates={msg.buyerDeliveryLocation.geo?.coordinates && 
-                                            Array.isArray(msg.buyerDeliveryLocation.geo.coordinates) && 
-                                            msg.buyerDeliveryLocation.geo.coordinates.length >= 2 ? {
-                                              latitude: msg.buyerDeliveryLocation.geo.coordinates[1],
-                                              longitude: msg.buyerDeliveryLocation.geo.coordinates[0]
-                                            } : null}
+                                          address={
+                                            msg.buyerDeliveryLocation.address
+                                          }
+                                          coordinates={
+                                            msg.buyerDeliveryLocation.geo
+                                              ?.coordinates &&
+                                            Array.isArray(
+                                              msg.buyerDeliveryLocation.geo
+                                                .coordinates
+                                            ) &&
+                                            msg.buyerDeliveryLocation.geo
+                                              .coordinates.length >= 2
+                                              ? {
+                                                  latitude:
+                                                    msg.buyerDeliveryLocation
+                                                      .geo.coordinates[1],
+                                                  longitude:
+                                                    msg.buyerDeliveryLocation
+                                                      .geo.coordinates[0],
+                                                }
+                                              : null
+                                          }
                                           label=""
                                           showLabel={false}
                                           className="w-full"
@@ -632,13 +658,28 @@ const GlobalChatWindow = ({
                                           Pickup Location
                                         </div>
                                         <ClickableAddress
-                                          address={msg.sellerPickupLocation.address}
-                                          coordinates={msg.sellerPickupLocation.geo?.coordinates && 
-                                            Array.isArray(msg.sellerPickupLocation.geo.coordinates) && 
-                                            msg.sellerPickupLocation.geo.coordinates.length >= 2 ? {
-                                              latitude: msg.sellerPickupLocation.geo.coordinates[1],
-                                              longitude: msg.sellerPickupLocation.geo.coordinates[0]
-                                            } : null}
+                                          address={
+                                            msg.sellerPickupLocation.address
+                                          }
+                                          coordinates={
+                                            msg.sellerPickupLocation.geo
+                                              ?.coordinates &&
+                                            Array.isArray(
+                                              msg.sellerPickupLocation.geo
+                                                .coordinates
+                                            ) &&
+                                            msg.sellerPickupLocation.geo
+                                              .coordinates.length >= 2
+                                              ? {
+                                                  latitude:
+                                                    msg.sellerPickupLocation.geo
+                                                      .coordinates[1],
+                                                  longitude:
+                                                    msg.sellerPickupLocation.geo
+                                                      .coordinates[0],
+                                                }
+                                              : null
+                                          }
                                           label=""
                                           showLabel={false}
                                           className="w-full"
@@ -649,33 +690,96 @@ const GlobalChatWindow = ({
                                 </div>
                               )}
 
-                              {/* Documents */}
-                              {Array.isArray(msg.documents) && msg.documents.length > 0 && (
-                                <div className="space-y-1.5">
+                              {/* Additional Information */}
+                              {(msg.specialRequest || msg.remarks) && (
+                                <div className="space-y-2">
                                   <h3 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                                    Attachments ({msg.documents.length})
+                                    Additional Information
                                   </h3>
-                                  <div className="flex flex-wrap gap-1.5">
-                                    {msg.documents.map((doc, i) => (
-                                      <a
-                                        key={i}
-                                        href={`${process.env.NEXT_PUBLIC_BASE_URL}/leadDocuments/${doc}`}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="inline-flex items-center gap-1.5 px-2 py-1.5 rounded bg-white text-blue-700 hover:bg-blue-50 border border-gray-200 transition-colors text-xs font-medium"
-                                      >
-                                        <span className="text-xs">DOC</span>
-                                        <span className="truncate max-w-[120px]">
-                                          {doc}
-                                        </span>
-                                        <span className="text-xs bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">
-                                          View
-                                        </span>
-                                      </a>
-                                    ))}
+                                  <div className="space-y-1.5">
+                                    {msg.specialRequest && (
+                                      <div className="bg-white rounded p-2 border border-gray-200">
+                                        <div className="text-xs font-semibold text-purple-600 mb-1 uppercase tracking-wide">
+                                          Special Request
+                                        </div>
+                                        <p className="text-sm text-gray-800">
+                                          {msg.specialRequest}
+                                        </p>
+                                      </div>
+                                    )}
+                                    {msg.remarks && (
+                                      <div className="bg-white rounded p-2 border border-gray-200">
+                                        <div className="text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wide">
+                                          Notes
+                                        </div>
+                                        <p className="text-sm text-gray-800">
+                                          {msg.remarks}
+                                        </p>
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
                               )}
+
+                              {/* Administrative Information */}
+                              {(msg.leadCode || msg.adminComment) && (
+                                <div className="space-y-2">
+                                  <h3 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                                    Lead Information
+                                  </h3>
+                                  <div className="space-y-1.5">
+                                    {msg.leadCode && (
+                                      <div className="bg-white rounded p-2 border border-gray-200">
+                                        <div className="text-xs font-semibold text-indigo-600 mb-1 uppercase tracking-wide">
+                                          Lead ID
+                                        </div>
+                                        <p className="text-sm text-gray-800 font-mono">
+                                          {msg.leadCode}
+                                        </p>
+                                      </div>
+                                    )}
+                                    {msg.adminComment && (
+                                      <div className="bg-white rounded p-2 border border-gray-200">
+                                        <div className="text-xs font-semibold text-orange-600 mb-1 uppercase tracking-wide">
+                                          Admin Comment
+                                        </div>
+                                        <p className="text-sm text-gray-800">
+                                          {msg.adminComment}
+                                        </p>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Documents */}
+                              {Array.isArray(msg.documents) &&
+                                msg.documents.length > 0 && (
+                                  <div className="space-y-1.5">
+                                    <h3 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                                      Attachments ({msg.documents.length})
+                                    </h3>
+                                    <div className="flex flex-wrap gap-1.5">
+                                      {msg.documents.map((doc, i) => (
+                                        <a
+                                          key={i}
+                                          href={`${process.env.NEXT_PUBLIC_BASE_URL}/leadDocuments/${doc}`}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          className="inline-flex items-center gap-1.5 px-2 py-1.5 rounded bg-white text-blue-700 hover:bg-blue-50 border border-gray-200 transition-colors text-xs font-medium"
+                                        >
+                                          <span className="text-xs">DOC</span>
+                                          <span className="truncate max-w-[120px]">
+                                            {doc}
+                                          </span>
+                                          <span className="text-xs bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">
+                                            View
+                                          </span>
+                                        </a>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
                             </div>
                           </div>
                         ) : (

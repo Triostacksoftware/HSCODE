@@ -41,7 +41,6 @@ const MyGroups = ({ onGroupSelect, selectedGroupId }) => {
     // Call the onGroupSelect callback with the group object
     if (onGroupSelect) {
       onGroupSelect(group);
-      console.log("group", group);
     }
     // mark as read
     try {

@@ -18,13 +18,6 @@ const Sidebar = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
-  // Debug logging
-  console.log("🔔 Sidebar notificationCount:", notificationCount);
-  console.log(
-    "🔔 Sidebar badge condition:",
-    notificationCount > 0 ? notificationCount : null
-  );
-
   const toggleSidebar = () => {
     setIsOpen(!isOpen);
   };
@@ -33,7 +26,6 @@ const Sidebar = ({
     // If notifications tab is clicked, mark all notifications as read
     if (tab === "notifications" && notificationCount > 0) {
       try {
-        console.log("🔔 Marking all notifications as read...");
         await axios.put(
           `${process.env.NEXT_PUBLIC_BASE_URL}/notifications/user/read-all`,
           {},
@@ -41,7 +33,6 @@ const Sidebar = ({
             withCredentials: true,
           }
         );
-        console.log("🔔 All notifications marked as read");
 
         // Call the callback to update the notification count
         if (onNotificationsRead) {
@@ -117,13 +108,6 @@ const Sidebar = ({
           ) {
             return null;
           }
-
-          // Debug logging for each menu item
-          console.log(`🔔 Menu item ${item.id}:`, {
-            label: item.label,
-            badge: item.badge,
-            hasBadge: !!item.badge,
-          });
 
           return (
             <div
