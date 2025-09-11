@@ -51,10 +51,10 @@ const LeadFormModal = ({
   const [sharingLocation, setSharingLocation] = useState(false);
   const [locationError, setLocationError] = useState("");
   const [showLocationModal, setShowLocationModal] = useState(false);
-    const [currentLocation, setCurrentLocation] = useState(null);
-    const [selectedLocation, setSelectedLocation] = useState(null);
-    const [addressSearch, setAddressSearch] = useState("");
-    const [searchingAddress, setSearchingAddress] = useState(false);
+  const [currentLocation, setCurrentLocation] = useState(null);
+  const [selectedLocation, setSelectedLocation] = useState(null);
+  const [addressSearch, setAddressSearch] = useState("");
+  const [searchingAddress, setSearchingAddress] = useState(false);
 
   // Check user membership and determine available lead types
   const isPremiumUser =
@@ -63,8 +63,16 @@ const LeadFormModal = ({
   // Define available lead types based on user membership and group type
   const getAvailableLeadTypes = () => {
     if (!isPremiumUser) {
-      // Free users can only post buy leads (regardless of group type)
-      return [{ value: "buy", label: "Buy" }];
+      // Free users can post buy leads based on group type
+      if (groupType === "global") {
+        return [
+          { value: "buy", label: "Buy" },
+          { value: "high-sea-buy", label: "High Sea Buy" },
+        ];
+      } else {
+        // Local groups: only buy
+        return [{ value: "buy", label: "Buy" }];
+      }
     }
 
     // Premium users can post all available types for their group
@@ -86,10 +94,16 @@ const LeadFormModal = ({
 
   // Set initial lead type based on user membership
   useEffect(() => {
-    if (!isPremiumUser && leadType !== "buy") {
-      setLeadType("buy");
+    if (!isPremiumUser) {
+      const availableTypes = getAvailableLeadTypes();
+      if (
+        availableTypes.length > 0 &&
+        !availableTypes.some((type) => type.value === leadType)
+      ) {
+        setLeadType(availableTypes[0].value);
+      }
     }
-  }, [isPremiumUser, leadType]);
+  }, [isPremiumUser, groupType]);
 
   // HS Code autocomplete states
   const [showHSCodeDropdown, setShowHSCodeDropdown] = useState(false);
@@ -561,28 +575,34 @@ const LeadFormModal = ({
   // Search for address using OpenStreetMap Nominatim API
   const searchAddress = async (query) => {
     if (!query.trim()) return;
-    
+
     try {
       setSearchingAddress(true);
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1`
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+          query
+        )}&limit=5&addressdetails=1`
       );
       const results = await response.json();
-      
+
       if (results.length > 0) {
         const firstResult = results[0];
         const newLocation = {
           latitude: parseFloat(firstResult.lat),
-          longitude: parseFloat(firstResult.lon)
+          longitude: parseFloat(firstResult.lon),
         };
         setCurrentLocation(newLocation);
         setAddressSearch(firstResult.display_name);
         setLocationError(""); // Clear any previous errors
-        
+
         // Show success message
-        console.log(`Found location: ${firstResult.display_name} at ${firstResult.lat}, ${firstResult.lon}`);
+        console.log(
+          `Found location: ${firstResult.display_name} at ${firstResult.lat}, ${firstResult.lon}`
+        );
       } else {
-        setLocationError("Address not found. Please try a different search term.");
+        setLocationError(
+          "Address not found. Please try a different search term."
+        );
       }
     } catch (error) {
       console.error("Error searching address:", error);
@@ -607,17 +627,25 @@ const LeadFormModal = ({
       });
 
       // Get the location name (address) from search or use coordinates as fallback
-      const locationName = addressSearch || `Location: ${currentLocation.latitude.toFixed(6)}, ${currentLocation.longitude.toFixed(6)}`;
-      
+      const locationName =
+        addressSearch ||
+        `Location: ${currentLocation.latitude.toFixed(
+          6
+        )}, ${currentLocation.longitude.toFixed(6)}`;
+
       if (leadType === "buy") {
         // Remove any existing location info and add new one
-        const cleanAddress = buyerDeliveryAddress.replace(/ \(Location: [^)]+\)$/, '').replace(/ \([^)]+\)$/, '');
+        const cleanAddress = buyerDeliveryAddress
+          .replace(/ \(Location: [^)]+\)$/, "")
+          .replace(/ \([^)]+\)$/, "");
         setBuyerDeliveryAddress(`${cleanAddress} (${locationName})`);
         setBuyerLat(currentLocation.latitude.toString());
         setBuyerLng(currentLocation.longitude.toString());
       } else {
         // Remove any existing location info and add new one
-        const cleanAddress = sellerPickupAddress.replace(/ \(Location: [^)]+\)$/, '').replace(/ \([^)]+\)$/, '');
+        const cleanAddress = sellerPickupAddress
+          .replace(/ \(Location: [^)]+\)$/, "")
+          .replace(/ \([^)]+\)$/, "");
         setSellerPickupAddress(`${cleanAddress} (${locationName})`);
         setSellerLat(currentLocation.latitude.toString());
         setSellerLng(currentLocation.longitude.toString());
@@ -688,475 +716,511 @@ const LeadFormModal = ({
             onSubmit={submitHandler}
             className="p-4 px-8 space-y-3 text-gray-600 text-sm"
           >
-          {/* Type toggle */}
-          <div>
-            <div className="text-xs text-gray-500 mb-1">Select lead type</div>
-            <select
-              value={leadType}
-              onChange={(e) => setLeadType(e.target.value)}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-gray-700 focus:border-gray-700"
-            >
-              {getAvailableLeadTypes().map((type) => (
-                <option key={type.value} value={type.value}>
-                  {type.label}
-                </option>
-              ))}
-            </select>
-          </div>
+            {/* Type toggle */}
+            <div>
+              <div className="text-xs text-gray-500 mb-1">Select lead type</div>
+              <select
+                value={leadType}
+                onChange={(e) => setLeadType(e.target.value)}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-gray-700 focus:border-gray-700"
+              >
+                {getAvailableLeadTypes().map((type) => (
+                  <option key={type.value} value={type.value}>
+                    {type.label}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          {/* HS + Description */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div className="md:col-span-1 relative hs-code-container">
-              <label className="text-[.8em] font-medium">
-                HS Code<span className="text-red-500">*</span>
-              </label>
+            {/* HS + Description */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="md:col-span-1 relative hs-code-container">
+                <label className="text-[.8em] font-medium">
+                  HS Code<span className="text-red-500">*</span>
+                </label>
 
-              {/* Instructions */}
-              {groupHSCode && (
-                <p className="text-[11px] text-blue-600 mt-1 mb-2">
-                  💡 Type additional digits after the group HS code. You can
-                  also search by product description (e.g., "rice").
-                </p>
-              )}
-
-              {/* Group HS Code Display (Fixed) */}
-              {groupHSCode && (
-                <div className="mt-1 mb-2">
-                  <div className="text-xs text-gray-500 mb-1">
-                    Group HS Code (Fixed):
-                  </div>
-                  <div className="bg-gray-100 px-2 py-1 rounded text-sm font-mono text-gray-700">
-                    {groupHSCode}
-                  </div>
-                </div>
-              )}
-
-              {/* User Input Field */}
-              <div className="relative">
+                {/* Instructions */}
                 {groupHSCode && (
-                  <div className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 font-mono text-sm">
-                    {groupHSCode}
+                  <p className="text-[11px] text-blue-600 mt-1 mb-2">
+                    💡 Type additional digits after the group HS code. You can
+                    also search by product description (e.g., "rice").
+                  </p>
+                )}
+
+                {/* Group HS Code Display (Fixed) */}
+                {groupHSCode && (
+                  <div className="mt-1 mb-2">
+                    <div className="text-xs text-gray-500 mb-1">
+                      Group HS Code (Fixed):
+                    </div>
+                    <div className="bg-gray-100 px-2 py-1 rounded text-sm font-mono text-gray-700">
+                      {groupHSCode}
+                    </div>
                   </div>
                 )}
-                <input
-                  className={`mt-1 w-full border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 rounded text-sm ${
-                    groupHSCode ? "pl-16" : ""
-                  }`}
-                  placeholder={
-                    groupHSCode
-                      ? "Type additional digits after 1010"
-                      : "e.g. 10101000"
-                  }
-                  value={hscode}
-                  onChange={handleHSCodeInputChange}
-                  onKeyDown={handleHSCodeKeyDown}
-                  onFocus={() => {
-                    if (hscodeSearchTerm.trim()) {
-                      setShowHSCodeDropdown(true);
-                    }
-                  }}
-                  maxLength={maxHSLength}
-                  required
-                />
-              </div>
 
-              <p className="text-[11px] text-gray-500 mt-1">
-                {groupHSCode
-                  ? `Complete HS Code: ${hscode} (${hscode.length}/${maxHSLength} digits)`
-                  : "HS code helps categorize your product."}
-              </p>
-
-              {/* HS Code Length Validation Message */}
-              {groupHSCode && getHSLengthMessage() && (
-                <p
-                  className={`text-[11px] mt-1 ${
-                    isHSCodeValid() ? "text-green-600" : "text-orange-500"
-                  }`}
-                >
-                  {getHSLengthMessage()}
-                </p>
-              )}
-              {hscodeLoading && !hasData && (
-                <p className="text-[11px] text-blue-500 mt-1">
-                  Loading HS codes for your country...
-                </p>
-              )}
-              {!hscodeLoading && !hasData && countryInfo?.code && (
-                <p className="text-[11px] text-orange-500 mt-1">
-                  HS codes not available for {countryInfo.code}
-                </p>
-              )}
-
-              {/* HS Code Dropdown */}
-              {showHSCodeDropdown && hscodeSearchResults.length > 0 && (
-                <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                  <div className="px-3 py-2 bg-gray-50 border-b border-gray-200 text-xs font-medium text-gray-700">
-                    {hscodeSearchResults.length} result
-                    {hscodeSearchResults.length !== 1 ? "s" : ""} found
-                  </div>
-                  {hscodeSearchResults.map((item, index) => (
-                    <div
-                      key={item.id}
-                      className={`px-3 py-2 cursor-pointer border-b border-gray-100 last:border-b-0 ${
-                        index === highlightedIndex
-                          ? "bg-blue-100 border-blue-300"
-                          : "hover:bg-gray-100"
-                      }`}
-                      onClick={() => handleHSCodeSelect(item)}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <div className="font-medium text-sm text-gray-900">
-                            {item.tl || item.hs6 || item.chapter}
-                          </div>
-                          <div className="text-xs text-gray-600 truncate">
-                            {item.tldesc ||
-                              item.hs6Description ||
-                              item.chapterDescription}
-                          </div>
-                        </div>
-                        {groupHSCode && (
-                          <div className="text-xs text-gray-500 ml-2">
-                            <span className="text-gray-400">{groupHSCode}</span>
-                            <span className="text-gray-600">
-                              {item.tl
-                                ? item.tl.substring(groupHSCode.length)
-                                : ""}
-                            </span>
-                          </div>
-                        )}
-                      </div>
+                {/* User Input Field */}
+                <div className="relative">
+                  {groupHSCode && (
+                    <div className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 font-mono text-sm">
+                      {groupHSCode}
                     </div>
-                  ))}
+                  )}
+                  <input
+                    className={`mt-1 w-full border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 rounded text-sm ${
+                      groupHSCode ? "pl-16" : ""
+                    }`}
+                    placeholder={
+                      groupHSCode
+                        ? "Type additional digits after 1010"
+                        : "e.g. 10101000"
+                    }
+                    value={hscode}
+                    onChange={handleHSCodeInputChange}
+                    onKeyDown={handleHSCodeKeyDown}
+                    onFocus={() => {
+                      if (hscodeSearchTerm.trim()) {
+                        setShowHSCodeDropdown(true);
+                      }
+                    }}
+                    maxLength={maxHSLength}
+                    required
+                  />
                 </div>
-              )}
 
-              {/* Loading indicator */}
-              {hscodeLoading && hscodeSearchTerm && (
-                <div className="absolute right-2 top-8 text-gray-400">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
-                </div>
-              )}
-            </div>
-            <div className="md:col-span-2 relative description-container">
-              <label className="text-[.8em] font-medium">
-                Product / Item Description
-                <span className="text-red-500">*</span>
-              </label>
-              <textarea
-                className="mt-1 w-full border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 rounded text-sm"
-                rows={2}
-                placeholder="Type to search for product descriptions or enter your own"
-                value={description}
-                onChange={handleDescriptionInputChange}
-                onKeyDown={handleDescriptionKeyDown}
-                onFocus={() => {
-                  if (descriptionSearchTerm.trim()) {
-                    setShowDescriptionDropdown(true);
-                  }
-                }}
-                required
-              />
+                <p className="text-[11px] text-gray-500 mt-1">
+                  {groupHSCode
+                    ? `Complete HS Code: ${hscode} (${hscode.length}/${maxHSLength} digits)`
+                    : "HS code helps categorize your product."}
+                </p>
 
-              {/* Description Search Dropdown */}
-              {showDescriptionDropdown &&
-                descriptionSearchResults.length > 0 && (
+                {/* HS Code Length Validation Message */}
+                {groupHSCode && getHSLengthMessage() && (
+                  <p
+                    className={`text-[11px] mt-1 ${
+                      isHSCodeValid() ? "text-green-600" : "text-orange-500"
+                    }`}
+                  >
+                    {getHSLengthMessage()}
+                  </p>
+                )}
+                {hscodeLoading && !hasData && (
+                  <p className="text-[11px] text-blue-500 mt-1">
+                    Loading HS codes for your country...
+                  </p>
+                )}
+                {!hscodeLoading && !hasData && countryInfo?.code && (
+                  <p className="text-[11px] text-orange-500 mt-1">
+                    HS codes not available for {countryInfo.code}
+                  </p>
+                )}
+
+                {/* HS Code Dropdown */}
+                {showHSCodeDropdown && hscodeSearchResults.length > 0 && (
                   <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                     <div className="px-3 py-2 bg-gray-50 border-b border-gray-200 text-xs font-medium text-gray-700">
-                      {descriptionSearchResults.length} result
-                      {descriptionSearchResults.length !== 1 ? "s" : ""} found
+                      {hscodeSearchResults.length} result
+                      {hscodeSearchResults.length !== 1 ? "s" : ""} found
                     </div>
-                    {descriptionSearchResults.map((item, index) => (
+                    {hscodeSearchResults.map((item, index) => (
                       <div
                         key={item.id}
                         className={`px-3 py-2 cursor-pointer border-b border-gray-100 last:border-b-0 ${
-                          index === highlightedDescriptionIndex
+                          index === highlightedIndex
                             ? "bg-blue-100 border-blue-300"
                             : "hover:bg-gray-100"
                         }`}
-                        onClick={() => handleDescriptionSelect(item)}
+                        onClick={() => handleHSCodeSelect(item)}
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
                             <div className="font-medium text-sm text-gray-900">
+                              {item.tl || item.hs6 || item.chapter}
+                            </div>
+                            <div className="text-xs text-gray-600 truncate">
                               {item.tldesc ||
                                 item.hs6Description ||
                                 item.chapterDescription}
                             </div>
-                            <div className="text-xs text-gray-600 truncate">
-                              HS Code: {item.tl || item.hs6 || item.chapter}
-                            </div>
                           </div>
+                          {groupHSCode && (
+                            <div className="text-xs text-gray-500 ml-2">
+                              <span className="text-gray-400">
+                                {groupHSCode}
+                              </span>
+                              <span className="text-gray-600">
+                                {item.tl
+                                  ? item.tl.substring(groupHSCode.length)
+                                  : ""}
+                              </span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))}
                   </div>
                 )}
 
-              {/* Loading indicator for description search */}
-              {hscodeLoading && descriptionSearchTerm && (
-                <div className="absolute right-2 top-8 text-gray-400">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* HS Code Additional Information */}
-          {selectedHSCode && (
-            <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-              <div className="text-xs font-medium text-gray-700 mb-2">
-                HS Code Details:
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-                <div>
-                  <span className="font-medium text-gray-600">
-                    Original HS6:{" "}
-                  </span>
-                  <span className="text-gray-800">
-                    {selectedHSCode.hs6 || "N/A"}
-                  </span>
-                </div>
-                <div>
-                  <span className="font-medium text-gray-600">HS4 Group: </span>
-                  <span className="text-gray-800">
-                    {selectedHSCode.hs4 || "N/A"}
-                  </span>
-                </div>
-                <div>
-                  <span className="font-medium text-gray-600">Chapter: </span>
-                  <span className="text-gray-800">
-                    {selectedHSCode.chapter || "N/A"}
-                  </span>
-                </div>
-                {selectedHSCode.hs4Description && (
-                  <div className="md:col-span-3">
-                    <span className="font-medium text-gray-600">
-                      Group Description:{" "}
-                    </span>
-                    <span className="text-gray-800">
-                      {selectedHSCode.hs4Description}
-                    </span>
-                  </div>
-                )}
-                {selectedHSCode.hs6Description && (
-                  <div className="md:col-span-3">
-                    <span className="font-medium text-gray-600">
-                      HS6 Description:{" "}
-                    </span>
-                    <span className="text-gray-800">
-                      {selectedHSCode.hs6Description}
-                    </span>
+                {/* Loading indicator */}
+                {hscodeLoading && hscodeSearchTerm && (
+                  <div className="absolute right-2 top-8 text-gray-400">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
                   </div>
                 )}
               </div>
-            </div>
-          )}
-
-          {/* Qty, packing, price */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-            <div>
-              <label className="text-[.8em] font-medium">
-                Quantity<span className="text-red-500">*</span>
-              </label>
-              <input
-                className="mt-1 w-full border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 rounded text-sm"
-                value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
-                required
-              />
-            </div>
-            <div>
-              <label className="text-[.8em] font-medium">
-                Packing<span className="text-red-500">*</span>
-              </label>
-              <input
-                className="mt-1 w-full border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 rounded text-sm"
-                value={packing}
-                onChange={(e) => setPacking(e.target.value)}
-                required
-              />
-            </div>
-            <div>
-              <label className="text-[.8em] font-medium">
-                Target / Expected Price<span className="text-red-500">*</span>
-              </label>
-              <input
-                className="mt-1 w-full border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 rounded text-sm"
-                value={targetPrice}
-                onChange={(e) => setTargetPrice(e.target.value)}
-                required
-              />
-            </div>
-            <div className="">
-              <label className="text-[.8em] font-medium">
-                Price Negotiable
-              </label>
-              <label className="mt-1 inline-flex border-gray-200 items-center gap-2 text-sm w-full border rounded p-2 justify-center cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={negotiable}
-                  onChange={(e) => setNegotiable(e.target.checked)}
+              <div className="md:col-span-2 relative description-container">
+                <label className="text-[.8em] font-medium">
+                  Product / Item Description
+                  <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  className="mt-1 w-full border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 rounded text-sm"
+                  rows={2}
+                  placeholder="Type to search for product descriptions or enter your own"
+                  value={description}
+                  onChange={handleDescriptionInputChange}
+                  onKeyDown={handleDescriptionKeyDown}
+                  onFocus={() => {
+                    if (descriptionSearchTerm.trim()) {
+                      setShowDescriptionDropdown(true);
+                    }
+                  }}
+                  required
                 />
-                Negotiable
-              </label>
-            </div>
-          </div>
 
-          {/* Address */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {leadType === "buy" ? (
-              <div className="md:col-span-2">
-                <label className="text-[.8em] font-medium">
-                  Delivery address<span className="text-red-500">*</span>
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    className="mt-1 flex-1 border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 rounded text-sm"
-                    value={buyerDeliveryAddress}
-                    onChange={(e) => setBuyerDeliveryAddress(e.target.value)}
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={handleLocationShare}
-                    disabled={sharingLocation}
-                    className="mt-1 px-3 py-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-gray-200"
-                    title="Add current location"
-                  >
-                    {sharingLocation ? (
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
-                    ) : (
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                    )}
-                  </button>
-                </div>
+                {/* Description Search Dropdown */}
+                {showDescriptionDropdown &&
+                  descriptionSearchResults.length > 0 && (
+                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                      <div className="px-3 py-2 bg-gray-50 border-b border-gray-200 text-xs font-medium text-gray-700">
+                        {descriptionSearchResults.length} result
+                        {descriptionSearchResults.length !== 1 ? "s" : ""} found
+                      </div>
+                      {descriptionSearchResults.map((item, index) => (
+                        <div
+                          key={item.id}
+                          className={`px-3 py-2 cursor-pointer border-b border-gray-100 last:border-b-0 ${
+                            index === highlightedDescriptionIndex
+                              ? "bg-blue-100 border-blue-300"
+                              : "hover:bg-gray-100"
+                          }`}
+                          onClick={() => handleDescriptionSelect(item)}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <div className="font-medium text-sm text-gray-900">
+                                {item.tldesc ||
+                                  item.hs6Description ||
+                                  item.chapterDescription}
+                              </div>
+                              <div className="text-xs text-gray-600 truncate">
+                                HS Code: {item.tl || item.hs6 || item.chapter}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                {/* Loading indicator for description search */}
+                {hscodeLoading && descriptionSearchTerm && (
+                  <div className="absolute right-2 top-8 text-gray-400">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
+                  </div>
+                )}
               </div>
-            ) : (
-              <div className="md:col-span-2">
-                <label className="text-[.8em] font-medium">
-                  Pickup address <span className="text-red-500">*</span>
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    className="mt-1 flex-1 border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 rounded text-sm"
-                    value={sellerPickupAddress}
-                    onChange={(e) => setSellerPickupAddress(e.target.value)}
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={handleLocationShare}
-                    disabled={sharingLocation}
-                    className="mt-1 px-3 py-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-gray-200"
-                    title="Add current location"
-                  >
-                    {sharingLocation ? (
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
-                    ) : (
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                    )}
-                  </button>
+            </div>
+
+            {/* HS Code Additional Information */}
+            {selectedHSCode && (
+              <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                <div className="text-xs font-medium text-gray-700 mb-2">
+                  HS Code Details:
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                  <div>
+                    <span className="font-medium text-gray-600">
+                      Original HS6:{" "}
+                    </span>
+                    <span className="text-gray-800">
+                      {selectedHSCode.hs6 || "N/A"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-600">
+                      HS4 Group:{" "}
+                    </span>
+                    <span className="text-gray-800">
+                      {selectedHSCode.hs4 || "N/A"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-600">Chapter: </span>
+                    <span className="text-gray-800">
+                      {selectedHSCode.chapter || "N/A"}
+                    </span>
+                  </div>
+                  {selectedHSCode.hs4Description && (
+                    <div className="md:col-span-3">
+                      <span className="font-medium text-gray-600">
+                        Group Description:{" "}
+                      </span>
+                      <span className="text-gray-800">
+                        {selectedHSCode.hs4Description}
+                      </span>
+                    </div>
+                  )}
+                  {selectedHSCode.hs6Description && (
+                    <div className="md:col-span-3">
+                      <span className="font-medium text-gray-600">
+                        HS6 Description:{" "}
+                      </span>
+                      <span className="text-gray-800">
+                        {selectedHSCode.hs6Description}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
-          </div>
 
-          {/* Requests + Remarks */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div>
-              <label className="text-[.8em] font-medium">
-                Any special request
-              </label>
-              <textarea
-                className="mt-1 w-full border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 rounded text-sm"
-                rows={2}
-                value={specialRequest}
-                onChange={(e) => setSpecialRequest(e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="text-[.8em] font-medium">Remarks / Notes</label>
-              <textarea
-                className="mt-1 w-full border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 rounded text-sm"
-                rows={2}
-                value={remarks}
-                onChange={(e) => setRemarks(e.target.value)}
-              />
-            </div>
-          </div>
-
-          {/* Documents */}
-          <div>
-            <label className="text-[.8em] font-medium">Documents</label>
-            <div className="mt-1 grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div className="md:col-span-1">
+            {/* Qty, packing, price */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+              <div>
+                <label className="text-[.8em] font-medium">
+                  Quantity<span className="text-red-500">*</span>
+                </label>
                 <input
-                  key={documents.length}
-                  type="file"
-                  multiple
-                  accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt"
-                  onChange={(e) => appendDocuments(e.target.files)}
-                  className="w-fit border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 file:bg-gray-600 file:text-white file:px-2 file:rounded-md file:py-1 rounded text-sm"
+                  className="mt-1 w-full border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 rounded text-sm"
+                  value={quantity}
+                  onChange={(e) => setQuantity(e.target.value)}
+                  required
                 />
-                {!!retainDocuments?.length && (
-                  <p className="text-[11px] text-gray-500 mt-2">
-                    Existing files listed below will be kept unless you remove
-                    them.
-                  </p>
-                )}
               </div>
-              <div className="border border-gray-200 rounded p-2 max-h-28 overflow-auto text-xs grid grid-cols-4 gap-2 md:col-span-2">
-                {retainDocuments?.map((name, idx) => (
-                  <div
-                    key={`r-${idx}`}
-                    className="border border-gray-300 rounded p-1 flex items-center justify-between gap-2"
-                  >
-                    <span className="truncate" title={name}>
-                      {name}
-                    </span>
+              <div>
+                <label className="text-[.8em] font-medium">
+                  Packing<span className="text-red-500">*</span>
+                </label>
+                <input
+                  className="mt-1 w-full border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 rounded text-sm"
+                  value={packing}
+                  onChange={(e) => setPacking(e.target.value)}
+                  required
+                />
+              </div>
+              <div>
+                <label className="text-[.8em] font-medium">
+                  Target / Expected Price<span className="text-red-500">*</span>
+                </label>
+                <input
+                  className="mt-1 w-full border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 rounded text-sm"
+                  value={targetPrice}
+                  onChange={(e) => setTargetPrice(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="">
+                <label className="text-[.8em] font-medium">
+                  Price Negotiable
+                </label>
+                <label className="mt-1 inline-flex border-gray-200 items-center gap-2 text-sm w-full border rounded p-2 justify-center cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={negotiable}
+                    onChange={(e) => setNegotiable(e.target.checked)}
+                  />
+                  Negotiable
+                </label>
+              </div>
+            </div>
+
+            {/* Address */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {leadType === "buy" ? (
+                <div className="md:col-span-2">
+                  <label className="text-[.8em] font-medium">
+                    Delivery address<span className="text-red-500">*</span>
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      className="mt-1 flex-1 border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 rounded text-sm"
+                      value={buyerDeliveryAddress}
+                      onChange={(e) => setBuyerDeliveryAddress(e.target.value)}
+                      required
+                    />
                     <button
                       type="button"
-                      className="text-red-600"
-                      onClick={() => removeRetained(idx)}
+                      onClick={handleLocationShare}
+                      disabled={sharingLocation}
+                      className="mt-1 px-3 py-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-gray-200"
+                      title="Add current location"
                     >
-                      ×
+                      {sharingLocation ? (
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                      ) : (
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                          />
+                        </svg>
+                      )}
                     </button>
                   </div>
-                ))}
-                {documents?.map((file, idx) => (
-                  <div
-                    key={`n-${idx}`}
-                    className="border border-gray-300 rounded p-1 flex items-center justify-between gap-2"
-                  >
-                    <span className="truncate" title={file.name}>
-                      {file.name}
-                    </span>
+                </div>
+              ) : (
+                <div className="md:col-span-2">
+                  <label className="text-[.8em] font-medium">
+                    Pickup address <span className="text-red-500">*</span>
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      className="mt-1 flex-1 border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 rounded text-sm"
+                      value={sellerPickupAddress}
+                      onChange={(e) => setSellerPickupAddress(e.target.value)}
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={handleLocationShare}
+                      disabled={sharingLocation}
+                      className="mt-1 px-3 py-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-gray-200"
+                      title="Add current location"
+                    >
+                      {sharingLocation ? (
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                      ) : (
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                          />
+                        </svg>
+                      )}
+                    </button>
                   </div>
-                ))}
+                </div>
+              )}
+            </div>
+
+            {/* Requests + Remarks */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <label className="text-[.8em] font-medium">
+                  Any special request
+                </label>
+                <textarea
+                  className="mt-1 w-full border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 rounded text-sm"
+                  rows={2}
+                  value={specialRequest}
+                  onChange={(e) => setSpecialRequest(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="text-[.8em] font-medium">
+                  Remarks / Notes
+                </label>
+                <textarea
+                  className="mt-1 w-full border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 rounded text-sm"
+                  rows={2}
+                  value={remarks}
+                  onChange={(e) => setRemarks(e.target.value)}
+                />
               </div>
             </div>
-          </div>
 
-          <div className="flex justify-end">
-            <button
-              type="submit"
-              disabled={sending}
-              className="px-4 py-2 bg-gray-900 text-white rounded-lg disabled:opacity-50"
-            >
-              {sending
-                ? "Submitting..."
-                : initial
-                ? "Resend for approval"
-                : "Submit for approval"}
-            </button>
-          </div>
+            {/* Documents */}
+            <div>
+              <label className="text-[.8em] font-medium">Documents</label>
+              <div className="mt-1 grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="md:col-span-1">
+                  <input
+                    key={documents.length}
+                    type="file"
+                    multiple
+                    accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt"
+                    onChange={(e) => appendDocuments(e.target.files)}
+                    className="w-fit border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 file:bg-gray-600 file:text-white file:px-2 file:rounded-md file:py-1 rounded text-sm"
+                  />
+                  {!!retainDocuments?.length && (
+                    <p className="text-[11px] text-gray-500 mt-2">
+                      Existing files listed below will be kept unless you remove
+                      them.
+                    </p>
+                  )}
+                </div>
+                <div className="border border-gray-200 rounded p-2 max-h-28 overflow-auto text-xs grid grid-cols-4 gap-2 md:col-span-2">
+                  {retainDocuments?.map((name, idx) => (
+                    <div
+                      key={`r-${idx}`}
+                      className="border border-gray-300 rounded p-1 flex items-center justify-between gap-2"
+                    >
+                      <span className="truncate" title={name}>
+                        {name}
+                      </span>
+                      <button
+                        type="button"
+                        className="text-red-600"
+                        onClick={() => removeRetained(idx)}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                  {documents?.map((file, idx) => (
+                    <div
+                      key={`n-${idx}`}
+                      className="border border-gray-300 rounded p-1 flex items-center justify-between gap-2"
+                    >
+                      <span className="truncate" title={file.name}>
+                        {file.name}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                type="submit"
+                disabled={sending}
+                className="px-4 py-2 bg-gray-900 text-white rounded-lg disabled:opacity-50"
+              >
+                {sending
+                  ? "Submitting..."
+                  : initial
+                  ? "Resend for approval"
+                  : "Submit for approval"}
+              </button>
+            </div>
           </form>
         </div>
       </div>
@@ -1168,9 +1232,24 @@ const LeadFormModal = ({
             {/* Modal Header */}
             <div className="flex items-center justify-between p-4 border-b border-gray-200">
               <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-                <svg className="w-5 h-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                <svg
+                  className="w-5 h-5 text-red-500 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
                 </svg>
                 Add Location
               </h3>
@@ -1181,49 +1260,69 @@ const LeadFormModal = ({
                 }}
                 className="text-gray-400 hover:text-gray-600 transition-colors"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             </div>
 
             {/* Modal Content */}
-              <div className="p-4">
-                <p className="text-sm text-gray-600 mb-4">
-                  Search for an address or use your current GPS location.
-                </p>
+            <div className="p-4">
+              <p className="text-sm text-gray-600 mb-4">
+                Search for an address or use your current GPS location.
+              </p>
 
-                {/* Address Search */}
-                <div className="mb-4">
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={addressSearch}
-                      onChange={(e) => setAddressSearch(e.target.value)}
-                      placeholder="Search for an address (e.g., '123 Main St, New York')"
-                      className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                      onKeyPress={(e) => {
-                        if (e.key === 'Enter') {
-                          searchAddress(addressSearch);
-                        }
-                      }}
-                    />
-                    <button
-                      onClick={() => searchAddress(addressSearch)}
-                      disabled={searchingAddress || !addressSearch.trim()}
-                      className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2 font-medium"
-                    >
-                      {searchingAddress ? (
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      ) : (
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                      )}
-                      Search
-                    </button>
-                  </div>
+              {/* Address Search */}
+              <div className="mb-4">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={addressSearch}
+                    onChange={(e) => setAddressSearch(e.target.value)}
+                    placeholder="Search for an address (e.g., '123 Main St, New York')"
+                    className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                    onKeyPress={(e) => {
+                      if (e.key === "Enter") {
+                        searchAddress(addressSearch);
+                      }
+                    }}
+                  />
+                  <button
+                    onClick={() => searchAddress(addressSearch)}
+                    disabled={searchingAddress || !addressSearch.trim()}
+                    className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2 font-medium"
+                  >
+                    {searchingAddress ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    ) : (
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                        />
+                      </svg>
+                    )}
+                    Search
+                  </button>
                 </div>
+              </div>
 
               {/* Map Preview */}
               <div className="relative bg-gray-100 rounded-lg overflow-hidden shadow-sm border border-gray-200 mb-4">
@@ -1263,9 +1362,24 @@ const LeadFormModal = ({
                   {/* Fallback map placeholder */}
                   <div className="hidden w-full h-full bg-gradient-to-br from-blue-50 to-green-50 items-center justify-center">
                     <div className="text-center">
-                      <svg className="w-12 h-12 text-red-500 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <svg
+                        className="w-12 h-12 text-red-500 mx-auto mb-2"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                        />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                        />
                       </svg>
                       <p className="text-sm text-gray-600">Location Map</p>
                     </div>
@@ -1275,9 +1389,24 @@ const LeadFormModal = ({
                   <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
                     <div className="relative">
                       <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center shadow-lg">
-                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <svg
+                          className="w-4 h-4 text-white"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                          />
                         </svg>
                       </div>
                       <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-red-500"></div>
@@ -1290,42 +1419,61 @@ const LeadFormModal = ({
                   </div>
                 </div>
 
-                 {/* Coordinates display */}
-                 <div className="p-3 bg-gray-50 border-t border-gray-200">
-                   <p className="text-xs text-gray-600 text-center">
-                     {currentLocation.latitude.toFixed(6)},{" "}
-                     {currentLocation.longitude.toFixed(6)}
-                   </p>
-                   <p className="text-xs text-blue-600 text-center mt-1 font-medium">
-                     {addressSearch ? "📍 Searched Location" : "📍 GPS Location"}
-                   </p>
-                 </div>
-               </div>
+                {/* Coordinates display */}
+                <div className="p-3 bg-gray-50 border-t border-gray-200">
+                  <p className="text-xs text-gray-600 text-center">
+                    {currentLocation.latitude.toFixed(6)},{" "}
+                    {currentLocation.longitude.toFixed(6)}
+                  </p>
+                  <p className="text-xs text-blue-600 text-center mt-1 font-medium">
+                    {addressSearch ? "📍 Searched Location" : "📍 GPS Location"}
+                  </p>
+                </div>
+              </div>
 
-               {/* GPS Location Button */}
-               <div className="mt-2 flex justify-center">
-                 <button
-                   onClick={async () => {
-                     try {
-                       const location = await getCurrentLocation();
-                       setCurrentLocation(location);
-                       setAddressSearch(""); // Clear search when using GPS
-                       setLocationError(""); // Clear any errors
-                       console.log(`Using current GPS location: ${location.latitude}, ${location.longitude}`);
-                     } catch (error) {
-                       console.error("Error getting current location:", error);
-                       setLocationError("Failed to get current location. Please try again.");
-                     }
-                   }}
-                   className="bg-green-500 text-white px-4 py-2 rounded text-sm hover:bg-green-600 transition-colors flex items-center gap-2"
-                 >
-                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                   </svg>
-                   Use My Current GPS Location
-                 </button>
-               </div>
+              {/* GPS Location Button */}
+              <div className="mt-2 flex justify-center">
+                <button
+                  onClick={async () => {
+                    try {
+                      const location = await getCurrentLocation();
+                      setCurrentLocation(location);
+                      setAddressSearch(""); // Clear search when using GPS
+                      setLocationError(""); // Clear any errors
+                      console.log(
+                        `Using current GPS location: ${location.latitude}, ${location.longitude}`
+                      );
+                    } catch (error) {
+                      console.error("Error getting current location:", error);
+                      setLocationError(
+                        "Failed to get current location. Please try again."
+                      );
+                    }
+                  }}
+                  className="bg-green-500 text-white px-4 py-2 rounded text-sm hover:bg-green-600 transition-colors flex items-center gap-2"
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                  </svg>
+                  Use My Current GPS Location
+                </button>
+              </div>
 
               {/* Error Message */}
               {locationError && (
@@ -1358,9 +1506,24 @@ const LeadFormModal = ({
                   </>
                 ) : (
                   <>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
                     </svg>
                     Add Location
                   </>
