@@ -6,6 +6,7 @@ import {
 import upload from "../configurations/multer.js";
 import {
   getDashboardStats,
+  getAdminDashboardStats,
   getAdmins,
   getAdminDetails,
   createAdmin,
@@ -33,6 +34,7 @@ const router = express.Router();
 
 // Dashboard routes
 router.get("/dashboard-stats", superadminMiddleware, getDashboardStats);
+router.get("/admin-dashboard-stats", authMiddleware, getAdminDashboardStats);
 
 // Admin management routes
 router.get("/admins", superadminMiddleware, getAdmins);

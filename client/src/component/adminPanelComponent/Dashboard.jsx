@@ -1,18 +1,19 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { MdTrendingUp, MdCategory, MdGroup, MdArticle, MdSearch } from "react-icons/md";
+import { MdTrendingUp, MdGroup, MdArticle, MdSearch } from "react-icons/md";
 import axios from "axios";
-import hsCodeData from "../../../hs_code_structure.json";
 
 const Dashboard = () => {
   const [stats, setStats] = useState({
-    sections: 0,
-    chapters: 0,
-    groups: 0,
-    news: 0
+    totalUsers: 0,
+    totalGroups: 0,
+    pendingLeads: 0,
+    approvedLeads: 0,
+    totalGlobalGroups: 0,
+    activeGroups: 0,
+    todayRegistrations: 0
   });
-  const [recentActivity, setRecentActivity] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -23,34 +24,36 @@ const Dashboard = () => {
     try {
       setIsLoading(true);
       
-      // Calculate HS code stats from JSON data
-      const totalSections = hsCodeData.sections.length;
-      const totalChapters = hsCodeData.sections.reduce((acc, section) => 
-        acc + (section.chapters?.length || 0), 0
-      );
-
-      // Fetch groups and news stats
-      const [groupsRes, newsRes] = await Promise.all([
-        axios.get(`${process.env.NEXT_PUBLIC_BASE_URL}/categories/groups/all`, { withCredentials: true }),
-        axios.get(`${process.env.NEXT_PUBLIC_BASE_URL}/home-data/admin`, { withCredentials: true })
-      ]);
-
-      setStats({
-        sections: totalSections,
-        chapters: totalChapters,
-        groups: groupsRes.data?.length || 0,
-        news: newsRes.data?.data?.news?.length || 0
+      // Fetch admin dashboard stats from the new endpoint
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_BASE_URL}/superadmin/admin-dashboard-stats`, { 
+        withCredentials: true 
       });
 
-      // Set recent activity (simplified for now)
-      setRecentActivity([
-        { type: 'section', action: 'viewed', name: 'Section 1 - Live Animals', time: '2 hours ago' },
-        { type: 'chapter', action: 'accessed', name: 'Chapter 01 - Live Animals', time: '4 hours ago' },
-        { type: 'group', action: 'created', name: 'New Group', time: '1 day ago' }
-      ]);
+      const data = response.data;
+      
+      setStats({
+        totalUsers: data.totalUsers || 0,
+        totalGroups: data.totalGroups || 0,
+        pendingLeads: data.pendingLeads || 0,
+        approvedLeads: data.approvedLeads || 0,
+        totalGlobalGroups: data.totalGlobalGroups || 0,
+        activeGroups: data.activeGroups || 0,
+        todayRegistrations: data.todayRegistrations || 0
+      });
+
 
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
+      // Set default values if API fails
+      setStats({
+        totalUsers: 0,
+        totalGroups: 0,
+        pendingLeads: 0,
+        approvedLeads: 0,
+        totalGlobalGroups: 0,
+        activeGroups: 0,
+        todayRegistrations: 0
+      });
     } finally {
       setIsLoading(false);
     }
@@ -70,21 +73,6 @@ const Dashboard = () => {
     </div>
   );
 
-  const ActivityItem = ({ activity }) => (
-    <div className="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg">
-      <div className={`w-2 h-2 rounded-full bg-${
-        activity.type === 'section' ? 'blue' : 
-        activity.type === 'chapter' ? 'green' : 
-        activity.type === 'group' ? 'purple' : 'orange'
-      }-500`} />
-      <div className="flex-1 min-w-0">
-        <p className="text-sm text-gray-900">
-          <span className="font-medium">{activity.action}</span> {activity.type}: {activity.name}
-        </p>
-        <p className="text-xs text-gray-500">{activity.time}</p>
-      </div>
-    </div>
-  );
 
   if (isLoading) {
     return (
@@ -97,118 +85,143 @@ const Dashboard = () => {
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-600">Overview of your HS Code management system</p>
+        <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
+        <p className="text-gray-600">Manage your HS Code platform and monitor system activity</p>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <StatCard
-          title="HS Code Sections"
-          value={stats.sections}
-          icon={MdCategory}
+          title="Total Users"
+          value={stats.totalUsers}
+          icon={MdGroup}
           color="blue"
         />
         <StatCard
-          title="HS Code Chapters"
-          value={stats.chapters}
-          icon={MdGroup}
+          title="Today's Registrations"
+          value={stats.todayRegistrations}
+          icon={MdTrendingUp}
           color="green"
         />
         <StatCard
-          title="Total Groups"
-          value={stats.groups}
+          title="Total Local Groups"
+          value={stats.totalGroups}
           icon={MdGroup}
           color="purple"
         />
         <StatCard
-          title="News Articles"
-          value={stats.news}
-          icon={MdArticle}
+          title="Total Pending Leads"
+          value={stats.pendingLeads}
+          icon={MdSearch}
           color="orange"
+        />
+        <StatCard
+          title="Total Approved Leads"
+          value={stats.approvedLeads}
+          icon={MdArticle}
+          color="green"
+        />
+        <StatCard
+          title="Total Global Groups"
+          value={stats.totalGlobalGroups}
+          icon={MdGroup}
+          color="indigo"
         />
       </div>
 
-      {/* HS Code Overview */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Sections Overview */}
+      {/* Admin Overview */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Today's Activity */}
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-            <MdCategory className="w-5 h-5 mr-2 text-blue-600" />
-            HS Code Sections
+            <MdTrendingUp className="w-5 h-5 mr-2 text-green-600" />
+            Today's Activity
           </h3>
-          <div className="space-y-2">
-            <p className="text-2xl font-bold text-blue-600">{stats.sections}</p>
-            <p className="text-sm text-gray-600">Total sections available</p>
-            {hsCodeData.sections.slice(0, 5).map((section, index) => (
-              <div key={index} className="flex items-center justify-between text-sm">
-                <span className="text-gray-700">
-                  Section {section.section}. {section.title}
-                </span>
-                <span className="text-gray-500">
-                  {section.chapters?.length || 0} chapters
-                </span>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-600">New Registrations</span>
+              <span className="text-2xl font-bold text-green-600">{stats.todayRegistrations}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-600">Total Users</span>
+              <span className="text-lg font-bold text-blue-600">{stats.totalUsers}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-600">Growth Rate</span>
+              <span className="text-sm font-bold text-green-600">
+                {stats.totalUsers > 0 ? ((stats.todayRegistrations / stats.totalUsers) * 100).toFixed(1) : 0}%
+              </span>
+            </div>
+            <div className="mt-4">
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div 
+                  className="bg-green-600 h-2 rounded-full" 
+                  style={{ width: `${stats.totalUsers > 0 ? (stats.todayRegistrations / stats.totalUsers) * 100 : 0}%` }}
+                ></div>
               </div>
-            ))}
+              <p className="text-xs text-gray-500 mt-1">Daily Growth</p>
+            </div>
           </div>
         </div>
 
-        {/* Chapters Overview */}
+        {/* System Status */}
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-            <MdGroup className="w-5 h-5 mr-2 text-green-600" />
-            HS Code Chapters
+            <MdTrendingUp className="w-5 h-5 mr-2 text-blue-600" />
+            System Status
           </h3>
-          <div className="space-y-2">
-            <p className="text-2xl font-bold text-green-600">{stats.chapters}</p>
-            <p className="text-sm text-gray-600">Total chapters available</p>
-            {hsCodeData.sections.slice(0, 3).map((section, index) => (
-              <div key={index} className="text-sm">
-                <div className="font-medium text-gray-700">
-                  Section {section.section}: {section.chapters?.length || 0} chapters
-                </div>
-                {section.chapters?.slice(0, 2).map((chapter, cIndex) => (
-                  <div key={cIndex} className="text-xs text-gray-500 ml-2">
-                    Chapter {chapter.chapter}: {chapter.heading}
-                  </div>
-                ))}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-600">Platform Status</span>
+              <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Online</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-600">Database</span>
+              <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Connected</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-600">API Status</span>
+              <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Active</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-600">User Registration</span>
+              <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">Open</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Lead Management */}
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <MdSearch className="w-5 h-5 mr-2 text-orange-600" />
+            Lead Management
+          </h3>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-600">Pending Approval</span>
+              <span className="text-lg font-bold text-orange-600">{stats.pendingLeads}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-600">Approved Today</span>
+              <span className="text-lg font-bold text-green-600">{stats.approvedLeads}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-600">Total Processed</span>
+              <span className="text-lg font-bold text-blue-600">{stats.pendingLeads + stats.approvedLeads}</span>
+            </div>
+            <div className="mt-4">
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div 
+                  className="bg-green-600 h-2 rounded-full" 
+                  style={{ width: `${stats.approvedLeads > 0 ? (stats.approvedLeads / (stats.pendingLeads + stats.approvedLeads)) * 100 : 0}%` }}
+                ></div>
               </div>
-            ))}
+              <p className="text-xs text-gray-500 mt-1">Approval Rate</p>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Recent Activity */}
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
-        <div className="space-y-2">
-          {recentActivity.map((activity, index) => (
-            <ActivityItem key={index} activity={activity} />
-          ))}
-        </div>
-      </div>
-
-      {/* Quick Actions */}
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <button className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-left">
-            <MdCategory className="w-6 h-6 text-blue-600 mb-2" />
-            <p className="font-medium text-gray-900">Browse Sections</p>
-            <p className="text-sm text-gray-600">View HS code sections</p>
-          </button>
-          <button className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-left">
-            <MdGroup className="w-6 h-6 text-green-600 mb-2" />
-            <p className="font-medium text-gray-900">Add Group</p>
-            <p className="text-sm text-gray-600">Create a new group</p>
-          </button>
-          <button className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-left">
-            <MdArticle className="w-6 h-6 text-purple-600 mb-2" />
-            <p className="font-medium text-gray-900">Manage News</p>
-            <p className="text-sm text-gray-600">Publish news articles</p>
-          </button>
-        </div>
-      </div>
     </div>
   );
 };

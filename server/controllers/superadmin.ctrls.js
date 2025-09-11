@@ -9,7 +9,7 @@ import RequestedLeads from "../models/RequestedLeads.js";
 import ApprovedLeads from "../models/ApprovedLeads.js";
 import LocalGroupModel from "../models/LocalGroup.js";
 
-// Get dashboard statistics
+// Get dashboard statistics for superadmin
 export const getDashboardStats = async (req, res) => {
   try {
     const [totalGlobalLeads, totalGlobalUsers, totalGlobalGroups, totalAdmins] =
@@ -29,6 +29,80 @@ export const getDashboardStats = async (req, res) => {
   } catch (error) {
     console.error("Error fetching dashboard stats:", error);
     res.status(500).json({ message: "Error fetching dashboard statistics" });
+  }
+};
+
+// Get dashboard statistics for admin
+export const getAdminDashboardStats = async (req, res) => {
+  try {
+    const adminCountryCode = req.user.countryCode;
+    
+    if (!adminCountryCode) {
+      return res.status(400).json({ message: "Admin country code not found" });
+    }
+
+    // Get stats for admin's country only
+    const [
+      totalUsers,
+      totalGroups,
+      pendingLeads,
+      approvedLeads,
+      totalGlobalGroups
+    ] = await Promise.all([
+      // Total users in admin's country (excluding admins)
+      UserModel.countDocuments({ 
+        countryCode: adminCountryCode, 
+        role: { $ne: "admin" } 
+      }),
+      // Total local groups in admin's country
+      LocalGroupModel.countDocuments({ countryCode: adminCountryCode }),
+      // Pending leads in admin's country
+      RequestedLeads.countDocuments({ 
+        countryCode: adminCountryCode, 
+        status: "pending" 
+      }),
+      // Approved leads in admin's country
+      RequestedLeads.countDocuments({ 
+        countryCode: adminCountryCode, 
+        status: "approved" 
+      }),
+      // Total global groups (admin can see all)
+      GlobalGroupModel.countDocuments()
+    ]);
+
+    // Get today's registrations
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const todayRegistrations = await UserModel.countDocuments({
+      countryCode: adminCountryCode,
+      role: { $ne: "admin" },
+      createdAt: {
+        $gte: today,
+        $lt: tomorrow
+      }
+    });
+
+    // Get active groups (groups with members)
+    const activeGroups = await LocalGroupModel.countDocuments({
+      countryCode: adminCountryCode,
+      members: { $exists: true, $ne: [] }
+    });
+
+    res.json({
+      totalUsers,
+      totalGroups,
+      pendingLeads,
+      approvedLeads,
+      totalGlobalGroups,
+      todayRegistrations,
+      activeGroups
+    });
+  } catch (error) {
+    console.error("Error fetching admin dashboard stats:", error);
+    res.status(500).json({ message: "Error fetching admin dashboard statistics" });
   }
 };
 

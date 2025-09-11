@@ -14,7 +14,6 @@ import AddGroup from "./AddGroup";
 import hsCodeData from "../../../hs_code_structure.json";
 
 const Categories = () => {
-  const [activeSection, setActiveSection] = useState(null);
   const [activeChapter, setActiveChapter] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [showAddGroupModal, setShowAddGroupModal] = useState(false);
@@ -31,20 +30,21 @@ const Categories = () => {
   const [groupToEdit, setGroupToEdit] = useState(null);
   const [editFormData, setEditFormData] = useState({ name: "", heading: "" });
 
-  // Filter sections based on search
-  const filteredSections = hsCodeData.sections.filter(
-    (section) =>
-      section.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      section.section.toString().includes(searchTerm)
+  // Flatten all chapters from all sections into a single array
+  const allChapters = hsCodeData.sections.flatMap(section => 
+    section.chapters.map(chapter => ({
+      ...chapter,
+      sectionTitle: section.title,
+      sectionNumber: section.section
+    }))
   );
 
-  // Filter chapters based on search and active section
-  const filteredChapters =
-    activeSection?.chapters.filter(
-      (chapter) =>
-        chapter.heading.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        chapter.chapter.toString().includes(searchTerm)
-    ) || [];
+  // Filter chapters based on search
+  const filteredChapters = allChapters.filter(chapter => 
+    chapter.heading.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    chapter.chapter.toString().includes(searchTerm) ||
+    chapter.sectionTitle.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   // Filter groups based on search
   const filteredGroups = groups.filter(
@@ -53,23 +53,9 @@ const Categories = () => {
       group.heading?.toLowerCase().includes(groupsSearchTerm.toLowerCase())
   );
 
-  const handleSectionClick = (section) => {
-    setActiveSection(section);
-    setActiveChapter(null);
-    setSearchTerm("");
-    setGroups([]);
-  };
-
   const handleChapterClick = (chapter) => {
     setActiveChapter(chapter);
     fetchGroups(chapter.chapter.toString());
-  };
-
-  const handleBackToSections = () => {
-    setActiveSection(null);
-    setActiveChapter(null);
-    setSearchTerm("");
-    setGroups([]);
   };
 
   const handleBackToChapters = () => {
@@ -229,18 +215,10 @@ const Categories = () => {
           <div className="flex justify-between items-start sm:items-center mb-3 gap-2">
             <div className="min-w-0 flex-1">
               <h2 className="text-sm sm:text-base lg:text-lg text-gray-700 font-medium truncate">
-                {!activeSection
-                  ? "HS Code Sections"
-                  : activeSection && !activeChapter
-                  ? `Section ${activeSection.section}`
-                  : `Chapter ${activeChapter?.chapter}`}
+                {!activeChapter ? "All HS Code Chapters" : `Chapter ${activeChapter?.chapter}`}
               </h2>
               <h3 className="text-xs sm:text-sm text-gray-500 mt-1">
-                {!activeSection
-                  ? `${hsCodeData.sections.length} Sections`
-                  : activeSection && !activeChapter
-                  ? `${activeSection.chapters.length} Chapters`
-                  : `Groups in right panel`}
+                {!activeChapter ? `${allChapters.length} Chapters` : `Groups in right panel`}
               </h3>
             </div>
             {activeChapter && (
@@ -257,9 +235,7 @@ const Categories = () => {
           <div className="relative">
             <input
               type="text"
-              placeholder={
-                !activeSection ? "Search sections..." : "Search chapters..."
-              }
+              placeholder="Search chapters..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full px-2 sm:px-3 py-2 pl-8 sm:pl-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent text-xs sm:text-sm"
@@ -267,21 +243,15 @@ const Categories = () => {
             <MdSearch className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 text-gray-400" />
           </div>
 
-          {/* Single Back Button - Goes back one level */}
-          {(activeSection || activeChapter) && (
+          {/* Back Button - Only show when a chapter is selected */}
+          {activeChapter && (
             <button
-              onClick={
-                activeChapter ? handleBackToChapters : handleBackToSections
-              }
+              onClick={handleBackToChapters}
               className="mt-2 p-1.5 sm:p-2 text-xs sm:text-sm cursor-pointer flex items-center justify-center hover:bg-gray-100 rounded-full text-gray-600 transition-colors"
             >
               <MdArrowBack className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
-              <span className="hidden sm:inline">
-                {activeChapter ? "Back to Chapters" : "Back to Sections"}
-              </span>
-              <span className="sm:hidden">
-                {activeChapter ? "Chapters" : "Sections"}
-              </span>
+              <span className="hidden sm:inline">Back to Chapters</span>
+              <span className="sm:hidden">Chapters</span>
             </button>
           )}
         </div>
@@ -289,30 +259,25 @@ const Categories = () => {
         {/* Content List */}
         <div className="p-2 sm:p-3 overflow-y-auto scrollbar-hide">
           <div className="space-y-1.5 sm:space-y-2">
-            {!activeSection
-              ? // Display Sections
-                filteredSections.map((section) => (
+            {!activeChapter
+              ? // Display All Chapters
+                filteredChapters.map((chapter) => (
                   <div
-                    key={section.section}
-                    className={`p-2.5 sm:p-3 rounded-lg cursor-pointer transition-all border border-gray-200 hover:shadow-sm ${
-                      activeSection && activeSection.section === section.section
-                        ? "bg-gray-200 text-gray-800 border-gray-300"
-                        : "bg-white hover:bg-[#f4f4f4] text-gray-600"
-                    }`}
-                    onClick={() => handleSectionClick(section)}
+                    key={chapter.chapter}
+                    className="p-2.5 sm:p-3 rounded-lg cursor-pointer transition-all border border-gray-200 hover:shadow-sm bg-white hover:bg-[#f4f4f4] text-gray-600"
+                    onClick={() => handleChapterClick(chapter)}
                   >
                     <div className="text-xs sm:text-sm grid font-medium">
                       <span className="font-semibold">
-                        Section {section.section}
+                        Chapter {chapter.chapter}
                       </span>
                       <span className="text-gray-400 text-xs truncate">
-                        {section.title}
+                        {chapter.heading}
                       </span>
                     </div>
                   </div>
                 ))
-              : activeSection && !activeChapter
-              ? // Display Chapters
+              : // Show chapters with the selected one highlighted
                 filteredChapters.map((chapter) => (
                   <div
                     key={chapter.chapter}
@@ -332,30 +297,7 @@ const Categories = () => {
                       </span>
                     </div>
                   </div>
-                ))
-              : activeChapter
-              ? // Show chapters with the selected one highlighted
-                filteredChapters.map((chapter) => (
-                  <div
-                    key={chapter.chapter}
-                    className={`p-2.5 sm:p-3 rounded-lg cursor-pointer transition-all border border-gray-200 hover:shadow-sm ${
-                      activeChapter && activeChapter.chapter === chapter.chapter
-                        ? "bg-gray-200 text-gray-800 border-gray-300"
-                        : "bg-white hover:bg-[#f4f4f4] text-gray-600"
-                    }`}
-                    onClick={() => handleChapterClick(chapter)}
-                  >
-                    <div className="text-xs sm:text-sm grid font-medium">
-                      <span className="font-semibold">
-                        Chapter {chapter.chapter}
-                      </span>
-                      <span className="text-gray-400 text-xs truncate">
-                        {chapter.heading}
-                      </span>
-                    </div>
-                  </div>
-                ))
-              : null}
+                ))}
           </div>
         </div>
       </div>
@@ -428,7 +370,7 @@ const Categories = () => {
                             src={
                               group.image.includes("https")
                                 ? group.image
-                                : `${process.env.NEXT_PUBLIC_BASE_URL}/uploads/${group.image}`
+                                : `${process.env.NEXT_PUBLIC_BASE_URL}/upload/${group.image}`
                             }
                             alt="group"
                             className="w-full h-full object-cover rounded-lg"

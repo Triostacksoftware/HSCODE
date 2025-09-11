@@ -65,6 +65,17 @@ const DomesticChat = ({ user, refreshUser, setMainActiveTab }) => {
           <div className="flex rounded-lg p-1 gap-1 md:gap-5">
             <button
               suppressHydrationWarning={true}
+              onClick={() => handleTabChange("navigator")}
+              className={`flex-1 py-3 md:py-[.6em] px-4 rounded-md text-sm md:text-xs font-medium transition-colors ${
+                activeTab === "navigator"
+                  ? "bg-gray-800 text-white"
+                  : "bg-gray-200 hover:text-gray-900"
+              }`}
+            >
+              All Chapters
+            </button>
+            <button
+              suppressHydrationWarning={true}
               onClick={() => handleTabChange("groups")}
               className={`flex-1 py-3 md:py-[.6em] px-4 rounded-md text-sm md:text-xs font-medium transition-colors ${
                 activeTab === "groups"
@@ -73,17 +84,6 @@ const DomesticChat = ({ user, refreshUser, setMainActiveTab }) => {
               }`}
             >
               My Groups
-            </button>
-            <button
-              suppressHydrationWarning={true}
-              onClick={() => handleTabChange("navigator")}
-              className={`flex-1 py-3 md:py-[.6em] px-4 rounded-md text-sm md:text-xs font-medium transition-colors ${
-                activeTab === "navigator"
-                  ? "bg-gray-800 text-white"
-                  : "bg-gray-200 hover:text-gray-900"
-              }`}
-            >
-              Sections
             </button>
           </div>
         </div>
