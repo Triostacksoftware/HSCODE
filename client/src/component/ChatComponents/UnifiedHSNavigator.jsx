@@ -1,7 +1,6 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { LiaSearchSolid } from "react-icons/lia";
-import { IoIosArrowBack } from "react-icons/io";
 import hsCodeData from "../../../hs_code_structure.json"
 
 const UnifiedHSNavigator = ({ 
@@ -9,12 +8,18 @@ const UnifiedHSNavigator = ({
   onChapterSelect,
   selectedChapter 
 }) => {
-  const [activeSection, setActiveSection] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const handleSectionClick = (section) => {
-    setActiveSection(section);
-  };
+  // Flatten all chapters from all sections into a single array
+  const allChapters = useMemo(() => {
+    return hsCodeData.sections.flatMap(section => 
+      section.chapters.map(chapter => ({
+        ...chapter,
+        sectionTitle: section.title,
+        sectionNumber: section.section
+      }))
+    );
+  }, []);
 
   const handleChapterClick = (chapter) => {
     if (onChapterSelect) {
@@ -26,9 +31,12 @@ const UnifiedHSNavigator = ({
     }
   };
 
-  const handleBackToSections = () => {
-    setActiveSection(null);
-  };
+  // Filter chapters based on search term
+  const filteredChapters = allChapters.filter(chapter => 
+    chapter.heading.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    chapter.chapter.toString().includes(searchTerm) ||
+    chapter.sectionTitle.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="flex flex-col h-full px-3">
@@ -37,66 +45,31 @@ const UnifiedHSNavigator = ({
         <LiaSearchSolid />
         <input
           type="text"
-          placeholder={activeSection ? "Search chapters..." : "Search sections..."}
+          placeholder="Search chapters..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full outline-none text-sm"
         />
       </div>
 
-      {/* Content */}
+      {/* Content - All Chapters */}
       <div className="flex-1 overflow-y-auto">
-        {!activeSection ? (
-          // Sections
-          hsCodeData.sections
-            .filter(section => 
-              section.title.toLowerCase().includes(searchTerm.toLowerCase())
-            )
-            .map((section) => (
-              <div
-                key={section.section}
-                className="p-3 rounded cursor-pointer transition-all bg-white hover:bg-[#f4f4f4] text-gray-600 mb-2"
-                onClick={() => handleSectionClick(section)}
-              >
-                <div className="text-sm grid font-medium">
-                  <span>Section {section.section}</span>
-                  <span className="text-gray-400 text-xs">{section.title}</span> 
-                </div>
-              </div>
-            ))
-        ) : (
-          // Chapters
-          <div>
-            <button
-              onClick={handleBackToSections}
-              className="p-2 text-sm cursor-pointer flex items-center justify-center hover:bg-gray-100 rounded-full mb-2"
-            >
-              <IoIosArrowBack/> back
-            </button>
-            
-            {activeSection.chapters
-              .filter(chapter => 
-                chapter.heading.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                chapter.chapter.toString().includes(searchTerm)
-              )
-              .map((chapter) => (
-                <div
-                  key={chapter.chapter}
-                  className={`p-3 rounded cursor-pointer transition-all mb-2 ${
-                    selectedChapter?.chapter === chapter.chapter.toString()
-                      ? "bg-[#eaeaea] text-gray-800"
-                      : "bg-white hover:bg-[#f4f4f4] text-gray-600"
-                  }`}
-                  onClick={() => handleChapterClick(chapter)}
-                >
-                  <div className="text-sm grid font-medium">
-                    <span>Chapter {chapter.chapter}</span>
-                    <span className="text-gray-400 text-xs">{chapter.heading}</span> 
-                  </div>
-                </div>
-              ))}
+        {filteredChapters.map((chapter) => (
+          <div
+            key={chapter.chapter}
+            className={`p-3 rounded cursor-pointer transition-all mb-2 ${
+              selectedChapter?.chapter === chapter.chapter.toString()
+                ? "bg-[#eaeaea] text-gray-800"
+                : "bg-white hover:bg-[#f4f4f4] text-gray-600"
+            }`}
+            onClick={() => handleChapterClick(chapter)}
+          >
+            <div className="text-sm grid font-medium">
+              <span>Chapter {chapter.chapter}</span>
+              <span className="text-gray-400 text-xs">{chapter.heading}</span> 
+            </div>
           </div>
-        )}
+        ))}
       </div>
     </div>
   );

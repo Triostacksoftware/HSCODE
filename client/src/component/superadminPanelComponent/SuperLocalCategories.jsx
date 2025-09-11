@@ -7,11 +7,10 @@ import hsCodeData from "../../../hs_code_structure.json";
 import SuperAdminChatWindow from "./SuperAdminChatWindow";
 
 const SuperLocalCategories = () => {
-  const [activeSection, setActiveSection] = useState(null);
   const [activeChapter, setActiveChapter] = useState(null);
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [showAddGroupModal, setShowAddGroupModal] = useState(false);
-  const [view, setView] = useState("countries"); // "countries", "sections", "chapters", "groups", "chat"
+  const [view, setView] = useState("countries"); // "countries", "chapters", "groups", "chat"
   const [selectedCountry, setSelectedCountry] = useState(null);
 
   // Available countries for local categories
@@ -28,16 +27,17 @@ const SuperLocalCategories = () => {
     { code: "BR", name: "Brazil" },
   ];
 
+  // Flatten all chapters from all sections into a single array
+  const allChapters = hsCodeData.sections.flatMap(section => 
+    section.chapters.map(chapter => ({
+      ...chapter,
+      sectionTitle: section.title,
+      sectionNumber: section.section
+    }))
+  );
+
   const handleCountrySelect = (country) => {
     setSelectedCountry(country);
-    setActiveSection(null);
-    setActiveChapter(null);
-    setSelectedGroup(null);
-    setView("sections");
-  };
-
-  const handleSectionClick = (section) => {
-    setActiveSection(section);
     setActiveChapter(null);
     setSelectedGroup(null);
     setView("chapters");
@@ -57,14 +57,6 @@ const SuperLocalCategories = () => {
   const handleBackToCountries = () => {
     setView("countries");
     setSelectedCountry(null);
-    setActiveSection(null);
-    setActiveChapter(null);
-    setSelectedGroup(null);
-  };
-
-  const handleBackToSections = () => {
-    setView("sections");
-    setActiveSection(null);
     setActiveChapter(null);
     setSelectedGroup(null);
   };
@@ -111,17 +103,15 @@ const SuperLocalCategories = () => {
     </div>
   );
 
-  const renderSectionsSidebar = () => (
+  const renderChaptersSidebar = () => (
     <div className="w-64 bg-white border-r border-gray-200 h-full overflow-y-auto">
       <div className="p-4 border-b border-gray-200 flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold text-gray-900">
-            {selectedCountry?.name} - HS Code
+            {selectedCountry?.name} - All Chapters
           </h2>
           <p className="text-sm text-gray-500 mt-1">
-            {activeSection
-              ? `Section ${activeSection.section}`
-              : "Select a section"}
+            {allChapters.length} chapters available
           </p>
         </div>
         <button
@@ -131,80 +121,15 @@ const SuperLocalCategories = () => {
           <MdArrowBack className="w-5 h-5 text-gray-500" />
         </button>
       </div>
-
       <div className="p-2">
-        {!activeSection ? (
-          // Show sections
-          <>
-            <h3 className="text-sm font-medium text-gray-700 mb-2 px-2">
-              Sections
-            </h3>
-            {hsCodeData.sections.map((section) => (
-              <div
-                key={section.section}
-                className="p-3 hover:bg-gray-100 border border-gray-200 rounded-lg cursor-pointer transition-all mb-2"
-                onClick={() => handleSectionClick(section)}
-              >
-                <h3 className="font-medium text-gray-900">
-                  Section {section.section}
-                </h3>
-                <p className="text-sm text-gray-600 mt-1">{section.title}</p>
-              </div>
-            ))}
-          </>
-        ) : (
-          // Show chapters for selected section
-          <>
-            <div className="flex items-center mb-2 px-2">
-              <button
-                onClick={handleBackToSections}
-                className="p-1 hover:bg-gray-200 rounded-lg transition-colors mr-2"
-              >
-                <MdArrowBack className="w-4 h-4 text-gray-500" />
-              </button>
-              <h3 className="text-sm font-medium text-gray-700">
-                Chapters - Section {activeSection.section}
-              </h3>
-            </div>
-            {activeSection.chapters?.map((chapter) => (
-              <div
-                key={chapter.chapter}
-                className="p-3 hover:bg-gray-100 border border-gray-200 rounded-lg cursor-pointer transition-all mb-2"
-                onClick={() => handleChapterClick(chapter)}
-              >
-                <h3 className="font-medium text-gray-900">
-                  Chapter {chapter.chapter}
-                </h3>
-                <p className="text-sm text-gray-600 mt-1">{chapter.heading}</p>
-              </div>
-            ))}
-          </>
-        )}
-      </div>
-    </div>
-  );
-
-  const renderChaptersSidebar = () => (
-    <div className="w-64 bg-white border-r border-gray-200 h-full overflow-y-auto">
-      <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-semibold text-gray-900">
-            Section {activeSection?.section}
-          </h2>
-          <p className="text-sm text-gray-500 mt-1">{activeSection?.title}</p>
-        </div>
-        <button
-          onClick={handleBackToSections}
-          className="p-1 hover:bg-gray-200 rounded-lg transition-colors"
-        >
-          <MdArrowBack className="w-5 h-5 text-gray-500" />
-        </button>
-      </div>
-      <div className="p-2">
-        {activeSection?.chapters?.map((chapter) => (
+        {allChapters.map((chapter) => (
           <div
             key={chapter.chapter}
-            className="p-3 hover:bg-gray-100 border border-gray-200 rounded-lg cursor-pointer transition-all mb-2"
+            className={`p-3 hover:bg-gray-100 border border-gray-200 rounded-lg cursor-pointer transition-all mb-2 ${
+              activeChapter && activeChapter.chapter === chapter.chapter
+                ? "bg-gray-200 border-gray-300"
+                : ""
+            }`}
             onClick={() => handleChapterClick(chapter)}
           >
             <h3 className="font-medium text-gray-900">
@@ -216,6 +141,7 @@ const SuperLocalCategories = () => {
       </div>
     </div>
   );
+
 
   const renderGroupsSidebar = () => (
     <div className="w-64 bg-white border-r border-gray-200 h-full overflow-y-auto">
@@ -278,19 +204,19 @@ const SuperLocalCategories = () => {
       {/* Left Sidebar - Countries */}
       {view === "countries" && renderCountriesSidebar()}
 
-      {/* Left Sidebar - Countries + Middle Sidebar - Sections & Chapters */}
-      {(view === "sections" || view === "chapters") && (
+      {/* Left Sidebar - Countries + Middle Sidebar - Chapters */}
+      {view === "chapters" && (
         <>
           {renderCountriesSidebar()}
-          {renderSectionsSidebar()}
+          {renderChaptersSidebar()}
         </>
       )}
 
-      {/* Left Sidebar - Countries + Middle Sidebar - Sections & Chapters + Right Sidebar - Groups + Chat Area */}
+      {/* Left Sidebar - Countries + Middle Sidebar - Chapters + Right Sidebar - Groups + Chat Area */}
       {view === "groups" && (
         <>
           {renderCountriesSidebar()}
-          {renderSectionsSidebar()}
+          {renderChaptersSidebar()}
           {renderGroupsSidebar()}
           {renderChatArea()}
         </>
@@ -300,7 +226,7 @@ const SuperLocalCategories = () => {
       {view === "chat" && (
         <>
           {renderCountriesSidebar()}
-          {renderSectionsSidebar()}
+          {renderChaptersSidebar()}
           {renderGroupsSidebar()}
           {renderChatArea()}
         </>
