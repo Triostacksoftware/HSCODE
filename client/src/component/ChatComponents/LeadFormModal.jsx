@@ -50,6 +50,7 @@ const LeadFormModal = ({
   // Location sharing states
   const [sharingLocation, setSharingLocation] = useState(false);
   const [locationError, setLocationError] = useState("");
+  const [locationSuccess, setLocationSuccess] = useState("");
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [currentLocation, setCurrentLocation] = useState(null);
   const [selectedLocation, setSelectedLocation] = useState(null);
@@ -541,15 +542,93 @@ const LeadFormModal = ({
     });
   };
 
-  // Handle location sharing with confirmation modal
+  // Get address from coordinates using Google Maps Geocoding API
+  const getAddressFromCoordinates = async (latitude, longitude) => {
+    try {
+      const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+
+      if (!apiKey) {
+        throw new Error("Google Maps API key is not configured");
+      }
+
+      console.log("Getting address for coordinates:", latitude, longitude);
+
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`
+      );
+      const data = await response.json();
+
+      console.log("Google Maps API response:", data);
+
+      if (data.status === "OK" && data.results.length > 0) {
+        const address = data.results[0].formatted_address;
+        console.log("Found address:", address);
+        return address;
+      } else {
+        console.error(
+          "Google Maps API error:",
+          data.status,
+          data.error_message
+        );
+        throw new Error(
+          `Google Maps API error: ${data.status} - ${
+            data.error_message || "No address found"
+          }`
+        );
+      }
+    } catch (error) {
+      console.error("Error getting address from coordinates:", error);
+      throw error;
+    }
+  };
+
+  // Handle location sharing - directly get address and populate field
   const handleLocationShare = async () => {
     try {
       setLocationError("");
       setSharingLocation(true);
 
+      console.log("Starting location sharing process...");
+
+      // Get current location
       const location = await getCurrentLocation();
-      setCurrentLocation(location);
-      setShowLocationModal(true);
+      console.log("Got current location:", location);
+
+      // Get address from coordinates using Google Maps API
+      const address = await getAddressFromCoordinates(
+        location.latitude,
+        location.longitude
+      );
+      console.log("Got address from Google Maps:", address);
+
+      // Set coordinates
+      setSelectedLocation({
+        latitude: location.latitude,
+        longitude: location.longitude,
+      });
+
+      // Update the appropriate address field based on lead type
+      if (leadType === "buy") {
+        console.log("Setting buyer delivery address:", address);
+        setBuyerDeliveryAddress(address);
+        setBuyerLat(location.latitude.toString());
+        setBuyerLng(location.longitude.toString());
+      } else {
+        console.log("Setting seller pickup address:", address);
+        setSellerPickupAddress(address);
+        setSellerLat(location.latitude.toString());
+        setSellerLng(location.longitude.toString());
+      }
+
+      // Show success message
+      setLocationError("");
+      setLocationSuccess("Location added successfully!");
+      console.log("Location sharing completed successfully");
+
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setLocationSuccess("");
+      }, 3000);
     } catch (error) {
       console.error("Error getting location:", error);
       if (error.message === "Geolocation is not supported by this browser") {
@@ -564,6 +643,12 @@ const LeadFormModal = ({
         );
       } else if (error.code === 3) {
         setLocationError("Location request timed out. Please try again.");
+      } else if (error.message.includes("No address found")) {
+        setLocationError(
+          "Could not find address for this location. Please enter manually."
+        );
+      } else if (error.message.includes("API key")) {
+        setLocationError("Google Maps API key is not configured properly.");
       } else {
         setLocationError("Failed to get your location. Please try again.");
       }
@@ -1048,11 +1133,33 @@ const LeadFormModal = ({
                       type="button"
                       onClick={handleLocationShare}
                       disabled={sharingLocation}
-                      className="mt-1 px-3 py-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-gray-200"
-                      title="Add current location"
+                      className={`mt-1 px-3 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed border ${
+                        locationSuccess
+                          ? "text-green-600 bg-green-50 border-green-200"
+                          : "text-gray-600 hover:text-red-600 hover:bg-red-50 border-gray-200"
+                      }`}
+                      title={
+                        locationSuccess
+                          ? "Location added successfully!"
+                          : "Add current location"
+                      }
                     >
                       {sharingLocation ? (
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                      ) : locationSuccess ? (
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
                       ) : (
                         <svg
                           className="w-4 h-4"
@@ -1093,11 +1200,33 @@ const LeadFormModal = ({
                       type="button"
                       onClick={handleLocationShare}
                       disabled={sharingLocation}
-                      className="mt-1 px-3 py-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-gray-200"
-                      title="Add current location"
+                      className={`mt-1 px-3 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed border ${
+                        locationSuccess
+                          ? "text-green-600 bg-green-50 border-green-200"
+                          : "text-gray-600 hover:text-red-600 hover:bg-red-50 border-gray-200"
+                      }`}
+                      title={
+                        locationSuccess
+                          ? "Location added successfully!"
+                          : "Add current location"
+                      }
                     >
                       {sharingLocation ? (
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                      ) : locationSuccess ? (
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
                       ) : (
                         <svg
                           className="w-4 h-4"
@@ -1124,6 +1253,28 @@ const LeadFormModal = ({
                 </div>
               )}
             </div>
+
+            {/* Location Success Message */}
+            {locationSuccess && (
+              <div className="mb-4 p-2 bg-green-50 border border-green-200 rounded-lg">
+                <p className="text-sm text-green-600 flex items-center gap-2">
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                  {locationSuccess}
+                </p>
+              </div>
+            )}
 
             {/* Requests + Remarks */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -1471,6 +1622,13 @@ const LeadFormModal = ({
               {locationError && (
                 <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
                   <p className="text-sm text-red-600">{locationError}</p>
+                </div>
+              )}
+
+              {/* Success Message */}
+              {locationSuccess && (
+                <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <p className="text-sm text-green-600">{locationSuccess}</p>
                 </div>
               )}
             </div>

@@ -1,6 +1,5 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { IoArrowBack } from "react-icons/io5";
 import axios from "axios";
 import UnifiedHSNavigator from "./UnifiedHSNavigator";
 import GlobalMyGroups from "./GlobalMyGroups";
@@ -76,7 +75,19 @@ const GlobalChat = ({ user, refreshUser, setMainActiveTab }) => {
                 onClick={handleBackToGroups}
                 className="md:hidden p-2 rounded-md hover:bg-gray-100"
               >
-                <IoArrowBack className="w-5 h-5" />
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 19l-7-7 7-7"
+                  />
+                </svg>
               </button>
             )}
           </div>

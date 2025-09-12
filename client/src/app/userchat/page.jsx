@@ -3,6 +3,8 @@ import React, { useState, useEffect } from "react";
 import Sidebar from "../../component/ChatComponents/Sidebar";
 import DomesticChat from "../../component/ChatComponents/DomesticChat";
 import GlobalChat from "../../component/ChatComponents/GlobalChat";
+import MobileDomesticChat from "../../component/ChatComponents/MobileDomesticChat";
+import MobileGlobalChat from "../../component/ChatComponents/MobileGlobalChat";
 import RequestedLeads from "../../component/ChatComponents/RequestedLeads";
 import UserChatSettings from "../../component/ChatComponents/UserChatSettings";
 import NotificationTab from "../../component/ChatComponents/NotificationTab";
@@ -230,9 +232,18 @@ const ChatPage = () => {
   };
 
   const renderActiveComponent = () => {
+    // Check if we're on mobile (screen width < 768px)
+    const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+
     switch (activeTab) {
       case "local":
-        return (
+        return isMobile ? (
+          <MobileDomesticChat
+            user={user}
+            refreshUser={refreshUser}
+            setMainActiveTab={setActiveTab}
+          />
+        ) : (
           <DomesticChat
             user={user}
             refreshUser={refreshUser}
@@ -240,7 +251,13 @@ const ChatPage = () => {
           />
         );
       case "global":
-        return (
+        return isMobile ? (
+          <MobileGlobalChat
+            user={user}
+            refreshUser={refreshUser}
+            setMainActiveTab={setActiveTab}
+          />
+        ) : (
           <GlobalChat
             user={user}
             refreshUser={refreshUser}
@@ -261,7 +278,19 @@ const ChatPage = () => {
       case "user-chat":
         return <UserChatPage onChatOpened={handleChatOpened} />;
       default:
-        return <DomesticChat setMainActiveTab={setActiveTab} />;
+        return isMobile ? (
+          <MobileDomesticChat
+            user={user}
+            refreshUser={refreshUser}
+            setMainActiveTab={setActiveTab}
+          />
+        ) : (
+          <DomesticChat
+            user={user}
+            refreshUser={refreshUser}
+            setMainActiveTab={setActiveTab}
+          />
+        );
     }
   };
 
@@ -271,7 +300,8 @@ const ChatPage = () => {
 
   return (
     <OnlineUsersContext.Provider value={{ onlineCounts, onlineUsers, socket }}>
-      <div className="flex h-screen bg-[#FEFEFE] ">
+      <div className="flex h-screen bg-[#FEFEFE]">
+        {/* Sidebar - Always visible */}
         <Sidebar
           onTabChange={setActiveTab}
           activeTab={activeTab}
@@ -280,7 +310,9 @@ const ChatPage = () => {
           unreadChatCount={unreadChatCount}
           onNotificationsRead={fetchNotificationCount}
         />
-        <div className="flex-1 overflow-auto">
+
+        {/* Main Content Area */}
+        <div className="flex-1 overflow-auto w-full">
           <div className="h-full">{renderActiveComponent()}</div>
         </div>
       </div>

@@ -369,62 +369,79 @@ const ChatWindow = ({
   }
 
   return (
-    <div className="relative flex flex-col h-full">
-      {/* Broadcast Marquee */}
+    <div className="relative flex flex-col h-full w-full">
+      {/* Lustrous Metallic Broadcast Banner */}
       {broadcastLeads.length > 0 && (
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2 px-4 overflow-hidden">
-          <div className="flex items-center justify-center space-x-4">
-            <HiMegaphone className="w-5 h-5 flex-shrink-0" />
-            <div className="flex-1 overflow-hidden">
-              <div className="animate-marquee whitespace-nowrap">
-                {broadcastLeads.map((lead, index) => {
-                  // Determine background color based on lead type
-                  let bgColor = "bg-gray-600"; // default
-                  if (lead.type === "buy") {
-                    bgColor = "bg-red-600";
-                  } else if (lead.type === "sell") {
-                    bgColor = "bg-green-600";
-                  } else if (lead.type === "high-sea-buy") {
-                    bgColor = "bg-red-700";
-                  } else if (lead.type === "high-sea-sell") {
-                    bgColor = "bg-green-700";
-                  }
+        <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border-b border-slate-700 shadow-lg">
+          <div className="py-2 px-4">
+            <div className="flex items-center justify-center">
+              {/* Main content area */}
+              <div className="flex-1 overflow-hidden">
+                <div className="animate-marquee whitespace-nowrap">
+                  {broadcastLeads.map((lead, index) => {
+                    // Lustrous metallic colors based on lead type
+                    let bgClass =
+                      "bg-gradient-to-r from-slate-600 to-slate-700 text-slate-200 border-slate-500 shadow-lg"; // default
 
-                  return (
-                    <span
-                      key={lead._id}
-                      onClick={() => scrollToLead(lead._id)}
-                      className={`inline-block mx-4 cursor-pointer hover:underline font-medium px-3 py-1 rounded-lg ${bgColor} text-white text-xs shadow-sm`}
-                      title="Click to scroll to this lead"
-                    >
-                      📢 {lead.hscode ? `HS: ${lead.hscode}` : "Lead"}:{" "}
-                      {lead.description || lead.content || "Text message"}
-                    </span>
-                  );
-                })}
+                    if (lead.type === "buy") {
+                      bgClass =
+                        "bg-gradient-to-r from-red-500 to-red-600 text-red-100 border-red-400 shadow-lg";
+                    } else if (lead.type === "sell") {
+                      bgClass =
+                        "bg-gradient-to-r from-green-500 to-green-600 text-green-100 border-green-400 shadow-lg";
+                    } else if (lead.type === "high-sea-buy") {
+                      bgClass =
+                        "bg-gradient-to-r from-red-600 to-red-700 text-red-100 border-red-500 shadow-lg";
+                    } else if (lead.type === "high-sea-sell") {
+                      bgClass =
+                        "bg-gradient-to-r from-green-600 to-green-700 text-green-100 border-green-500 shadow-lg";
+                    }
+
+                    return (
+                      <span
+                        key={lead._id}
+                        onClick={() => scrollToLead(lead._id)}
+                        className="group inline-block mx-3 cursor-pointer transition-all duration-200 hover:scale-105"
+                        title="Click to scroll to this lead"
+                      >
+                        <div
+                          className={`px-3 py-1.5 rounded-full border ${bgClass} hover:shadow-xl transition-all duration-200`}
+                        >
+                          <div className="flex items-center space-x-2">
+                            <span className="font-medium text-sm whitespace-nowrap">
+                              {lead.hscode ? `HS: ${lead.hscode}` : "Lead"}:{" "}
+                              {lead.description ||
+                                lead.content ||
+                                "Text message"}
+                            </span>
+                          </div>
+                        </div>
+                      </span>
+                    );
+                  })}
+                </div>
               </div>
             </div>
-            <HiMegaphone className="w-5 h-5 flex-shrink-0" />
           </div>
         </div>
       )}
 
       {/* Top Bar */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white sticky top-0 z-10">
-        <div className="flex items-center gap-3 min-w-0 flex-1">
+      <div className="flex items-center justify-between px-2 sm:px-4 py-3 border-b border-gray-200 bg-white sticky top-0 z-10">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
           {/* Back button for mobile */}
           {onBack && (
             <button
               onClick={onBack}
-              className="md:hidden p-2 rounded-md hover:bg-gray-100 -ml-2"
+              className="md:hidden p-1.5 sm:p-2 rounded-md hover:bg-gray-100 -ml-1 sm:-ml-2"
             >
-              <IoArrowBack className="w-5 h-5" />
+              <IoArrowBack className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
           )}
 
           {/* Group avatar and name */}
           <div
-            className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-lg font-bold text-white overflow-hidden flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
+            className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gray-300 flex items-center justify-center text-sm sm:text-lg font-bold text-white overflow-hidden flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
             onClick={handleGroupNameClick}
             title="Click to view group details"
           >
@@ -444,7 +461,7 @@ const ChatWindow = ({
           </div>
           <div className="flex flex-col min-w-0 flex-1">
             <span
-              className="text-base font-semibold text-gray-900 truncate cursor-pointer hover:text-blue-600 transition-colors"
+              className="text-sm sm:text-base font-semibold text-gray-900 truncate cursor-pointer hover:text-blue-600 transition-colors"
               onClick={handleGroupNameClick}
               title="Click to view group details"
             >
@@ -507,7 +524,7 @@ const ChatWindow = ({
           )}
           {/* Members dropdown: show all members with online indicators */}
           {showMembers && (
-            <div className="absolute right-4 top-14 bg-white border border-gray-200 rounded shadow-lg z-20 min-w-[220px] max-h-80 overflow-y-auto">
+            <div className="absolute right-2 sm:right-4 top-14 bg-white border border-gray-200 rounded shadow-lg z-20 min-w-[200px] sm:min-w-[220px] max-h-80 overflow-y-auto">
               <div className="p-2 text-gray-700 border-b border-gray-100 text-sm">
                 Members ({groupMembers.length})
               </div>
@@ -577,7 +594,7 @@ const ChatWindow = ({
       </div>
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4 md:p-9 space-y-4 bg-[#faf7f4]">
+      <div className="flex-1 overflow-y-auto p-2 sm:p-4 md:p-9 space-y-3 sm:space-y-4 bg-[#faf7f4]">
         {loading ? (
           <div className="flex items-center justify-center h-full">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -644,7 +661,7 @@ const ChatWindow = ({
                         </div>
                       )}
                       <div
-                        className={`max-w-[85%] sm:max-w-lg lg:max-w-2xl ${
+                        className={`max-w-[90%] sm:max-w-[85%] md:max-w-lg lg:max-w-2xl ${
                           isOwnMessage ? "order-2" : "order-1"
                         }`}
                       >
@@ -660,7 +677,7 @@ const ChatWindow = ({
                           >
                             {/* Header with badges */}
                             <div
-                              className={`px-3 py-2 border-b ${
+                              className={`px-2 py-1.5 sm:px-3 sm:py-2 border-b ${
                                 lead.type === "buy"
                                   ? "bg-blue-100 border-blue-200"
                                   : lead.type === "sell"
@@ -716,10 +733,10 @@ const ChatWindow = ({
                             </div>
 
                             {/* Main Content */}
-                            <div className="p-3 space-y-3">
+                            <div className="p-2 sm:p-3 space-y-2 sm:space-y-3">
                               {/* Description */}
                               {lead.description && (
-                                <div className="bg-white rounded p-2 border border-gray-200">
+                                <div className="bg-white rounded p-1.5 sm:p-2 border border-gray-200">
                                   <h3 className="text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wide">
                                     Description
                                   </h3>
@@ -734,9 +751,9 @@ const ChatWindow = ({
                                 lead.packing ||
                                 lead.targetPrice ||
                                 lead.negotiable !== undefined) && (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5 sm:gap-2">
                                   {lead.quantity && (
-                                    <div className="bg-white rounded p-2 border border-gray-200">
+                                    <div className="bg-white rounded p-1.5 sm:p-2 border border-gray-200">
                                       <div className="text-xs font-semibold text-blue-600 mb-1 uppercase tracking-wide">
                                         Quantity
                                       </div>
@@ -746,7 +763,7 @@ const ChatWindow = ({
                                     </div>
                                   )}
                                   {lead.packing && (
-                                    <div className="bg-white rounded p-2 border border-gray-200">
+                                    <div className="bg-white rounded p-1.5 sm:p-2 border border-gray-200">
                                       <div className="text-xs font-semibold text-green-600 mb-1 uppercase tracking-wide">
                                         Packing
                                       </div>
@@ -757,7 +774,7 @@ const ChatWindow = ({
                                   )}
                                   {(lead.targetPrice ||
                                     lead.negotiable !== undefined) && (
-                                    <div className="bg-white rounded p-2 border border-gray-200">
+                                    <div className="bg-white rounded p-1.5 sm:p-2 border border-gray-200">
                                       <div className="text-xs font-semibold text-yellow-600 mb-1 uppercase tracking-wide">
                                         Price
                                       </div>
@@ -783,7 +800,7 @@ const ChatWindow = ({
                                   </h3>
                                   <div className="grid gap-2">
                                     {lead.buyerDeliveryLocation?.address && (
-                                      <div className="bg-white rounded p-2 border border-gray-200">
+                                      <div className="bg-white rounded p-1.5 sm:p-2 border border-gray-200">
                                         <div className="text-xs font-semibold text-red-600 mb-1 uppercase tracking-wide">
                                           Delivery Location
                                         </div>
@@ -817,7 +834,7 @@ const ChatWindow = ({
                                       </div>
                                     )}
                                     {lead.sellerPickupLocation?.address && (
-                                      <div className="bg-white rounded p-2 border border-gray-200">
+                                      <div className="bg-white rounded p-1.5 sm:p-2 border border-gray-200">
                                         <div className="text-xs font-semibold text-green-600 mb-1 uppercase tracking-wide">
                                           Pickup Location
                                         </div>
@@ -862,7 +879,7 @@ const ChatWindow = ({
                                   </h3>
                                   <div className="space-y-1.5">
                                     {lead.specialRequest && (
-                                      <div className="bg-white rounded p-2 border border-gray-200">
+                                      <div className="bg-white rounded p-1.5 sm:p-2 border border-gray-200">
                                         <div className="text-xs font-semibold text-purple-600 mb-1 uppercase tracking-wide">
                                           Special Request
                                         </div>
@@ -872,7 +889,7 @@ const ChatWindow = ({
                                       </div>
                                     )}
                                     {lead.remarks && (
-                                      <div className="bg-white rounded p-2 border border-gray-200">
+                                      <div className="bg-white rounded p-1.5 sm:p-2 border border-gray-200">
                                         <div className="text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wide">
                                           Notes
                                         </div>
@@ -893,7 +910,7 @@ const ChatWindow = ({
                                   </h3>
                                   <div className="space-y-1.5">
                                     {lead.leadCode && (
-                                      <div className="bg-white rounded p-2 border border-gray-200">
+                                      <div className="bg-white rounded p-1.5 sm:p-2 border border-gray-200">
                                         <div className="text-xs font-semibold text-indigo-600 mb-1 uppercase tracking-wide">
                                           Lead ID
                                         </div>
@@ -903,7 +920,7 @@ const ChatWindow = ({
                                       </div>
                                     )}
                                     {lead.adminComment && (
-                                      <div className="bg-white rounded p-2 border border-gray-200">
+                                      <div className="bg-white rounded p-1.5 sm:p-2 border border-gray-200">
                                         <div className="text-xs font-semibold text-orange-600 mb-1 uppercase tracking-wide">
                                           Admin Comment
                                         </div>
@@ -947,13 +964,13 @@ const ChatWindow = ({
                             </div>
                           </div>
                         ) : (
-                          <div className="bg-white rounded-2xl px-4 py-3 shadow-sm border border-gray-200">
+                          <div className="bg-white rounded-2xl px-3 py-2 sm:px-4 sm:py-3 shadow-sm border border-gray-200">
                             <p className="text-sm break-words text-gray-800">
                               {lead.content}
                             </p>
                           </div>
                         )}
-                        <div className="flex items-center justify-between mt-2 px-1">
+                        <div className="flex items-center justify-between mt-1.5 sm:mt-2 px-1">
                           <div
                             className={`text-xs text-gray-500 ${
                               isOwnMessage ? "text-right" : "text-left"
@@ -967,7 +984,7 @@ const ChatWindow = ({
                               <button
                                 onClick={() => handleBroadcastRequest(lead._id)}
                                 disabled={processingBroadcast[lead._id]}
-                                className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="flex items-center gap-1 px-2 py-1 sm:gap-1.5 sm:px-2.5 text-xs font-medium bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 title="Request broadcast for this lead"
                               >
                                 <HiMegaphone className="w-3 h-3" />
@@ -988,11 +1005,11 @@ const ChatWindow = ({
         )}
       </div>
       {/* Action bar */}
-      <div className="p-3 md:p-4 border-t border-gray-200 flex-shrink-0 bg-white flex items-center justify-end">
+      <div className="p-2 sm:p-3 md:p-4 border-t border-gray-200 flex-shrink-0 bg-white flex items-center justify-end">
         <button
           type="button"
           onClick={() => setLeadModalOpen(true)}
-          className={`items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-black/90 ${
+          className={`items-center gap-1.5 sm:gap-2 px-3 py-2 sm:px-4 bg-gray-900 text-white rounded-lg hover:bg-black/90 ${
             leadModalOpen ? "hidden" : "inline-flex"
           }`}
         >

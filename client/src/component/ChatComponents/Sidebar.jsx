@@ -16,7 +16,7 @@ const Sidebar = ({
   unreadChatCount = 0,
   onNotificationsRead,
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
 
   const toggleSidebar = () => {
     setIsOpen(!isOpen);
@@ -85,7 +85,7 @@ const Sidebar = ({
   return (
     <div
       className={`h-screen transition-all duration-500 bg-[#f3f3f3] overflow-hidden flex flex-col border-r-1 border-gray-200 ${
-        isOpen ? "w-56" : "w-14"
+        isOpen ? "w-56 md:w-64" : "w-14"
       }`}
     >
       {/* Hamburger Menu */}

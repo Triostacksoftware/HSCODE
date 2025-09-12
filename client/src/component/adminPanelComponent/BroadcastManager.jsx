@@ -268,19 +268,7 @@ const BroadcastManager = () => {
                     <td className="px-6 py-4">
                       <div className="flex items-center">
                         <div className="flex-shrink-0 w-10 h-10">
-                          <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
-                            <span className="text-sm font-medium text-gray-700">
-                              {lead.type === "buy"
-                                ? "🛒"
-                                : lead.type === "sell"
-                                ? "💰"
-                                : lead.type === "high-sea-buy"
-                                ? "🚢🛒"
-                                : lead.type === "high-sea-sell"
-                                ? "🚢💰"
-                                : "📝"}
-                            </span>
-                          </div>
+                          <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center"></div>
                         </div>
                         <div className="ml-4">
                           <div className="text-sm font-medium text-gray-900">

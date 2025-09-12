@@ -238,41 +238,58 @@ const SuperAdminChatWindow = ({
 
   return (
     <div className="relative flex flex-col h-full">
-      {/* Broadcast Marquee */}
+      {/* Lustrous Metallic Broadcast Banner */}
       {broadcastLeads.length > 0 && (
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2 px-4 overflow-hidden">
-          <div className="flex items-center justify-center space-x-4 ">
-            <HiMegaphone className="w-5 h-5 flex-shrink-0" />
-            <div className="flex-1 overflow-hidden">
-              <div className="animate-marquee whitespace-nowrap">
-                {broadcastLeads.map((lead, index) => {
-                  // Determine background color based on lead type
-                  let bgColor = "bg-gray-600"; // default
-                  if (lead.type === "buy") {
-                    bgColor = "bg-red-600";
-                  } else if (lead.type === "sell") {
-                    bgColor = "bg-green-600";
-                  } else if (lead.type === "high-sea-buy") {
-                    bgColor = "bg-red-700";
-                  } else if (lead.type === "high-sea-sell") {
-                    bgColor = "bg-green-700";
-                  }
+        <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border-b border-slate-700 shadow-lg">
+          <div className="py-2 px-4">
+            <div className="flex items-center justify-center">
+              {/* Main content area */}
+              <div className="flex-1 overflow-hidden">
+                <div className="animate-marquee whitespace-nowrap">
+                  {broadcastLeads.map((lead, index) => {
+                    // Lustrous metallic colors based on lead type
+                    let bgClass =
+                      "bg-gradient-to-r from-slate-600 to-slate-700 text-slate-200 border-slate-500 shadow-lg"; // default
 
-                  return (
-                    <span
-                      key={lead._id}
-                      onClick={() => scrollToLead(lead._id)}
-                      className={`inline-block mx-4 cursor-pointer hover:underline font-medium px-3 py-1 rounded-lg ${bgColor} text-white text-xs shadow-sm`}
-                      title="Click to scroll to this lead"
-                    >
-                      📢 {lead.hscode ? `HS: ${lead.hscode}` : "Lead"}:{" "}
-                      {lead.description || lead.content || "Text message"}
-                    </span>
-                  );
-                })}
+                    if (lead.type === "buy") {
+                      bgClass =
+                        "bg-gradient-to-r from-red-500 to-red-600 text-red-100 border-red-400 shadow-lg";
+                    } else if (lead.type === "sell") {
+                      bgClass =
+                        "bg-gradient-to-r from-green-500 to-green-600 text-green-100 border-green-400 shadow-lg";
+                    } else if (lead.type === "high-sea-buy") {
+                      bgClass =
+                        "bg-gradient-to-r from-red-600 to-red-700 text-red-100 border-red-500 shadow-lg";
+                    } else if (lead.type === "high-sea-sell") {
+                      bgClass =
+                        "bg-gradient-to-r from-green-600 to-green-700 text-green-100 border-green-500 shadow-lg";
+                    }
+
+                    return (
+                      <span
+                        key={lead._id}
+                        onClick={() => scrollToLead(lead._id)}
+                        className="group inline-block mx-3 cursor-pointer transition-all duration-200 hover:scale-105"
+                        title="Click to scroll to this lead"
+                      >
+                        <div
+                          className={`px-3 py-1.5 rounded-full border ${bgClass} hover:shadow-xl transition-all duration-200`}
+                        >
+                          <div className="flex items-center space-x-2">
+                            <span className="font-medium text-sm whitespace-nowrap">
+                              {lead.hscode ? `HS: ${lead.hscode}` : "Lead"}:{" "}
+                              {lead.description ||
+                                lead.content ||
+                                "Text message"}
+                            </span>
+                          </div>
+                        </div>
+                      </span>
+                    );
+                  })}
+                </div>
               </div>
             </div>
-            <HiMegaphone className="w-5 h-5 flex-shrink-0" />
           </div>
         </div>
       )}

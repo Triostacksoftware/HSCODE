@@ -139,12 +139,12 @@ const RequestedLeads = () => {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="p-4 border-b border-gray-200">
-        <div className="flex justify-between items-center">
-          <h3 className="text-lg font-semibold text-gray-800">
+      <div className="p-3 sm:p-4 border-b border-gray-200">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-800">
             My Requested Leads
           </h3>
-          <div className="flex outline outline-gray-500 rounded-md relative text-sm w-52">
+          <div className="flex outline outline-gray-500 rounded-md relative text-sm w-full sm:w-52">
             <button
               onClick={() => setRequestState("local")}
               className={`py-1 w-1/2 cursor-pointer z-10 ${
@@ -174,12 +174,12 @@ const RequestedLeads = () => {
       </div>
 
       {/* Tabs */}
-      <div className="p-4 border-b border-gray-200">
+      <div className="p-3 sm:p-4 border-b border-gray-200">
         <div className="flex bg-gray-100 rounded-lg p-1">
           <button
             suppressHydrationWarning={true}
             onClick={() => setActiveTab("pending")}
-            className={`flex-1 py-2 px-4 rounded-md cursor-pointer text-sm font-medium transition-colors ${
+            className={`flex-1 py-2 px-2 sm:px-4 rounded-md cursor-pointer text-xs sm:text-sm font-medium transition-colors ${
               activeTab === "pending"
                 ? "bg-gray-600 text-white"
                 : "text-gray-600 hover:text-gray-900"
@@ -190,7 +190,7 @@ const RequestedLeads = () => {
           <button
             suppressHydrationWarning={true}
             onClick={() => setActiveTab("approved")}
-            className={`flex-1 py-2 px-4 rounded-md cursor-pointer text-sm font-medium transition-colors ${
+            className={`flex-1 py-2 px-2 sm:px-4 rounded-md cursor-pointer text-xs sm:text-sm font-medium transition-colors ${
               activeTab === "approved"
                 ? "bg-gray-600 text-white"
                 : "text-gray-600 hover:text-gray-900"
@@ -201,7 +201,7 @@ const RequestedLeads = () => {
           <button
             suppressHydrationWarning={true}
             onClick={() => setActiveTab("rejected")}
-            className={`flex-1 py-2 px-4 rounded-md cursor-pointer text-sm font-medium transition-colors ${
+            className={`flex-1 py-2 px-2 sm:px-4 rounded-md cursor-pointer text-xs sm:text-sm font-medium transition-colors ${
               activeTab === "rejected"
                 ? "bg-gray-600 text-white"
                 : "text-gray-600 hover:text-gray-900"
@@ -213,29 +213,29 @@ const RequestedLeads = () => {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="flex-1 overflow-y-auto p-2 sm:p-4">
         {loading ? (
           <div className="flex items-center justify-center h-full">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
           </div>
         ) : requestedLeads.length === 0 ? (
-          <div className="flex items-center justify-center h-full">
+          <div className="flex items-center justify-center h-full p-4">
             <div className="text-center">
-              <div className="text-gray-400 text-4xl mb-2">
+              <div className="text-gray-400 text-3xl sm:text-4xl mb-2">
                 {activeTab === "pending"
                   ? "⏳"
                   : activeTab === "approved"
                   ? "✅"
                   : "❌"}
               </div>
-              <p className="text-gray-500">
+              <p className="text-gray-500 text-sm sm:text-base">
                 {activeTab === "pending"
                   ? "No pending leads"
                   : activeTab === "approved"
                   ? "No approved leads"
                   : "No rejected leads"}
               </p>
-              <p className="text-gray-400 text-sm mt-1">
+              <p className="text-gray-400 text-xs sm:text-sm mt-1">
                 {activeTab === "pending"
                   ? "Your submitted leads will appear here"
                   : activeTab === "approved"
@@ -245,11 +245,11 @@ const RequestedLeads = () => {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
             {requestedLeads.map((lead) => (
               <div
                 key={lead._id}
-                className={`p-4 bg-white border border-gray-200 rounded-lg hover:shadow-sm transition-all border-l-4`}
+                className={`p-3 sm:p-4 bg-white border border-gray-200 rounded-lg hover:shadow-sm transition-all border-l-4`}
                 style={{
                   borderLeftColor:
                     lead.type === "buy"
@@ -278,24 +278,24 @@ const RequestedLeads = () => {
 
                     {/* Structured lead view */}
                     {lead.hscode || lead.description ? (
-                      <div className="text-sm space-y-1">
-                        <div className="flex items-center gap-2 rounded bg-gray-100 w-fit">
+                      <div className="text-xs sm:text-sm space-y-1">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 rounded bg-gray-100 w-fit">
                           <span className="text-xs text-gray-600 inline-block px-2">
                             HS: {lead.hscode || "-"}
                           </span>
                           {lead.description && (
-                            <div className="bg-gray-700 px-2 py-1 text-white rounded-r">
+                            <div className="bg-gray-700 px-2 py-1 text-white rounded-r text-xs">
                               {lead.description}
                             </div>
                           )}
                         </div>
                         {lead.leadCode && (
-                          <div className="text-[11px] text-gray-600">
+                          <div className="text-[10px] sm:text-[11px] text-gray-600">
                             Lead ID:{" "}
                             <span className="font-medium">{lead.leadCode}</span>
                           </div>
                         )}
-                        <div className="flex gap-20 justify-between text-xs text-gray-700 mt-2">
+                        <div className="flex flex-col sm:flex-row sm:gap-20 sm:justify-between text-xs text-gray-700 mt-2">
                           {lead.quantity && (
                             <div>Quantity: {lead.quantity}</div>
                           )}
