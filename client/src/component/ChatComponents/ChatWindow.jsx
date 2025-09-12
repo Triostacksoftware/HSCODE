@@ -17,6 +17,7 @@ import { MdOutlineGroup } from "react-icons/md";
 import { IoArrowBack } from "react-icons/io5";
 import { HiMegaphone } from "react-icons/hi2";
 import UserProfileSidebar from "./UserProfileSidebar";
+import GroupDetailsSidebar from "./GroupDetailsSidebar";
 import LeadFormModal from "./LeadFormModal";
 import ClickableAddress from "../ClickableAddress";
 
@@ -25,6 +26,7 @@ const ChatWindow = ({
   selectedGroupId,
   groupName,
   groupImage,
+  groupData,
   onBack,
   setActiveTab,
 }) => {
@@ -48,6 +50,10 @@ const ChatWindow = ({
     userId: null,
   });
   const [selectedUser, setSelectedUser] = useState(null);
+  const [groupDetailsSidebar, setGroupDetailsSidebar] = useState({
+    isOpen: false,
+    group: null,
+  });
 
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
@@ -257,6 +263,29 @@ const ChatWindow = ({
     setSelectedUser(null);
   };
 
+  const handleGroupNameClick = () => {
+    if (selectedGroupId && groupName) {
+      setGroupDetailsSidebar({
+        isOpen: true,
+        group: {
+          _id: selectedGroupId,
+          name: groupName,
+          heading: groupData?.heading || "",
+          image: groupImage || groupData?.image || "",
+          chapterNumber: chapterNo,
+          countryCode: groupData?.countryCode || "",
+        },
+      });
+    }
+  };
+
+  const closeGroupDetailsSidebar = () => {
+    setGroupDetailsSidebar({
+      isOpen: false,
+      group: null,
+    });
+  };
+
   const handleStartChat = (chat) => {
     // Switch to user-chat tab instead of navigating
     if (setActiveTab) {
@@ -394,7 +423,11 @@ const ChatWindow = ({
           )}
 
           {/* Group avatar and name */}
-          <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-lg font-bold text-white overflow-hidden flex-shrink-0">
+          <div
+            className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-lg font-bold text-white overflow-hidden flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
+            onClick={handleGroupNameClick}
+            title="Click to view group details"
+          >
             {groupImage ? (
               <img
                 src={
@@ -410,7 +443,11 @@ const ChatWindow = ({
             )}
           </div>
           <div className="flex flex-col min-w-0 flex-1">
-            <span className="text-base font-semibold text-gray-900 truncate">
+            <span
+              className="text-base font-semibold text-gray-900 truncate cursor-pointer hover:text-blue-600 transition-colors"
+              onClick={handleGroupNameClick}
+              title="Click to view group details"
+            >
               {groupName || "Group Chat"}
             </span>
             <div className="text-xs text-gray-600 truncate">
@@ -1038,6 +1075,14 @@ const ChatWindow = ({
         currentUser={user}
         onStartChat={handleStartChat}
         setActiveTab={setActiveTab}
+      />
+
+      <GroupDetailsSidebar
+        isOpen={groupDetailsSidebar.isOpen}
+        onClose={closeGroupDetailsSidebar}
+        group={groupDetailsSidebar.group}
+        groupType="local"
+        onlineCount={onlineUsers[selectedGroupId]?.length || 0}
       />
     </div>
   );

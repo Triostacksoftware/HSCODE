@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   FaTimes,
   FaComments,
@@ -8,6 +8,9 @@ import {
   FaPhone,
   FaGlobe,
   FaMapMarkerAlt,
+  FaFileAlt,
+  FaChartLine,
+  FaCalendarAlt,
 } from "react-icons/fa";
 import axios from "axios";
 
@@ -20,6 +23,30 @@ const UserProfileSidebar = ({
   setActiveTab,
 }) => {
   const [startingChat, setStartingChat] = useState(false);
+  const [userStats, setUserStats] = useState(null);
+  const [loadingStats, setLoadingStats] = useState(false);
+
+  useEffect(() => {
+    if (isOpen && user && isPremium) {
+      fetchUserStats();
+    }
+  }, [isOpen, user]);
+
+  const fetchUserStats = async () => {
+    try {
+      setLoadingStats(true);
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/user/${user._id}/stats`,
+        { withCredentials: true }
+      );
+      console.log("User stats API response:", response.data);
+      setUserStats(response.data.data);
+    } catch (error) {
+      console.error("Error fetching user stats:", error);
+    } finally {
+      setLoadingStats(false);
+    }
+  };
 
   if (!isOpen || !user) return null;
 
@@ -104,28 +131,31 @@ const UserProfileSidebar = ({
 
         {/* Contact Information */}
         <div className={`space-y-4 ${!isPremium ? "relative" : ""}`}>
-          <div className="flex items-center space-x-3">
-            <FaEnvelope className="text-gray-400 flex-shrink-0" />
-            <div>
-              <p className="text-sm font-medium text-gray-900">Email</p>
-              <p className="text-sm text-gray-600">Email:XXXXXXXXX</p>
-            </div>
-          </div>
-          <div className="flex items-center space-x-3">
-            <FaPhone className="text-gray-400 flex-shrink-0" />
-            <div>
-              <p className="text-sm font-medium text-gray-900">Phone</p>
-              <p className="text-sm text-gray-600">Phone:XXXXXXXXX</p>
-            </div>
-          </div>
-          <div className="flex items-center space-x-3">
-            <FaMapMarkerAlt className="text-gray-400 flex-shrink-0" />
-            <div>
-              <p className="text-sm font-medium text-gray-900">Country</p>
-              <p className="text-sm text-gray-600">Country:XX</p>
-            </div>
-          </div>
-
+          {user.email && !isPremium && (
+            <>
+              <div className="flex items-center space-x-3">
+                <FaEnvelope className="text-gray-400 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-gray-900">Email</p>
+                  <p className="text-sm text-gray-600">Email:XXXXXXXXX</p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-3">
+                <FaPhone className="text-gray-400 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-gray-900">Phone</p>
+                  <p className="text-sm text-gray-600">Phone:XXXXXXXXX</p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-3">
+                <FaMapMarkerAlt className="text-gray-400 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-gray-900">Country</p>
+                  <p className="text-sm text-gray-600">Country:XX</p>
+                </div>
+              </div>
+            </>
+          )}
           {user.email && isPremium && (
             <div className="flex items-center space-x-3">
               <FaEnvelope className="text-gray-400 flex-shrink-0" />
@@ -180,6 +210,131 @@ const UserProfileSidebar = ({
             </div>
           )}
         </div>
+
+        {/* User Statistics - Only for Premium Users */}
+        {isPremium && (
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            <h4 className="text-sm font-medium text-gray-900 mb-4">
+              Activity Statistics
+            </h4>
+
+            {loadingStats ? (
+              <div className="flex justify-center py-4">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600"></div>
+              </div>
+            ) : userStats ? (
+              <div className="space-y-4">
+                {/* Lead Statistics */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="text-center p-3 bg-gray-50 rounded-lg">
+                    <div className="text-lg font-semibold text-gray-900">
+                      {userStats.totalLeads || 0}
+                    </div>
+                    <div className="text-xs text-gray-600">Total Leads</div>
+                  </div>
+                  <div className="text-center p-3 bg-gray-50 rounded-lg">
+                    <div className="text-lg font-semibold text-gray-900">
+                      {userStats.approvedLeads || 0}
+                    </div>
+                    <div className="text-xs text-gray-600">Approved</div>
+                  </div>
+                </div>
+
+                {/* Lead Types Breakdown */}
+                {userStats.leadTypes &&
+                  Object.keys(userStats.leadTypes).length > 0 && (
+                    <div>
+                      <h5 className="text-xs font-medium text-gray-700 mb-2">
+                        Lead Types
+                      </h5>
+                      <div className="space-y-1">
+                        {Object.entries(userStats.leadTypes).map(
+                          ([type, count]) => (
+                            <div
+                              key={type}
+                              className="flex justify-between text-sm"
+                            >
+                              <span className="text-gray-600 capitalize">
+                                {type}
+                              </span>
+                              <span className="text-gray-900 font-medium">
+                                {count}
+                              </span>
+                            </div>
+                          )
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                {/* Recent Activity */}
+                {userStats.recentLeads && userStats.recentLeads.length > 0 && (
+                  <div>
+                    <h5 className="text-xs font-medium text-gray-700 mb-2">
+                      Recent Leads
+                    </h5>
+                    <div className="space-y-2">
+                      {userStats.recentLeads.slice(0, 3).map((lead, index) => (
+                        <div
+                          key={index}
+                          className="text-sm border-b border-gray-100 pb-2 last:border-b-0"
+                        >
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-gray-900 truncate">
+                                {lead.description ||
+                                  lead.content ||
+                                  "No description"}
+                              </p>
+                              {lead.hscode && (
+                                <p className="text-xs text-gray-500">
+                                  HS: {lead.hscode}
+                                </p>
+                              )}
+                            </div>
+                            <div className="text-right ml-2">
+                              <span
+                                className={`text-xs px-2 py-1 rounded ${
+                                  lead.type === "buy"
+                                    ? "bg-blue-100 text-blue-800"
+                                    : lead.type === "sell"
+                                    ? "bg-green-100 text-green-800"
+                                    : "bg-gray-100 text-gray-800"
+                                }`}
+                              >
+                                {lead.type?.toUpperCase()}
+                              </span>
+                              <p className="text-xs text-gray-500 mt-1">
+                                {new Date(lead.createdAt).toLocaleDateString()}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Member Since */}
+                {user.createdAt && (
+                  <div className="flex items-center space-x-2 text-sm text-gray-600">
+                    <FaCalendarAlt className="w-3 h-3" />
+                    <span>
+                      Member since{" "}
+                      {new Date(user.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-center py-4">
+                <p className="text-sm text-gray-500">
+                  No activity data available
+                </p>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Chat Button */}
         {canStartChat && (

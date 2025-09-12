@@ -14,6 +14,9 @@ const router = express.Router();
 // Public route to get home data by country code
 router.get("/country/:countryCode", getHomeDataByCountry);
 
+// Backward compatibility route (direct call to controller)
+router.get("/:countryCode", getHomeDataByCountry);
+
 // Admin routes (require authentication)
 router.get("/admin", adminMiddleware, getAdminHomeData);
 router.post("/admin", adminMiddleware, upsertHomeData);

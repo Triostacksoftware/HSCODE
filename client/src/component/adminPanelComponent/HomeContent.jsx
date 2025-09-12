@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { HiPencil, HiSave, HiX, HiRefresh, HiTrash } from "react-icons/hi";
 import axios from "axios";
 import CouponManager from "./CouponManager";
+import NewsManager from "./NewsManager";
 import toast from "react-hot-toast";
 
 const HomeContent = () => {
@@ -346,30 +347,7 @@ const HomeContent = () => {
             />
           )}
 
-          {activeTab === "news" && (
-            <NewsEditor
-              data={homeData.newsSection}
-              editing={editing}
-              onChange={(field, value) =>
-                handleInputChange("newsSection", field, value)
-              }
-              onArrayChange={(field, index, subField, value) =>
-                handleArrayItemChange(
-                  "newsSection",
-                  field,
-                  index,
-                  subField,
-                  value
-                )
-              }
-              onAddItem={(field, template) =>
-                addArrayItem("newsSection", field, template)
-              }
-              onRemoveItem={(field, index) =>
-                removeArrayItem("newsSection", field, index)
-              }
-            />
-          )}
+          {activeTab === "news" && <NewsManager />}
 
           {activeTab === "testimonials" && (
             <TestimonialsEditor
@@ -758,161 +736,6 @@ const CategoriesEditor = ({
           )}
         </div>
       ))}
-    </div>
-  </div>
-);
-
-const NewsEditor = ({
-  data,
-  editing,
-  onChange,
-  onArrayChange,
-  onAddItem,
-  onRemoveItem,
-}) => (
-  <div className="space-y-6">
-    <h3 className="text-xl font-semibold text-gray-900">News Section</h3>
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <InputField
-        label="Section Title"
-        value={data?.title}
-        onChange={(value) => onChange("title", value)}
-        editing={editing}
-      />
-      <InputField
-        label="Section Subtitle"
-        value={data?.subtitle}
-        onChange={(value) => onChange("subtitle", value)}
-        editing={editing}
-      />
-    </div>
-
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h4 className="text-lg font-medium text-gray-900">News Items</h4>
-        {editing && (
-          <button
-            onClick={() =>
-              onAddItem("news", {
-                id: Date.now(),
-                title: "",
-                excerpt: "",
-                image: "",
-                date: "",
-                category: "",
-                newsUrl: "",
-              })
-            }
-            className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
-          >
-            Add News
-          </button>
-        )}
-      </div>
-      {data?.news
-        .slice()
-        .reverse()
-        .map((item, index) => {
-          const isComplete =
-            item?.title?.trim() &&
-            item?.excerpt?.trim() &&
-            item?.image?.trim() &&
-            item?.date?.trim() &&
-            item?.category?.trim();
-
-          return (
-            <div
-              key={item.id || index}
-              className={`border rounded-lg p-4 ${
-                isComplete
-                  ? "bg-green-50 border-green-200"
-                  : "bg-red-50 border-red-200"
-              }`}
-            >
-              {editing && !isComplete && (
-                <div className="mb-3 p-2 bg-red-100 border border-red-300 rounded text-red-700 text-sm">
-                  ⚠️ Please fill in all required fields (Title, Excerpt, Image
-                  URL, Date, Category)
-                </div>
-              )}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <InputField
-                  label="Title *"
-                  value={item?.title}
-                  onChange={(value) =>
-                    onArrayChange("news", index, "title", value)
-                  }
-                  editing={editing}
-                  required={!item?.title?.trim()}
-                />
-                <InputField
-                  label="Excerpt *"
-                  value={item?.excerpt}
-                  onChange={(value) =>
-                    onArrayChange("news", index, "excerpt", value)
-                  }
-                  editing={editing}
-                  multiline
-                  required={!item?.excerpt?.trim()}
-                />
-                <InputField
-                  label="Image URL *"
-                  value={item?.image}
-                  onChange={(value) =>
-                    onArrayChange("news", index, "image", value)
-                  }
-                  editing={editing}
-                  fullWidth
-                  required={!item?.image?.trim()}
-                />
-                <InputField
-                  label="Date *"
-                  value={item?.date}
-                  onChange={(value) =>
-                    onArrayChange("news", index, "date", value)
-                  }
-                  editing={editing}
-                  type="date"
-                  required={!item?.date?.trim()}
-                />
-                <InputField
-                  label="Category *"
-                  value={item?.category}
-                  onChange={(value) =>
-                    onArrayChange("news", index, "category", value)
-                  }
-                  editing={editing}
-                  required={!item?.category?.trim()}
-                />
-                <InputField
-                  label="News URL (Optional)"
-                  value={item?.newsUrl || ""}
-                  onChange={(value) =>
-                    onArrayChange("news", index, "newsUrl", value)
-                  }
-                  editing={editing}
-                  placeholder="https://example.com/news-article"
-                  fullWidth
-                />
-              </div>
-              {editing && (
-                <div className="mt-3 flex gap-2">
-                  <button
-                    onClick={() => onRemoveItem("news", index)}
-                    className="text-red-600 hover:text-red-800 text-sm"
-                  >
-                    Remove News
-                  </button>
-                  {!isComplete && (
-                    <span className="text-orange-600 text-sm">
-                      ⚠️ Incomplete - will not be saved
-                    </span>
-                  )}
-                </div>
-              )}
-            </div>
-          );
-        })}
     </div>
   </div>
 );

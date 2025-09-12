@@ -4,6 +4,7 @@ import HomeData from "../models/HomeData.js";
 export const getHomeDataByCountry = async (req, res) => {
   try {
     const { countryCode } = req.params;
+    console.log(`Fetching home data for country: ${countryCode}`);
 
     if (!countryCode) {
       return res.status(400).json({ message: "Country code is required" });
@@ -14,6 +15,8 @@ export const getHomeDataByCountry = async (req, res) => {
       countryCode: countryCode.toUpperCase(),
     });
 
+    console.log(`Home data found for ${countryCode}:`, homeData ? "Yes" : "No");
+
     // If no data found for the requested country, fallback to India (IN)
     if (!homeData) {
       console.log(
@@ -22,11 +25,13 @@ export const getHomeDataByCountry = async (req, res) => {
 
       // Try to get India's home data as fallback
       const indiaHomeData = await HomeData.findOne({ countryCode: "IN" });
+      console.log(`India fallback data found:`, indiaHomeData ? "Yes" : "No");
 
       if (indiaHomeData) {
         console.log(
           `Using India home data as fallback for country: ${countryCode}`
         );
+        console.log(`India data news section:`, indiaHomeData.newsSection);
         return res.status(200).json({
           success: true,
           data: indiaHomeData,
@@ -36,6 +41,7 @@ export const getHomeDataByCountry = async (req, res) => {
         });
       } else {
         // If even India doesn't have data, return 404
+        console.log(`No fallback data available for ${countryCode}`);
         return res.status(404).json({
           message:
             "Home data not found for this country and no fallback available",
@@ -45,6 +51,10 @@ export const getHomeDataByCountry = async (req, res) => {
       }
     }
 
+    console.log(
+      `Returning home data for ${countryCode}, news section:`,
+      homeData.newsSection
+    );
     res.status(200).json({ success: true, data: homeData });
   } catch (error) {
     console.error("Error fetching home data:", error);

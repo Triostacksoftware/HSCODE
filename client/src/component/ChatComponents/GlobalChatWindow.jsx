@@ -13,6 +13,7 @@ import { LiaSearchSolid } from "react-icons/lia";
 import { IoMdClose } from "react-icons/io";
 import { FaRegPaperPlane } from "react-icons/fa";
 import UserProfileSidebar from "./UserProfileSidebar";
+import GroupDetailsSidebar from "./GroupDetailsSidebar";
 import LeadFormModal from "./LeadFormModal";
 import ClickableAddress from "../ClickableAddress";
 import socket from "../../utilities/socket";
@@ -44,6 +45,10 @@ const GlobalChatWindow = ({
   });
   const [selectedUser, setSelectedUser] = useState(null);
   const [showMembers, setShowMembers] = useState(false);
+  const [groupDetailsSidebar, setGroupDetailsSidebar] = useState({
+    isOpen: false,
+    group: null,
+  });
   const messagesEndRef = useRef(null);
 
   const fetchGroupMembers = useCallback(async () => {
@@ -247,6 +252,29 @@ const GlobalChatWindow = ({
     setSelectedUser(null);
   };
 
+  const handleGroupNameClick = () => {
+    if (selectedGroupId && groupName) {
+      setGroupDetailsSidebar({
+        isOpen: true,
+        group: {
+          _id: selectedGroupId,
+          name: groupName,
+          heading: groupData?.heading || "",
+          image: groupImage || groupData?.image || "",
+          chapterNumber: chapterNo,
+          countryCode: groupData?.countryCode || "",
+        },
+      });
+    }
+  };
+
+  const closeGroupDetailsSidebar = () => {
+    setGroupDetailsSidebar({
+      isOpen: false,
+      group: null,
+    });
+  };
+
   const handleStartChat = (chat) => {
     // Switch to user-chat tab instead of navigating
     if (setActiveTab) {
@@ -330,7 +358,11 @@ const GlobalChatWindow = ({
           )}
 
           {/* Group avatar and name */}
-          <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-lg font-bold text-white overflow-hidden flex-shrink-0">
+          <div
+            className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-lg font-bold text-white overflow-hidden flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
+            onClick={handleGroupNameClick}
+            title="Click to view group details"
+          >
             {groupImage ? (
               <img
                 src={
@@ -346,7 +378,11 @@ const GlobalChatWindow = ({
             )}
           </div>
           <div className="flex flex-col min-w-0 flex-1">
-            <span className="text-base font-semibold text-gray-900 truncate">
+            <span
+              className="text-base font-semibold text-gray-900 truncate cursor-pointer hover:text-blue-600 transition-colors"
+              onClick={handleGroupNameClick}
+              title="Click to view group details"
+            >
               {groupName || "Group Chat"}
             </span>
             <div className="text-xs text-gray-600 truncate">
@@ -836,6 +872,15 @@ const GlobalChatWindow = ({
         onStartChat={handleStartChat}
         setActiveTab={setActiveTab}
       />
+
+      <GroupDetailsSidebar
+        isOpen={groupDetailsSidebar.isOpen}
+        onClose={closeGroupDetailsSidebar}
+        group={groupDetailsSidebar.group}
+        groupType="global"
+        onlineCount={onlineUsers[selectedGroupId]?.length || 0}
+      />
+
       {showMembers && (
         <div className="absolute right-4 top-14 bg-white border border-gray-200 rounded shadow-lg z-20 min-w-[220px] max-h-80 overflow-y-auto">
           <div className="p-2 text-gray-700 border-b border-gray-100 text-sm">
