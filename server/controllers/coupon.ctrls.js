@@ -1,6 +1,7 @@
 import CouponModel from "../models/Coupon.js";
 import UserModel from "../models/user.js";
 import HomeDataModel from "../models/HomeData.js";
+import SubscriptionPlanModel from "../models/SubscriptionPlan.js";
 
 // Create a new coupon (Admin only)
 export const createCoupon = async (req, res) => {
@@ -292,12 +293,14 @@ export const getSubscriptionPlans = async (req, res) => {
       return res.status(400).json({ message: "Country code is required" });
     }
 
-    // Get HomeData for the specific country
-    const homeData = await HomeDataModel.findOne({ countryCode });
+    // Get active subscription plans from the new model
+    const plans = await SubscriptionPlanModel.find({ isActive: true })
+      .sort({ monthlyPrice: 1 })
+      .select("-__v");
 
-    if (!homeData || !homeData.subscriptionPlans) {
+    if (!plans || plans.length === 0) {
       return res.status(404).json({
-        message: "Subscription plans not found for this country",
+        message: "No subscription plans found",
       });
     }
 
@@ -313,13 +316,77 @@ export const getSubscriptionPlans = async (req, res) => {
       ],
     }).select("code description planId discountType discountValue");
 
+    // Calculate global yearly discount (you can make this configurable)
+    const globalYearlyDiscount = 20; // Default 20% discount for yearly billing
+
     res.json({
-      ...homeData.subscriptionPlans.toObject(),
+      title: "Choose Your Plan",
+      subtitle: "Select the perfect plan for your business needs",
+      currency: "USD",
+      yearlyDiscount: globalYearlyDiscount,
+      plans: plans.map((plan) => ({
+        id: plan.id,
+        name: plan.name,
+        description: plan.description,
+        monthlyPrice: plan.monthlyPrice,
+        features: plan.features,
+        icon: plan.icon,
+        popular: plan.popular,
+        color: plan.color,
+        maxGroups: plan.maxGroups,
+        maxLeads: plan.maxLeads,
+      })),
+      faqSection: {
+        title: "Frequently Asked Questions",
+        faqs: [
+          {
+            id: 1,
+            question: "What happens if I exceed my plan limits?",
+            answer:
+              "If you exceed your plan limits, you'll be notified and can upgrade to a higher plan or purchase additional capacity.",
+          },
+          {
+            id: 2,
+            question: "Can I change my plan anytime?",
+            answer:
+              "Yes, you can upgrade or downgrade your plan at any time. Changes take effect immediately.",
+          },
+          {
+            id: 3,
+            question: "Do you offer refunds?",
+            answer:
+              "We offer a 30-day money-back guarantee for all paid plans. Contact support for assistance.",
+          },
+        ],
+      },
+      ctaSection: {
+        title: "Ready to Get Started?",
+        subtitle: "Join thousands of businesses already using HSCODE",
+        primaryButtonText: "Start Free Trial",
+        primaryButtonLink: "/auth",
+        secondaryButtonText: "Contact Sales",
+        secondaryButtonLink: "/contact",
+      },
       availableCoupons: activeCoupons.length,
       supportsCoupons: true,
     });
   } catch (error) {
     console.error("Error fetching subscription plans:", error);
+    res.status(500).json({ message: "Error fetching subscription plans" });
+  }
+};
+
+// Get subscription plans for coupon creation (simplified)
+export const getSubscriptionPlansForCoupons = async (req, res) => {
+  try {
+    // Get active subscription plans from the new model
+    const plans = await SubscriptionPlanModel.find({ isActive: true })
+      .select("id name description monthlyPrice")
+      .sort({ monthlyPrice: 1 });
+
+    res.json(plans);
+  } catch (error) {
+    console.error("Error fetching subscription plans for coupons:", error);
     res.status(500).json({ message: "Error fetching subscription plans" });
   }
 };

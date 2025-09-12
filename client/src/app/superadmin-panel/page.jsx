@@ -14,6 +14,8 @@ import SuperLocalRequestedLeads from "@/component/superadminPanelComponent/Super
 import SuperLocalCategories from "@/component/superadminPanelComponent/SuperLocalCategories";
 import ManageAdmins from "@/component/superadminPanelComponent/ManageAdmins";
 import NotificationManager from "@/component/superadminPanelComponent/NotificationManager";
+import CouponManager from "@/component/superadminPanelComponent/CouponManager";
+import SubscriptionPlanManager from "@/component/superadminPanelComponent/SubscriptionPlanManager";
 import {
   MdOutlineDashboard,
   MdOutlineCategory,
@@ -24,6 +26,8 @@ import {
   MdOutlineRequestPage,
   MdOutlineAdminPanelSettings,
   MdOutlineNotifications,
+  MdOutlineCardMembership,
+  MdOutlineLocalOffer,
 } from "react-icons/md";
 
 const SuperAdminPanel = () => {
@@ -57,6 +61,16 @@ const SuperAdminPanel = () => {
       name: "Global Categories",
       icon: MdOutlineCategory,
       component: SuperCategories,
+    },
+    {
+      name: "Subscription Plans",
+      icon: MdOutlineCardMembership,
+      component: SubscriptionPlanManager,
+    },
+    {
+      name: "Coupon Management",
+      icon: MdOutlineLocalOffer,
+      component: CouponManager,
     },
     { name: "Settings", icon: MdOutlineSettings, component: SuperSettings },
     {

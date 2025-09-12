@@ -7,6 +7,7 @@ import {
   validateCoupon,
   applyCoupon,
   getSubscriptionPlans,
+  getSubscriptionPlansForCoupons,
 } from "../controllers/coupon.ctrls.js";
 import { authMiddleware, adminMiddleware } from "../middlewares/auth.mdware.js";
 
@@ -14,6 +15,7 @@ const router = express.Router();
 
 // Public routes
 router.get("/subscription/plans", getSubscriptionPlans);
+router.get("/plans", getSubscriptionPlansForCoupons);
 
 // User routes (require authentication)
 router.get("/validate/:code", authMiddleware, validateCoupon);
