@@ -8,6 +8,7 @@ import {
   FaTimes,
   FaFile,
   FaMapMarkerAlt,
+  FaPlus,
 } from "react-icons/fa";
 import axios from "axios";
 import { OnlineUsersContext } from "../../contexts/OnlineUsersContext";
@@ -46,11 +47,15 @@ const IndividualUserChat = ({ chat, user, onBack, onMessageSent }) => {
   const [selectedImageModal, setSelectedImageModal] = useState(null);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
 
+  // Mobile attachment dropdown state
+  const [showAttachmentDropdown, setShowAttachmentDropdown] = useState(false);
+
   const { socket } = useContext(OnlineUsersContext);
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const imageInputRef = useRef(null);
   const documentInputRef = useRef(null);
+  const dropdownRef = useRef(null);
 
   // Add body class to prevent page scrolling
   useEffect(() => {
@@ -59,6 +64,23 @@ const IndividualUserChat = ({ chat, user, onBack, onMessageSent }) => {
       document.body.classList.remove("chat-active");
     };
   }, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowAttachmentDropdown(false);
+      }
+    };
+
+    if (showAttachmentDropdown) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showAttachmentDropdown]);
 
   // Fetch messages when chat changes
   useEffect(() => {
@@ -858,7 +880,9 @@ const IndividualUserChat = ({ chat, user, onBack, onMessageSent }) => {
     return (
       <div className="flex-1 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-500">Select a chat to start messaging</p>
+          <p className="text-gray-500 hidden md:block">
+            Select a chat to start messaging
+          </p>
         </div>
       </div>
     );
@@ -1228,35 +1252,90 @@ const IndividualUserChat = ({ chat, user, onBack, onMessageSent }) => {
             className="hidden"
           />
 
-          {/* Image picker button */}
-          <button
-            onClick={() => imageInputRef.current?.click()}
-            className="px-3 py-2 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
-          >
-            <FaImage className="w-5 h-5" />
-          </button>
+          {/* Desktop: Show all icons */}
+          <div className="hidden md:flex items-center gap-2">
+            {/* Image picker button */}
+            <button
+              onClick={() => imageInputRef.current?.click()}
+              className="px-3 py-2 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+            >
+              <FaImage className="w-5 h-5" />
+            </button>
 
-          {/* Document picker button */}
-          <button
-            onClick={() => documentInputRef.current?.click()}
-            className="px-3 py-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-          >
-            <FaFile className="w-5 h-5" />
-          </button>
+            {/* Document picker button */}
+            <button
+              onClick={() => documentInputRef.current?.click()}
+              className="px-3 py-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+            >
+              <FaFile className="w-5 h-5" />
+            </button>
 
-          {/* Location sharing button */}
-          <button
-            onClick={handleLocationShare}
-            disabled={sharingLocation}
-            className="px-3 py-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Share current location"
-          >
-            {sharingLocation ? (
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-red-600"></div>
-            ) : (
-              <FaMapMarkerAlt className="w-5 h-5" />
+            {/* Location sharing button */}
+            <button
+              onClick={handleLocationShare}
+              disabled={sharingLocation}
+              className="px-3 py-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Share current location"
+            >
+              {sharingLocation ? (
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-red-600"></div>
+              ) : (
+                <FaMapMarkerAlt className="w-5 h-5" />
+              )}
+            </button>
+          </div>
+
+          {/* Mobile: Plus icon with dropdown */}
+          <div className="md:hidden relative" ref={dropdownRef}>
+            <button
+              onClick={() => setShowAttachmentDropdown(!showAttachmentDropdown)}
+              className="px-3 py-2 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+              title="Attachments"
+            >
+              <FaPlus className="w-5 h-5" />
+            </button>
+
+            {/* Dropdown menu */}
+            {showAttachmentDropdown && (
+              <div className="absolute bottom-full left-0 mb-2 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[120px]">
+                <button
+                  onClick={() => {
+                    imageInputRef.current?.click();
+                    setShowAttachmentDropdown(false);
+                  }}
+                  className="w-full px-4 py-3 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 border-b border-gray-100"
+                >
+                  <FaImage className="w-4 h-4 text-purple-600" />
+                  <span className="text-sm">Image</span>
+                </button>
+                <button
+                  onClick={() => {
+                    documentInputRef.current?.click();
+                    setShowAttachmentDropdown(false);
+                  }}
+                  className="w-full px-4 py-3 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 border-b border-gray-100"
+                >
+                  <FaFile className="w-4 h-4 text-blue-600" />
+                  <span className="text-sm">File</span>
+                </button>
+                <button
+                  onClick={() => {
+                    handleLocationShare();
+                    setShowAttachmentDropdown(false);
+                  }}
+                  disabled={sharingLocation}
+                  className="w-full px-4 py-3 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {sharingLocation ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                  ) : (
+                    <FaMapMarkerAlt className="w-4 h-4 text-red-600" />
+                  )}
+                  <span className="text-sm">Location</span>
+                </button>
+              </div>
             )}
-          </button>
+          </div>
 
           <div className="flex-1 relative">
             <input

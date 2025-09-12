@@ -227,11 +227,11 @@ const UserChatContent = ({ onChatOpened = () => {} }) => {
         ) : (
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center">
-              <FaComments className="text-6xl text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
+              <FaComments className="text-6xl text-gray-300 mx-auto mb-4 hidden md:block" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2 hidden md:block">
                 Select a Chat
               </h3>
-              <p className="text-gray-500">
+              <p className="text-gray-500 hidden md:block">
                 Choose a conversation from the left sidebar to start messaging
               </p>
             </div>

@@ -29,8 +29,32 @@ export const getMe = async (req, res) => {
     if (!decoded?.id) return res.status(401).json({ message: "Unauthorized" });
     const user = await UserModel.findById(decoded.id).select("-password");
     if (!user) return res.status(404).json({ message: "User not found" });
-    res.json({ user });
+
+    // Return user with all profile fields
+    res.json({
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        about: user.about,
+        companyWebsite: user.companyWebsite,
+        address: user.address,
+        companyName: user.companyName,
+        country: user.country,
+        image: user.image,
+        membership: user.membership,
+        role: user.role,
+        countryCode: user.countryCode,
+        preferences: user.preferences,
+        groupsID: user.groupsID,
+        globalGroupsID: user.globalGroupsID,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+      },
+    });
   } catch (e) {
+    console.error("Get profile error:", e);
     res.status(500).json({ message: "Failed to fetch profile" });
   }
 };
@@ -51,6 +75,9 @@ export const updateProfile = async (req, res) => {
       password,
       about,
       companyWebsite,
+      address,
+      companyName,
+      country,
       preferences,
       image,
     } = req.body;
@@ -67,6 +94,9 @@ export const updateProfile = async (req, res) => {
     if (typeof about !== "undefined") user.about = about;
     if (typeof companyWebsite !== "undefined")
       user.companyWebsite = companyWebsite;
+    if (typeof address !== "undefined") user.address = address;
+    if (typeof companyName !== "undefined") user.companyName = companyName;
+    if (typeof country !== "undefined") user.country = country;
     if (preferences && typeof preferences === "object") {
       user.preferences = { ...(user.preferences || {}), ...preferences };
     }
@@ -228,7 +258,10 @@ export const signup = async (req, res) => {
     await newUser.save();
 
     // Generate JWT with user._id
-    const authToken = generateToken({ id: newUser._id, role: "user", countryCode: newUser.countryCode }, "7d");
+    const authToken = generateToken(
+      { id: newUser._id, role: "user", countryCode: newUser.countryCode },
+      "7d"
+    );
 
     // Set JWT in HTTP-only cookie
     setCookie(res, "auth_token", authToken); // 7d
@@ -333,7 +366,10 @@ export const emailVerification = async (req, res) => {
     await newUser.save();
 
     // 5. Generate JWT with user._id
-    const authToken = generateToken({ id: newUser._id, role: "user", countryCode: newUser.countryCode }, "24h");
+    const authToken = generateToken(
+      { id: newUser._id, role: "user", countryCode: newUser.countryCode },
+      "24h"
+    );
 
     // 6. Set JWT in HTTP-only cookie
     res.cookie("auth_token", authToken, {
@@ -1068,7 +1104,10 @@ export const userLogin = async (req, res) => {
     }
 
     // Generate JWT token
-    const authToken = generateToken({ id: user._id, role: "user", countryCode: user.countryCode }, "7d");
+    const authToken = generateToken(
+      { id: user._id, role: "user", countryCode: user.countryCode },
+      "7d"
+    );
 
     // Set JWT in HTTP-only cookie
     setCookie(res, "auth_token", authToken);

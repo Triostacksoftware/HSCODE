@@ -155,9 +155,11 @@ const DomesticChat = ({ user, refreshUser, setMainActiveTab }) => {
       ) : (
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center text-gray-500">
-            <div className="text-6xl mb-4">💬</div>
-            <h3 className="text-lg font-medium mb-2">Select a Group</h3>
-            <p className="text-sm">
+            <div className="text-6xl mb-4 hidden md:block">💬</div>
+            <h3 className="text-lg font-medium mb-2 hidden md:block">
+              Select a Group
+            </h3>
+            <p className="text-sm hidden md:block">
               Choose a group from My Groups or browse HS Code chapters to find
               local trading groups
             </p>

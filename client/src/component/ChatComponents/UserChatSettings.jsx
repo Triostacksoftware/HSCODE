@@ -91,6 +91,15 @@ const UserChatSettings = () => {
   const [editCompanyWebsite, setEditCompanyWebsite] = useState(false);
   const [phone, setPhone] = useState("");
   const [websiteError, setWebsiteError] = useState("");
+  const [email, setEmail] = useState("");
+  const [address, setAddress] = useState("");
+  const [companyName, setCompanyName] = useState("");
+  const [country, setCountry] = useState("");
+  const [editEmail, setEditEmail] = useState(false);
+  const [editPhone, setEditPhone] = useState(false);
+  const [editAddress, setEditAddress] = useState(false);
+  const [editCompanyName, setEditCompanyName] = useState(false);
+  const [editCountry, setEditCountry] = useState(false);
 
   useEffect(() => {
     // Load current settings (if backend endpoints exist). Gracefully fallback to defaults
@@ -102,10 +111,15 @@ const UserChatSettings = () => {
           { withCredentials: true }
         );
         const u = res.data?.user || {};
+        console.log("Fetched user data:", u); // Debug log
         setProfileName(u.name || "");
         setProfileAbout(u.about || "");
         setProfileCompanyWebsite(u.companyWebsite || "");
         setPhone(u.phone || "");
+        setEmail(u.email || "");
+        setAddress(u.address || "");
+        setCompanyName(u.companyName || "");
+        setCountry(u.country || "");
         if (u.image)
           setImagePreview(
             u.image.includes("http")
@@ -143,17 +157,23 @@ const UserChatSettings = () => {
       form.append("name", profileName);
       form.append("about", profileAbout);
       form.append("companyWebsite", formatWebsiteUrl(profileCompanyWebsite));
-      form.append(
-        "preferences",
-        JSON.stringify({
-          notifyNewLead,
-          notifyMention,
-          sound,
-          muteAll,
-          autoJoin,
-        })
-      );
+      form.append("email", email);
+      form.append("phone", phone);
+      form.append("address", address);
+      form.append("companyName", companyName);
+      form.append("country", country);
       if (imageFile) form.append("image", imageFile);
+
+      console.log("Saving profile data:", {
+        name: profileName,
+        about: profileAbout,
+        companyWebsite: formatWebsiteUrl(profileCompanyWebsite),
+        email,
+        phone,
+        address,
+        companyName,
+        country,
+      }); // Debug log
       await axios.patch(
         `${process.env.NEXT_PUBLIC_BASE_URL}/auth/profile`,
         form,
@@ -273,56 +293,9 @@ const UserChatSettings = () => {
                 )}
               </div>
               <div className="mt-1 text-sm text-gray-600">
-                {!editCompanyWebsite ? (
-                  <div className="flex items-center gap-2">
-                    <span className="truncate">
-                      {profileCompanyWebsite || "No website"}
-                    </span>
-                    <button
-                      className="text-[11px] px-2 py-0.5 rounded border border-gray-300 bg-gray-100 hover:bg-gray-200 text-gray-800"
-                      onClick={() => {
-                        setEditCompanyWebsite(true);
-                        setWebsiteError("");
-                      }}
-                    >
-                      Edit
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2 w-full">
-                    <div className="flex-1">
-                      <Input
-                        value={profileCompanyWebsite}
-                        onChange={(e) => {
-                          setProfileCompanyWebsite(e.target.value);
-                          if (websiteError) setWebsiteError("");
-                        }}
-                        placeholder="Company website (e.g., example.com)"
-                      />
-                      {websiteError && (
-                        <div className="text-xs text-red-500 mt-1">
-                          {websiteError}
-                        </div>
-                      )}
-                    </div>
-                    <button
-                      className="text-[11px] px-2 py-0.5 rounded border border-gray-300 bg-gray-100 hover:bg-gray-200 text-gray-800"
-                      onClick={() => {
-                        if (
-                          profileCompanyWebsite &&
-                          !validateWebsiteUrl(profileCompanyWebsite)
-                        ) {
-                          setWebsiteError("Please enter a valid website URL");
-                          return;
-                        }
-                        setEditCompanyWebsite(false);
-                        setWebsiteError("");
-                      }}
-                    >
-                      Done
-                    </button>
-                  </div>
-                )}
+                <span className="truncate">
+                  {profileCompanyWebsite || "No website"}
+                </span>
               </div>
             </div>
           </div>
@@ -332,7 +305,64 @@ const UserChatSettings = () => {
         <Row>
           <div className="px-5">
             <div className="text-xs text-gray-500 mb-1">Phone number</div>
-            <div className="text-sm">{phone || "-"}</div>
+            <div className="text-sm flex items-center gap-2">
+              {!editPhone ? (
+                <>
+                  <div className="flex-1">
+                    <span className="truncate">{phone || "-"}</span>
+                  </div>
+                  <button
+                    className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
+                    onClick={() => setEditPhone(true)}
+                    title="Edit phone number"
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                      />
+                    </svg>
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div className="flex-1">
+                    <Input
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="Enter phone number"
+                      type="tel"
+                    />
+                  </div>
+                  <button
+                    className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
+                    onClick={() => setEditPhone(false)}
+                    title="Done editing"
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  </button>
+                </>
+              )}
+            </div>
           </div>
         </Row>
 
@@ -340,61 +370,352 @@ const UserChatSettings = () => {
         <Row>
           <div className="px-5">
             <div className="text-xs text-gray-500 mb-1">Company Website</div>
-            <div className="text-sm">
-              {profileCompanyWebsite ? (
-                <a
-                  href={formatWebsiteUrl(profileCompanyWebsite)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:text-blue-800 underline"
-                >
-                  {profileCompanyWebsite}
-                </a>
+            <div className="text-sm flex items-center gap-2">
+              {!editCompanyWebsite ? (
+                <>
+                  <div className="flex-1">
+                    {profileCompanyWebsite ? (
+                      <a
+                        href={formatWebsiteUrl(profileCompanyWebsite)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-800 underline"
+                      >
+                        {profileCompanyWebsite}
+                      </a>
+                    ) : (
+                      "-"
+                    )}
+                  </div>
+                  <button
+                    className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
+                    onClick={() => {
+                      setEditCompanyWebsite(true);
+                      setWebsiteError("");
+                    }}
+                    title="Edit website"
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                      />
+                    </svg>
+                  </button>
+                </>
               ) : (
-                "-"
+                <>
+                  <div className="flex-1">
+                    <Input
+                      value={profileCompanyWebsite}
+                      onChange={(e) => {
+                        setProfileCompanyWebsite(e.target.value);
+                        if (websiteError) setWebsiteError("");
+                      }}
+                      placeholder="Company website (e.g., example.com)"
+                    />
+                    {websiteError && (
+                      <div className="text-xs text-red-500 mt-1">
+                        {websiteError}
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
+                    onClick={() => {
+                      if (
+                        profileCompanyWebsite &&
+                        !validateWebsiteUrl(profileCompanyWebsite)
+                      ) {
+                        setWebsiteError("Please enter a valid website URL");
+                        return;
+                      }
+                      setEditCompanyWebsite(false);
+                      setWebsiteError("");
+                    }}
+                    title="Done editing"
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  </button>
+                </>
               )}
             </div>
           </div>
         </Row>
 
-        {/* Notification preferences */}
-        <Row title="Notifications">
-          <div className="px-6 space-y-4">
-            <Toggle
-              checked={notifyNewLead}
-              onChange={setNotifyNewLead}
-              label="New approved lead"
-            />
-            <Toggle
-              checked={notifyMention}
-              onChange={setNotifyMention}
-              label="Mentions"
-            />
-            <Toggle checked={muteAll} onChange={setMuteAll} label="Mute all" />
-            <div className="flex items-center justify-between">
-              <div className="text-sm font-medium">Sound</div>
-              <div className="w-40">
-                <Select
-                  value={sound}
-                  onChange={(e) => setSound(e.target.value)}
-                >
-                  <option value="pop">Pop</option>
-                  <option value="ding">Ding</option>
-                  <option value="silent">Silent</option>
-                </Select>
-              </div>
+        {/* Email row */}
+        <Row>
+          <div className="px-5">
+            <div className="text-xs text-gray-500 mb-1">Email</div>
+            <div className="text-sm flex items-center gap-2">
+              {!editEmail ? (
+                <>
+                  <div className="flex-1">
+                    <span className="truncate">{email || "-"}</span>
+                  </div>
+                  <button
+                    className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
+                    onClick={() => setEditEmail(true)}
+                    title="Edit email"
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                      />
+                    </svg>
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div className="flex-1">
+                    <Input
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="Enter email address"
+                      type="email"
+                    />
+                  </div>
+                  <button
+                    className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
+                    onClick={() => setEditEmail(false)}
+                    title="Done editing"
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </Row>
 
-        {/* Behaviour */}
-        <Row title="Behaviour">
+        {/* Address row */}
+        <Row>
           <div className="px-5">
-            <Toggle
-              checked={autoJoin}
-              onChange={setAutoJoin}
-              label="Auto-join suggested groups"
-            />
+            <div className="text-xs text-gray-500 mb-1">Address</div>
+            <div className="text-sm flex items-center gap-2">
+              {!editAddress ? (
+                <>
+                  <div className="flex-1">
+                    <span className="truncate">{address || "-"}</span>
+                  </div>
+                  <button
+                    className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
+                    onClick={() => setEditAddress(true)}
+                    title="Edit address"
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                      />
+                    </svg>
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div className="flex-1">
+                    <Input
+                      value={address}
+                      onChange={(e) => setAddress(e.target.value)}
+                      placeholder="Enter your address"
+                    />
+                  </div>
+                  <button
+                    className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
+                    onClick={() => setEditAddress(false)}
+                    title="Done editing"
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </Row>
+
+        {/* Company Name row */}
+        <Row>
+          <div className="px-5">
+            <div className="text-xs text-gray-500 mb-1">Company Name</div>
+            <div className="text-sm flex items-center gap-2">
+              {!editCompanyName ? (
+                <>
+                  <div className="flex-1">
+                    <span className="truncate">{companyName || "-"}</span>
+                  </div>
+                  <button
+                    className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
+                    onClick={() => setEditCompanyName(true)}
+                    title="Edit company name"
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                      />
+                    </svg>
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div className="flex-1">
+                    <Input
+                      value={companyName}
+                      onChange={(e) => setCompanyName(e.target.value)}
+                      placeholder="Enter company name"
+                    />
+                  </div>
+                  <button
+                    className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
+                    onClick={() => setEditCompanyName(false)}
+                    title="Done editing"
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </Row>
+
+        {/* Country row */}
+        <Row>
+          <div className="px-5">
+            <div className="text-xs text-gray-500 mb-1">Country</div>
+            <div className="text-sm flex items-center gap-2">
+              {!editCountry ? (
+                <>
+                  <div className="flex-1">
+                    <span className="truncate">{country || "-"}</span>
+                  </div>
+                  <button
+                    className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
+                    onClick={() => setEditCountry(true)}
+                    title="Edit country"
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                      />
+                    </svg>
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div className="flex-1">
+                    <Input
+                      value={country}
+                      onChange={(e) => setCountry(e.target.value)}
+                      placeholder="Enter country"
+                    />
+                  </div>
+                  <button
+                    className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
+                    onClick={() => setEditCountry(false)}
+                    title="Done editing"
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  </button>
+                </>
+              )}
+            </div>
           </div>
         </Row>
 
