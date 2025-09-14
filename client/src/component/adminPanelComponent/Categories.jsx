@@ -28,7 +28,7 @@ const Categories = () => {
   const [groupToDelete, setGroupToDelete] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [groupToEdit, setGroupToEdit] = useState(null);
-  const [editFormData, setEditFormData] = useState({ name: "", heading: "" });
+  const [editFormData, setEditFormData] = useState({ name: "", heading: "", image: "" });
 
   // Flatten all chapters from all sections into a single array
   const allChapters = hsCodeData.sections.flatMap(section => 
@@ -74,7 +74,11 @@ const Categories = () => {
 
   const handleEditGroup = (group) => {
     setGroupToEdit(group);
-    setEditFormData({ name: group.name, heading: group.heading });
+    setEditFormData({ 
+      name: group.name, 
+      heading: group.heading,
+      image: group.image || ""
+    });
     setShowEditModal(true);
     setOpenMenu(null);
   };
@@ -97,6 +101,7 @@ const Categories = () => {
         {
           name: editFormData.name,
           heading: editFormData.heading,
+          image: editFormData.image,
         },
         {
           withCredentials: true,
@@ -111,6 +116,7 @@ const Categories = () => {
                 ...group,
                 name: editFormData.name,
                 heading: editFormData.heading,
+                image: editFormData.image,
               }
             : group
         )
@@ -118,7 +124,7 @@ const Categories = () => {
 
       setShowEditModal(false);
       setGroupToEdit(null);
-      setEditFormData({ name: "", heading: "" });
+      setEditFormData({ name: "", heading: "", image: "" });
     } catch (error) {
       console.error("Error updating group:", error);
       setGroupsError("Failed to update group");
@@ -472,7 +478,7 @@ const Categories = () => {
 
       {/* Add Group Modal */}
       {showAddGroupModal && (
-        <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-3 sm:p-4">
+        <div className="fixed inset-0 z-50 bg-black/40 bg-opacity-50 flex items-center justify-center p-3 sm:p-4">
           <div className="bg-white rounded-lg w-full max-w-sm sm:max-w-md max-h-[90vh] overflow-hidden">
             <AddGroup
               categoryId={activeChapter._id || activeChapter.chapter.toString()}
@@ -491,7 +497,7 @@ const Categories = () => {
 
       {/* Delete Group Modal */}
       {showDeleteModal && (
-        <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-3 sm:p-4">
+        <div className="fixed inset-0 z-50 bg-black/40 bg-opacity-50 flex items-center justify-center p-3 sm:p-4">
           <div className="bg-white rounded-lg p-4 sm:p-6 max-w-sm sm:max-w-md w-full mx-3 sm:mx-4 animate-dropdown">
             <div className="flex flex-row-reverse items-center justify-between mb-4">
               <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center mr-4">
@@ -541,7 +547,7 @@ const Categories = () => {
 
       {/* Edit Group Modal */}
       {showEditModal && groupToEdit && (
-        <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-3 sm:p-4">
+        <div className="fixed inset-0 z-50 bg-black/40 bg-opacity-50 flex items-center justify-center p-3 sm:p-4">
           <div className="bg-white rounded-lg w-full max-w-sm sm:max-w-md max-h-[90vh] overflow-hidden">
             <div className="p-3 sm:p-4 border-b border-gray-200">
               <h3 className="text-base sm:text-lg font-semibold text-gray-900">
@@ -584,6 +590,35 @@ const Categories = () => {
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none  focus:ring-1 focus:ring-blue-500 focus:border-transparent"
                       required
                     />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Image URL
+                    </label>
+                    <input
+                      type="url"
+                      value={editFormData.image}
+                      onChange={(e) =>
+                        setEditFormData({
+                          ...editFormData,
+                          image: e.target.value,
+                        })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="https://example.com/image.jpg"
+                    />
+                    {editFormData.image && (
+                      <div className="mt-2">
+                        <img
+                          src={editFormData.image}
+                          alt="Preview"
+                          className="w-20 h-20 object-cover rounded-lg border border-gray-200"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                          }}
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 mt-6">

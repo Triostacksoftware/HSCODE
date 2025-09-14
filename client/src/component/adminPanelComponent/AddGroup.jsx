@@ -172,9 +172,9 @@ const AddGroup = ({ categoryId, categoryName, onClose }) => {
   };
 
   return (
-    <div className="w-full h-full flex flex-col">
+    <div className="w-full h-full flex flex-col" style={{ maxHeight: '100vh' }}>
       {/* Header */}
-      <div className="p-3 sm:p-4 border-b border-gray-200 flex items-center justify-between">
+      <div className="p-3 sm:p-4 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
           <button
             onClick={onClose}
@@ -193,11 +193,18 @@ const AddGroup = ({ categoryId, categoryName, onClose }) => {
         </div>
       </div>
 
-      {/* Form Content */}
-      <div className="flex-1 p-3 sm:p-4 overflow-y-auto">
+      {/* Form Content - Scrollable Area */}
+      <div 
+        className="flex-1 p-3 sm:p-4 overflow-y-auto min-h-0 border-t border-gray-100"
+        style={{ 
+          maxHeight: 'calc(100vh - 120px)', // Account for header and some padding
+          overflowY: 'auto',
+          scrollBehavior: 'smooth'
+        }}
+      >
         <form
           onSubmit={handleSubmit}
-          className="max-w-md mx-auto space-y-4"
+          className="max-w-md mx-auto space-y-4 pb-12"
         >
           {/* Error Message */}
           {error && (
@@ -424,6 +431,9 @@ const AddGroup = ({ categoryId, categoryName, onClose }) => {
             </div>
           </div>
         </form>
+        
+        {/* Extra spacing to ensure last button is visible */}
+        <div className="h-8"></div>
       </div>
     </div>
   );
