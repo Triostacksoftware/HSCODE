@@ -102,45 +102,86 @@ export const createGroup = async (req, res) => {
 // CREATE MANY groups directly (Admin only)
 export const createManyGroup = async (req, res) => {
   try {
+    console.log("🚀 Starting bulk local group creation...");
+    console.log("👤 User countryCode:", req.user?.countryCode);
+    console.log(
+      "📁 File received:",
+      req.file
+        ? {
+            originalname: req.file.originalname,
+            mimetype: req.file.mimetype,
+            size: req.file.size,
+          }
+        : "No file"
+    );
+    console.log("📋 Request body:", req.body);
+
     const { countryCode } = req.user;
+
+    if (!req.file) {
+      console.error("❌ No file uploaded");
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+
     const groups = parseFile(req.file);
-    console.log(req.body)
+    console.log("📊 Parsed groups count:", groups.length);
+    console.log("📊 First few groups:", groups.slice(0, 3));
 
     if (!groups || groups.length === 0) {
+      console.error("❌ No groups found in file");
       return res.status(400).json({ message: "No valid groups found in file" });
     }
 
-    const formatted = groups.map((g) => ({
-      name: g.name,
-      heading: g.heading || g.hscode,
-      image: g.image,
-      chapterNumber: req.body.chapter,
-      countryCode,
-      members: [],
-    }));  
+    const formatted = groups.map((g, index) => {
+      const formattedGroup = {
+        name: g.name,
+        heading: g.heading || g.hscode,
+        image: g.image,
+        chapterNumber: req.body.chapter,
+        countryCode,
+        members: [],
+      };
+      console.log(`📝 Group ${index + 1}:`, formattedGroup);
+      return formattedGroup;
+    });
 
     // Validate that all required fields are present
-    const validGroups = formatted.filter(
-      (g) => g.name && g.heading && g.chapterNumber
-    );
-    console.log("Valid groups:", validGroups.length);
+    const validGroups = formatted.filter((g) => {
+      const isValid = g.name && g.heading && g.chapterNumber;
+      if (!isValid) {
+        console.log("❌ Invalid group filtered out:", g);
+      }
+      return isValid;
+    });
+
+    console.log("✅ Valid groups count:", validGroups.length);
+    console.log("✅ Valid groups:", validGroups);
+
     if (validGroups.length === 0) {
+      console.error("❌ No valid groups found after validation");
       return res
         .status(400)
         .json({ message: "No valid groups found after validation" });
     }
 
+    console.log("💾 Inserting groups into database...");
     const newGroups = await LocalGroupModel.insertMany(validGroups);
+    console.log("✅ Successfully created groups:", newGroups.length);
+
     res.status(201).json({
       message: "Groups created successfully",
       count: newGroups.length,
     });
   } catch (err) {
-    console.error("Error bulk creating groups:", err);
-    console.error("Error stack:", err.stack);
+    console.error("❌ Error bulk creating groups:", err);
+    console.error("❌ Error stack:", err.stack);
 
     // Check if it's a mongoose validation error
     if (err.name === "ValidationError") {
+      console.error(
+        "❌ Validation errors:",
+        Object.values(err.errors).map((e) => e.message)
+      );
       return res.status(400).json({
         message: "Validation error",
         details: Object.values(err.errors).map((e) => e.message),

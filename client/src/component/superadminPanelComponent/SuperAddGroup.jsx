@@ -145,13 +145,28 @@ const SuperAddGroup = ({
     setSuccess("");
 
     try {
+      console.log("🚀 Starting bulk group creation...");
+      console.log("📁 Selected file:", {
+        name: selectedFile.name,
+        size: selectedFile.size,
+        type: selectedFile.type,
+      });
+      console.log("📋 Chapter number:", chapterNumber);
+      console.log("🏷️ Group type:", groupType);
+
       const bulkFormData = new FormData();
       bulkFormData.append("file", selectedFile);
       bulkFormData.append("chapterNumber", chapterNumber);
 
       // Determine API endpoint based on group type
       const endpoint =
-        groupType === "global" ? "/global-groups/bulk" : "/groups/bulk";
+        groupType === "global" ? "/global-groups/many" : "/groups/many";
+
+      console.log("🌐 API endpoint:", endpoint);
+      console.log("📤 FormData contents:");
+      for (let [key, value] of bulkFormData.entries()) {
+        console.log(`  ${key}:`, value);
+      }
 
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_BASE_URL}${endpoint}`,
@@ -164,6 +179,8 @@ const SuperAddGroup = ({
         }
       );
 
+      console.log("✅ Response received:", response.data);
+
       const groupTypeText = groupType === "global" ? "Global" : "Local";
       setSuccess(`${groupTypeText} groups imported successfully!`);
 
@@ -174,7 +191,8 @@ const SuperAddGroup = ({
       }, 500);
     } catch (error) {
       const groupTypeText = groupType === "global" ? "global" : "local";
-      console.error(`Error importing ${groupTypeText} groups:`, error);
+      console.error(`❌ Error importing ${groupTypeText} groups:`, error);
+      console.error("❌ Error response:", error.response?.data);
       setError(
         error.response?.data?.message ||
           `Failed to import ${groupTypeText} groups`
