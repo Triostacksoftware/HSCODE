@@ -104,6 +104,7 @@ export const createManyGroup = async (req, res) => {
   try {
     const { countryCode } = req.user;
     const groups = parseFile(req.file);
+    console.log(req.body)
 
     if (!groups || groups.length === 0) {
       return res.status(400).json({ message: "No valid groups found in file" });
@@ -113,17 +114,16 @@ export const createManyGroup = async (req, res) => {
       name: g.name,
       heading: g.heading || g.hscode,
       image: g.image,
-      chapterNumber: g.chapter,
+      chapterNumber: req.body.chapter,
       countryCode,
       members: [],
-      categoryId: null,
-    }));
+    }));  
 
     // Validate that all required fields are present
     const validGroups = formatted.filter(
       (g) => g.name && g.heading && g.chapterNumber
     );
-
+    console.log("Valid groups:", validGroups.length);
     if (validGroups.length === 0) {
       return res
         .status(400)

@@ -137,7 +137,7 @@ const AddGroup = ({ categoryId, categoryName, onClose }) => {
     try {
       const formDataToSend = new FormData();
       formDataToSend.append("file", selectedBulkFile);
-      formDataToSend.append("chapterId", categoryId);
+      formDataToSend.append("chapter", categoryId);
       formDataToSend.append("categoryId", categoryId); // Keep for backward compatibility
 
       // Use direct groups endpoint for bulk upload
