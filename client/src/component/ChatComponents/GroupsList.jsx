@@ -120,7 +120,6 @@ const GroupsList = ({
     <div className="flex flex-col h-full px-3">
       {/* Header with Back Button */}
       <div className="flex items-center justify-between py-[1.1em]">
-        <h2 className="text-lg  text-gray-900">{categoryName}</h2>
         {onBack && (
           <button
             onClick={onBack}

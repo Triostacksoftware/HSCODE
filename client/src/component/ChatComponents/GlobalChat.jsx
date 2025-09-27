@@ -142,18 +142,15 @@ const GlobalChat = ({ user, refreshUser, setMainActiveTab }) => {
       {activeTab === "navigator" && selectedChapter && showGroupsList && (
         <div className="w-80 border-r border-gray-200 flex flex-col animate-slide-in-groups">
           <div className="p-4 border-b border-gray-200 bg-gray-50">
-            <h3 className="text-sm font-semibold text-gray-900 mb-1">
-              Global Groups
-            </h3>
-            <p className="text-xs text-gray-600">
+            <p className="text-xs text-gray-900 font-semibold">
               Chapter {selectedChapter.chapter}: {selectedChapter.name}
             </p>
             <p className="text-xs text-gray-500 mt-1">
               {loading
                 ? "Loading..."
-                : `${groups.length} group${
+                : `${groups.length} Group${
                     groups.length !== 1 ? "s" : ""
-                  } available`}
+                  } Available`}
             </p>
           </div>
 

@@ -126,9 +126,6 @@ const GlobalGroupsList = ({
     <div className="flex flex-col h-full px-3">
       {/* Header with Back Button */}
       <div className="flex items-center justify-between py-4 md:py-[1.1em] border-b border-gray-200">
-        <h2 className="text-lg font-semibold text-gray-900 truncate">
-          {categoryName}
-        </h2>
         {onBack && (
           <button
             onClick={onBack}
@@ -140,7 +137,7 @@ const GlobalGroupsList = ({
       </div>
 
       {/* Search Bar */}
-      <div className="flex-shrink-0 flex items-center gap-3 p-3 md:p-2 md:py-[.35em] border border-gray-200 rounded-md text-gray-600 mt-3 md:mt-0">
+      <div className="flex-shrink-0 flex items-center gap-3 p-3 md:p-2 md:py-[.35em] border border-gray-200 rounded-md text-gray-600">
         <LiaSearchSolid className="flex-shrink-0" />
         <input
           type="text"
@@ -222,12 +219,12 @@ const GlobalGroupsList = ({
 
                     {/* Group Info */}
                     <div className="min-w-0 flex-1 grid">
-                      <div className="text-sm md:text-sm font-medium truncate">
+                      <div className="text-sm text-gray-900 truncate">
+                        HSCODE: {group.heading || group.hscode}
+                      </div>
+                      <div className="text-xs font-medium truncate text-gray-400">
                         {group.name ||
                           `Global Group ${String(index + 1).padStart(2, "0")}`}
-                      </div>
-                      <div className="text-xs text-gray-500 truncate">
-                        heading: {group.heading || group.hscode}
                       </div>
                     </div>
                     {/* Action Button for not joined */}
