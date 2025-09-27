@@ -13,11 +13,11 @@ const SuperCategories = () => {
   const [view, setView] = useState("chapters"); // "chapters", "groups", "chat"
 
   // Flatten all chapters from all sections into a single array
-  const allChapters = hsCodeData.sections.flatMap(section => 
-    section.chapters.map(chapter => ({
+  const allChapters = hsCodeData.sections.flatMap((section) =>
+    section.chapters.map((chapter) => ({
       ...chapter,
       sectionTitle: section.title,
-      sectionNumber: section.section
+      sectionNumber: section.section,
     }))
   );
 
@@ -52,7 +52,7 @@ const SuperCategories = () => {
   };
 
   const renderChaptersSidebar = () => (
-    <div className="w-64 bg-white border-r border-gray-200 h-full overflow-y-auto">
+    <div className="w-80 bg-white border-r border-gray-200 h-full overflow-y-auto">
       <div className="p-4 border-b border-gray-200">
         <h2 className="text-lg font-semibold text-gray-900">
           All HS Code Chapters
@@ -82,9 +82,8 @@ const SuperCategories = () => {
     </div>
   );
 
-
   const renderGroupsSidebar = () => (
-    <div className="w-64 bg-white border-r border-gray-200 h-full overflow-y-auto">
+    <div className="w-80 bg-white border-r border-gray-200 h-full overflow-y-auto">
       <div className="p-4 border-b border-gray-200 flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold text-gray-900">
@@ -107,6 +106,7 @@ const SuperCategories = () => {
           chapterName={`Chapter ${activeChapter?.chapter} - ${activeChapter?.heading}`}
           onGroupSelect={handleGroupSelect}
           selectedGroupId={selectedGroup?._id}
+          onGroupUpdated={handleGroupCreated}
         />
       </div>
     </div>

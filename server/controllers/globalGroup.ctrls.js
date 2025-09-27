@@ -143,35 +143,85 @@ export const deleteGlobalGroup = async (req, res) => {
   }
 };
 
-// Bulk create global groups via CSV/Excel (superadmin)
+// Bulk create global groups via CSV/Excel (superadmin) - Same pattern as local groups
 export const bulkCreateGlobalGroups = async (req, res) => {
   try {
-    const rows = parseFile(req.file);
+    console.log("🚀 Starting bulk global group creation...");
+    console.log(
+      "📁 File received:",
+      req.file
+        ? {
+            originalname: req.file.originalname,
+            mimetype: req.file.mimetype,
+            size: req.file.size,
+          }
+        : "No file"
+    );
+    console.log("📋 Request body:", req.body);
 
-    const docs = rows
-      .map((r) => ({
-        name: r.name,
-        heading: r.heading,
-        image: r.image,
-        chapterNumber: r.chapter || "00", // Chapter number from CSV, fallback to "00"
-        categoryId: null, // No longer needed
-      }))
-      .filter((d) => d.name && d.heading);
+    if (!req.file) {
+      console.error("❌ No file uploaded");
+      return res.status(400).json({ message: "No file uploaded" });
+    }
 
-    if (!docs.length)
-      return res.status(400).json({ message: "No valid rows found" });
+    const groups = parseFile(req.file);
+    console.log("📊 Parsed groups count:", groups.length);
+    console.log("📊 First few groups:", groups.slice(0, 3));
 
-    const created = await GlobalGroup.insertMany(docs);
+    if (!groups || groups.length === 0) {
+      console.error("❌ No groups found in file");
+      return res.status(400).json({ message: "No valid groups found in file" });
+    }
+
+    const formatted = groups.map((g, index) => {
+      const formattedGroup = {
+        name: g.name,
+        heading: g.heading || g.hscode,
+        image: g.image,
+        chapterNumber: req.body.chapter || req.body.chapterNumber || "00",
+        categoryId: null,
+      };
+      console.log(`📝 Group ${index + 1}:`, formattedGroup);
+      return formattedGroup;
+    });
+
+    // Validate that all required fields are present
+    const validGroups = formatted.filter((g) => {
+      const isValid = g.name && g.heading && g.chapterNumber;
+      if (!isValid) {
+        console.log("❌ Invalid group filtered out:", g);
+      }
+      return isValid;
+    });
+
+    console.log("✅ Valid groups count:", validGroups.length);
+    console.log("✅ Valid groups:", validGroups);
+
+    if (validGroups.length === 0) {
+      console.error("❌ No valid groups found after validation");
+      return res
+        .status(400)
+        .json({ message: "No valid groups found after validation" });
+    }
+
+    console.log("💾 Inserting groups into database...");
+    const newGroups = await GlobalGroup.insertMany(validGroups);
+    console.log("✅ Successfully created groups:", newGroups.length);
+
     res.status(201).json({
-      message: "Global groups imported successfully",
-      count: created.length,
+      message: "Global groups created successfully",
+      count: newGroups.length,
     });
   } catch (error) {
-    console.error("Error bulk creating global groups:", error);
-    console.error("Error stack:", error.stack);
+    console.error("❌ Error bulk creating global groups:", error);
+    console.error("❌ Error stack:", error.stack);
 
     // Check if it's a mongoose validation error
     if (error.name === "ValidationError") {
+      console.error(
+        "❌ Validation errors:",
+        Object.values(error.errors).map((e) => e.message)
+      );
       return res.status(400).json({
         message: "Validation error",
         details: Object.values(error.errors).map((e) => e.message),
@@ -180,6 +230,6 @@ export const bulkCreateGlobalGroups = async (req, res) => {
 
     res
       .status(500)
-      .json({ message: "Error importing global groups", error: error.message });
+      .json({ message: "Error creating global groups", error: error.message });
   }
 };

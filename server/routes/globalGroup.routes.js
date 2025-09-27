@@ -38,4 +38,12 @@ router.post(
   bulkCreateGlobalGroups
 );
 
+// Create many groups (same pattern as local groups)
+router.post(
+  "/many",
+  superadminMiddleware,
+  upload.single("file"),
+  bulkCreateGlobalGroups
+);
+
 export default router;
