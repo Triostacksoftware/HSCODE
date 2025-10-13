@@ -1018,6 +1018,19 @@ const FooterEditor = ({ data, editing, onChange }) => (
           onChange={(value) => onChange("socialLinks.instagram", value)}
           editing={editing}
         />
+        <div>
+          <InputField
+            label="Arattai (Phone Number or URL)"
+            value={data?.socialLinks.arattai}
+            onChange={(value) => onChange("socialLinks.arattai", value)}
+            editing={editing}
+          />
+          {editing && (
+            <p className="text-xs text-gray-500 mt-1">
+              Enter phone number (e.g., +919876543210) or full URL. Phone numbers will automatically open in Arattai app.
+            </p>
+          )}
+        </div>
       </div>
     </div>
   </div>

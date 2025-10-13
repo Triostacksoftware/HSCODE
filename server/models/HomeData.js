@@ -116,6 +116,7 @@ const HomeDataSchema = new mongoose.Schema(
         twitter: { type: String },
         linkedin: { type: String },
         instagram: { type: String },
+        arattai: { type: String },
       },
     },
   },

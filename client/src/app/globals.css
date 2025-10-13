@@ -145,6 +145,25 @@ body {
   top: 0px !important;
 }
 
+/* Prevent Google Translate overlay from blocking content */
+.goog-te-menu-frame,
+.goog-te-ftab-frame,
+iframe.skiptranslate {
+  pointer-events: auto !important;
+  z-index: 10000 !important;
+}
+
+/* Ensure footer is always clickable */
+#footer {
+  position: relative;
+  z-index: 10 !important;
+  pointer-events: auto !important;
+}
+
+#footer * {
+  pointer-events: auto !important;
+}
+
 /* Section-based navigation animations */
 .section-transition-enter {
   opacity: 0;

@@ -99,7 +99,16 @@ export const getAdminHomeData = async (req, res) => {
               secondaryButtonLink: "/contact",
             },
           },
-          footer: { contactInfo: {}, socialLinks: {} },
+          footer: { 
+            contactInfo: {}, 
+            socialLinks: { 
+              facebook: "", 
+              twitter: "", 
+              linkedin: "", 
+              instagram: "", 
+              arattai: "+919876543210" 
+            } 
+          },
         },
       });
     }
@@ -498,6 +507,7 @@ export const saveDummyData = async (req, res) => {
           twitter: "#",
           linkedin: "#",
           instagram: "#",
+          arattai: "+919876543210",
         },
       },
     });
