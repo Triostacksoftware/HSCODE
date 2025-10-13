@@ -142,6 +142,59 @@ const GroupsList = ({
         />
       </div>
 
+      {/* Chapter Information Section */}
+      {categoryId && user?.countryCode && (
+        <div className="mt-3 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold">
+                  {categoryId}
+                </div>
+                <h4 className="text-sm font-semibold text-gray-900">
+                  Chapter {categoryId}
+                </h4>
+              </div>
+              <p className="text-xs text-gray-600 line-clamp-2">
+                {categoryName}
+              </p>
+            </div>
+            <a
+              href={`${process.env.NEXT_PUBLIC_BASE_URL}/Chapters/${user.countryCode}/${user.countryCode}_Chapter_${String(categoryId).padStart(2, '0')}.pdf`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-shrink-0 px-3 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-all text-xs font-medium flex items-center gap-1.5 shadow-sm"
+              title="View Chapter Information PDF"
+              onClick={(e) => {
+                e.stopPropagation();
+                // Check if file exists
+                const url = e.currentTarget.href;
+                fetch(url, { method: 'HEAD' })
+                  .then(response => {
+                    if (response.ok) {
+                      window.open(url, '_blank');
+                    } else {
+                      alert('Chapter document not available yet.');
+                    }
+                  })
+                  .catch(() => {
+                    alert('Chapter document not available yet.');
+                  });
+                e.preventDefault();
+              }}
+            >
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
+              </svg>
+              <span>View PDF</span>
+            </a>
+          </div>
+          <div className="mt-2 text-xs text-gray-500 bg-white bg-opacity-60 rounded px-2 py-1">
+            📄 Click "View PDF" to read chapter information and guidelines
+          </div>
+        </div>
+      )}
+
       {/* Groups List */}
       <div className="flex-1 overflow-y-auto mt-4 min-h-0">
         {loading ? (

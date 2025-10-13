@@ -8,8 +8,10 @@ import {
   deleteGroup,
   createManyGroup,
   getAllGroups,
+  uploadChapterDocument,
 } from "../controllers/groups.ctrls.js";
 import upload from "../configurations/multer.js";
+import uploadChapterDoc from "../configurations/multerChapters.js";
 
 const router = express.Router();
 
@@ -23,5 +25,28 @@ router.delete("/:groupId", adminMiddleware, deleteGroup);
 
 // Get all groups for admin
 router.get("/all", adminMiddleware, getAllGroups);
+
+// Upload chapter document (Admin only)
+router.post("/chapter-document", adminMiddleware, uploadChapterDoc.single("chapterDocument"), uploadChapterDocument);
+
+// Serve chapter documents
+router.get("/chapter-document/:countryCode/:chapterNumber", authMiddleware, (req, res) => {
+  try {
+    const { countryCode, chapterNumber } = req.params;
+    const filePath = `public/Chapters/${countryCode}/${countryCode}_Chapter_${chapterNumber}.pdf`;
+    
+    // Check if file exists
+    const fs = require('fs');
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ message: "Chapter document not found" });
+    }
+    
+    // Send file
+    res.sendFile(filePath, { root: process.cwd() });
+  } catch (error) {
+    console.error("Error retrieving chapter document:", error);
+    res.status(500).json({ message: "Error retrieving chapter document" });
+  }
+});
 
 export default router;

@@ -1,5 +1,7 @@
 import LocalGroupModel from "../models/LocalGroup.js";
 import { parseFile } from "../utilities/xlsx.util.js";
+import fs from "fs";
+import path from "path";
 
 // GET groups (can filter by chapter number)
 export const getGroups = async (req, res) => {
@@ -60,6 +62,8 @@ export const createGroup = async (req, res) => {
   try {
     const { name, heading, chapterNumber } = req.body;
     const { countryCode } = req.user;
+    
+    // Handle image file
     const image = req.file ? req.file.filename : null;
 
     // Validate required fields
@@ -261,5 +265,49 @@ export const getAllGroups = async (req, res) => {
   } catch (err) {
     console.error("Error fetching all groups:", err);
     res.status(500).json({ message: "Error fetching groups" });
+  }
+};
+
+// UPLOAD chapter document (Admin only)
+export const uploadChapterDocument = async (req, res) => {
+  try {
+    const { chapterNumber } = req.body;
+    const { countryCode } = req.user;
+
+    // Validate required fields
+    if (!chapterNumber) {
+      return res.status(400).json({
+        message: "Chapter number is required",
+      });
+    }
+
+    // Check if file was uploaded
+    if (!req.file) {
+      return res.status(400).json({
+        message: "No file uploaded",
+      });
+    }
+
+    // File info
+    const uploadedFile = req.file;
+    const documentPath = `Chapters/${countryCode}/${uploadedFile.filename}`;
+
+    console.log(`Chapter document uploaded: ${documentPath}`);
+
+    // Return success with file info
+    res.status(200).json({
+      success: true,
+      message: "Chapter document uploaded successfully",
+      documentPath,
+      fileName: uploadedFile.filename,
+      chapterNumber,
+      countryCode,
+    });
+  } catch (err) {
+    console.error("Error uploading chapter document:", err);
+    res.status(500).json({ 
+      message: "Error uploading chapter document",
+      error: err.message 
+    });
   }
 };

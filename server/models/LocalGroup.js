@@ -6,6 +6,7 @@ const LocalGroupSchema = mongoose.Schema({
   image: { type: String }, // path string
   chapterNumber: { type: String, required: true }, // HS Code chapter number
   countryCode: { type: String, required: true }, // Country code for filtering
+  chapterDocument: { type: String }, // PDF document path - stored in Chapters/{countryCode}/
   members: [
     {
       type: mongoose.Schema.Types.ObjectId,
