@@ -10,6 +10,7 @@ const LeadFormModal = ({
   onSubmit,
   sending,
   groupHSCode = "", // Add group HS code prop
+  groupName = "", // Add group name prop for description pre-fill
   user = null, // Add user prop to check membership
   groupType = "local", // Add group type prop: "local" or "global"
 }) => {
@@ -136,23 +137,20 @@ const LeadFormModal = ({
 
   // Validate HS code length
   const isHSCodeValid = () => {
-    if (!groupHSCode) return true; // No group restriction
-    return hscode.length === maxHSLength;
+    return hscode.length >= 4 && hscode.length <= maxHSLength; // Allow flexible length
   };
 
   const getHSLengthMessage = () => {
-    if (!groupHSCode) return null;
     const currentLength = hscode.length;
-    const remaining = maxHSLength - currentLength;
 
-    if (remaining > 0) {
-      return `Add ${remaining} more digit${
-        remaining !== 1 ? "s" : ""
-      } to complete the HS code`;
-    } else if (remaining === 0) {
-      return `HS code complete (${currentLength}/${maxHSLength} digits)`;
+    if (currentLength < 4) {
+      return `HS code should be at least 4 digits (current: ${currentLength})`;
+    } else if (currentLength === maxHSLength) {
+      return "HS code is complete";
+    } else if (currentLength > maxHSLength) {
+      return `HS code is too long (max: ${maxHSLength} digits)`;
     } else {
-      return `HS code exceeds maximum length (${maxHSLength} digits)`;
+      return `HS code length: ${currentLength}/${maxHSLength} digits`;
     }
   };
 
@@ -163,13 +161,16 @@ const LeadFormModal = ({
     }
   }, [countryInfo?.code, hasData, loadHSCodes]);
 
-  // Initialize group HS code when component mounts
+  // Initialize group HS code and description when component mounts (as a starting value, but allow full editing)
   useEffect(() => {
-    if (groupHSCode && !hscode.startsWith(groupHSCode)) {
+    if (groupHSCode && !hscode) {
       setHscode(groupHSCode);
-      setUserHSCodeInput("");
+      setUserHSCodeInput(groupHSCode);
     }
-  }, [groupHSCode]);
+    if (groupName && !description) {
+      setDescription(groupName);
+    }
+  }, [groupHSCode, groupName]);
 
   // Search HS codes when user types
   const [hscodeSearchResults, setHscodeSearchResults] = useState([]);
@@ -180,11 +181,10 @@ const LeadFormModal = ({
 
       // Check if input is numeric (starts with number)
       if (/^\d+$/.test(hscodeSearchTerm)) {
-        // Numeric input: use starts-with search with group HS code prefix
-        const searchPrefix = groupHSCode + hscodeSearchTerm;
-        results = searchHSCodes(searchPrefix).filter((item) => {
+        // Numeric input: use starts-with search
+        results = searchHSCodes(hscodeSearchTerm).filter((item) => {
           const itemCode = item.tl || item.hs6 || item.chapter;
-          return itemCode && itemCode.startsWith(searchPrefix);
+          return itemCode && itemCode.startsWith(hscodeSearchTerm);
         });
       } else {
         // Text input: search in descriptions (contains search)
@@ -208,7 +208,7 @@ const LeadFormModal = ({
       setShowHSCodeDropdown(false);
       setHighlightedIndex(-1);
     }
-  }, [hscodeSearchTerm, searchHSCodes, groupHSCode]);
+  }, [hscodeSearchTerm, searchHSCodes]);
 
   // Search descriptions when user types
   useEffect(() => {
@@ -249,15 +249,9 @@ const LeadFormModal = ({
         selectedCode.chapterDescription
     );
 
-    // Extract user input part (remove group HS code prefix)
-    if (groupHSCode && selectedHSCodeValue.startsWith(groupHSCode)) {
-      const userInput = selectedHSCodeValue.substring(groupHSCode.length);
-      setUserHSCodeInput(userInput);
-      setHscodeSearchTerm(userInput);
-    } else {
-      setUserHSCodeInput("");
-      setHscodeSearchTerm(selectedHSCodeValue);
-    }
+    // Set the full HS code value for editing
+    setUserHSCodeInput(selectedHSCodeValue);
+    setHscodeSearchTerm(selectedHSCodeValue);
 
     setShowHSCodeDropdown(false);
     setHighlightedIndex(-1); // Reset highlighted index
@@ -286,31 +280,10 @@ const LeadFormModal = ({
       return; // Don't allow input beyond country limit
     }
 
-    // If group HS code exists, ensure the input starts with it
-    if (groupHSCode) {
-      if (!value.startsWith(groupHSCode)) {
-        // If user tries to delete the group HS code, prevent it
-        if (value.length < groupHSCode.length) {
-          return;
-        }
-        // If user types something that doesn't start with group HS code, prepend it
-        const userInput = value.substring(groupHSCode.length);
-        setUserHSCodeInput(userInput);
-        setHscode(value);
-        setHscodeSearchTerm(userInput);
-      } else {
-        // Input starts with group HS code, extract user part
-        const userInput = value.substring(groupHSCode.length);
-        setUserHSCodeInput(userInput);
-        setHscode(value);
-        setHscodeSearchTerm(userInput);
-      }
-    } else {
-      // No group HS code, use input as is
-      setUserHSCodeInput(value);
-      setHscode(value);
-      setHscodeSearchTerm(value);
-    }
+    // Allow full editing of HS code - no restrictions based on group HS code
+    setUserHSCodeInput(value);
+    setHscode(value);
+    setHscodeSearchTerm(value);
 
     // Clear selection when user types
     setSelectedHSCode(null);
@@ -465,24 +438,27 @@ const LeadFormModal = ({
     setShowDescriptionDropdown(false);
     setHighlightedDescriptionIndex(-1);
 
-    // Handle HS code initialization
-    if (initial?.hscode && groupHSCode) {
-      if (initial.hscode.startsWith(groupHSCode)) {
-        const userInput = initial.hscode.substring(groupHSCode.length);
-        setUserHSCodeInput(userInput);
-        setHscode(initial.hscode); // Set the complete HS code
-      } else {
-        setUserHSCodeInput("");
-        setHscode(groupHSCode); // Set just the group HS code
-      }
+    // Handle HS code initialization - allow full editing
+    if (initial?.hscode) {
+      setUserHSCodeInput(initial.hscode);
+      setHscode(initial.hscode);
     } else if (groupHSCode) {
-      setUserHSCodeInput("");
-      setHscode(groupHSCode); // Set just the group HS code
+      setUserHSCodeInput(groupHSCode);
+      setHscode(groupHSCode);
     } else {
       setUserHSCodeInput("");
-      setHscode(initial?.hscode || "");
+      setHscode("");
     }
-  }, [initial, isOpen, groupHSCode]);
+
+    // Handle description initialization - pre-fill with group name if available
+    if (initial?.description) {
+      setDescription(initial.description);
+    } else if (groupName) {
+      setDescription(groupName);
+    } else {
+      setDescription("");
+    }
+  }, [initial, isOpen, groupHSCode, groupName]);
 
   const appendDocuments = (fileList) => {
     const incoming = Array.from(fileList || []);
@@ -745,10 +721,10 @@ const LeadFormModal = ({
   const submitHandler = (e) => {
     e.preventDefault();
 
-    // Validate HS code length if group HS code is provided
-    if (groupHSCode && !isHSCodeValid()) {
+    // Validate HS code length
+    if (!isHSCodeValid()) {
       alert(
-        `Please complete the HS code. Current length: ${hscode.length}/${maxHSLength} digits`
+        `Please enter a valid HS code. Current length: ${hscode.length} digits (minimum: 4, maximum: ${maxHSLength})`
       );
       return;
     }
@@ -820,15 +796,13 @@ const LeadFormModal = ({
                 </label>
 
                 {/* Instructions */}
-                {groupHSCode && (
-                  <p className="text-[11px] text-blue-600 mt-1 mb-2">
-                    💡 Type additional digits after the group HS code. You can
-                    also search by product description (e.g., "rice").
-                  </p>
-                )}
+                <p className="text-[11px] text-blue-600 mt-1 mb-2">
+                  💡 Enter the HS code for your product. You can also search by
+                  product description (e.g., "rice").
+                </p>
 
                 {/* Group HS Code Display (Fixed) */}
-                {groupHSCode && (
+                {/* {groupHSCode && (
                   <div className="mt-1 mb-2">
                     <div className="text-xs text-gray-500 mb-1">
                       Group HS Code (Fixed):
@@ -837,45 +811,32 @@ const LeadFormModal = ({
                       {groupHSCode}
                     </div>
                   </div>
-                )}
+                )} */}
 
                 {/* User Input Field */}
-                <div className="relative">
-                  {groupHSCode && (
-                    <div className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 font-mono text-sm">
-                      {groupHSCode}
-                    </div>
-                  )}
-                  <input
-                    className={`mt-1 w-full border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 rounded text-sm ${
-                      groupHSCode ? "pl-16" : ""
-                    }`}
-                    placeholder={
-                      groupHSCode
-                        ? "Type additional digits after 1010"
-                        : "e.g. 10101000"
+
+                <input
+                  className={`mt-1 w-full border border-gray-200 p-2 outline-none focus:ring-1 focus:ring-gray-700 rounded text-sm `}
+                  placeholder="e.g. 10101000"
+                  value={hscode}
+                  onChange={handleHSCodeInputChange}
+                  onKeyDown={handleHSCodeKeyDown}
+                  onFocus={() => {
+                    if (hscodeSearchTerm.trim()) {
+                      setShowHSCodeDropdown(true);
                     }
-                    value={hscode}
-                    onChange={handleHSCodeInputChange}
-                    onKeyDown={handleHSCodeKeyDown}
-                    onFocus={() => {
-                      if (hscodeSearchTerm.trim()) {
-                        setShowHSCodeDropdown(true);
-                      }
-                    }}
-                    maxLength={maxHSLength}
-                    required
-                  />
-                </div>
+                  }}
+                  maxLength={maxHSLength}
+                  required
+                />
 
                 <p className="text-[11px] text-gray-500 mt-1">
-                  {groupHSCode
-                    ? `Complete HS Code: ${hscode} (${hscode.length}/${maxHSLength} digits)`
-                    : "HS code helps categorize your product."}
+                  HS code helps categorize your product. Current: {hscode} (
+                  {hscode.length}/{maxHSLength} digits)
                 </p>
 
                 {/* HS Code Length Validation Message */}
-                {groupHSCode && getHSLengthMessage() && (
+                {getHSLengthMessage() && (
                   <p
                     className={`text-[11px] mt-1 ${
                       isHSCodeValid() ? "text-green-600" : "text-orange-500"
@@ -923,18 +884,6 @@ const LeadFormModal = ({
                                 item.chapterDescription}
                             </div>
                           </div>
-                          {groupHSCode && (
-                            <div className="text-xs text-gray-500 ml-2">
-                              <span className="text-gray-400">
-                                {groupHSCode}
-                              </span>
-                              <span className="text-gray-600">
-                                {item.tl
-                                  ? item.tl.substring(groupHSCode.length)
-                                  : ""}
-                              </span>
-                            </div>
-                          )}
                         </div>
                       </div>
                     ))}

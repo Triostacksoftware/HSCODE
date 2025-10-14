@@ -379,11 +379,15 @@ const GlobalChatWindow = ({
           </div>
           <div className="flex flex-col min-w-0 flex-1">
             <span
-              className="text-base font-semibold text-gray-900 truncate cursor-pointer hover:text-blue-600 transition-colors"
+              className="text-base font-semibold text-gray-900 cursor-pointer hover:text-blue-600 transition-colors"
               onClick={handleGroupNameClick}
-              title="Click to view group details"
+              title={`Click to view group details - ${
+                groupName || "Group Chat"
+              }`}
             >
-              {groupName || "Group Chat"}
+              {groupName && groupName.length > 50
+                ? `${groupName.substring(0, 50)}...`
+                : groupName || "Group Chat"}
             </span>
             <div className="text-xs text-gray-600 truncate">
               {Array.isArray(onlineUsers[selectedGroupId]) &&
@@ -858,6 +862,8 @@ const GlobalChatWindow = ({
       <LeadFormModal
         isOpen={leadModalOpen}
         onClose={() => setLeadModalOpen(false)}
+        groupHSCode={groupData?.heading || ""}
+        groupName={groupName || ""}
         onSubmit={handleSendMessage}
         sending={sending}
         user={user}

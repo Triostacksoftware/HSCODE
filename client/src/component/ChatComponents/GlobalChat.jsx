@@ -56,11 +56,11 @@ const GlobalChat = ({ user, refreshUser, setMainActiveTab }) => {
   };
 
   return (
-    <div className="flex h-full relative">
+    <div className="flex h-full relative min-w-0">
       {/* Left Section */}
       <div
         className={`
-          flex flex-col border-r-1 border-gray-200 transition-all duration-300
+          flex flex-col border-r-1 border-gray-200 transition-all duration-300 flex-shrink-0
           ${selectedGroup ? "hidden md:flex md:w-80" : "w-full md:w-80"}
         `}
       >
@@ -140,7 +140,7 @@ const GlobalChat = ({ user, refreshUser, setMainActiveTab }) => {
 
       {/* Middle Section - Groups List */}
       {activeTab === "navigator" && selectedChapter && showGroupsList && (
-        <div className="w-80 border-r border-gray-200 flex flex-col animate-slide-in-groups">
+        <div className="w-80 border-r border-gray-200 flex flex-col animate-slide-in-groups flex-shrink-0">
           <div className="p-4 border-b border-gray-200 bg-gray-50">
             <p className="text-xs text-gray-900 font-semibold">
               Chapter {selectedChapter.chapter}: {selectedChapter.name}
@@ -171,7 +171,7 @@ const GlobalChat = ({ user, refreshUser, setMainActiveTab }) => {
 
       {/* Right Section - Chat Window */}
       {selectedGroup ? (
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col min-w-0">
           <GlobalChatWindow
             chapterNo={selectedGroup.chapterNumber}
             selectedGroupId={selectedGroup._id}

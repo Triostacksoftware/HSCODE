@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { HiMenu, HiX, HiChevronDown } from "react-icons/hi";
 import { useRouter, usePathname } from "next/navigation";
 import useCountryCode from "../../utilities/useCountryCode";
+import { useUserAuth } from "../../utilities/userAuthMiddleware";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -13,21 +14,26 @@ const Navbar = () => {
   const router = useRouter();
   const pathname = usePathname();
   const dropdownRef = useRef(null);
-  
+
   // Get user's country code
   const { countryInfo } = useCountryCode();
+
+  // Get user authentication status
+  const { isAuthenticated, user, isLoading } = useUserAuth();
 
   // Initialize Google Translate
   useEffect(() => {
     const script = document.createElement("script");
-    script.src = "//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
+    script.src =
+      "//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
     script.async = true;
 
-    window.googleTranslateElementInit = function() {
+    window.googleTranslateElementInit = function () {
       new window.google.translate.TranslateElement(
         {
           pageLanguage: "en",
-          includedLanguages: "en,hi,fr,es,de,it,pt,ru,ja,ko,zh-CN,ar,tr,nl,pl,sv,da,no,fi,cs,hu,ro,sk,sl,bg,hr,el,et,lv,lt,mt,th,vi,id,ms,tl,bn,ta,te,kn,ml,gu,pa,mr,or,as,ne,si,my,km,lo,ka,hy,az,kk,ky,uz,tg,fa,ur,he,am,sw,zu,af,sq,be,bs,ca,cy,eu,fo,gl,is,ga,mk,mn,sr,uk",
+          includedLanguages:
+            "en,hi,fr,es,de,it,pt,ru,ja,ko,zh-CN,ar,tr,nl,pl,sv,da,no,fi,cs,hu,ro,sk,sl,bg,hr,el,et,lv,lt,mt,th,vi,id,ms,tl,bn,ta,te,kn,ml,gu,pa,mr,or,as,ne,si,my,km,lo,ka,hy,az,kk,ky,uz,tg,fa,ur,he,am,sw,zu,af,sq,be,bs,ca,cy,eu,fo,gl,is,ga,mk,mn,sr,uk",
           layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
           autoDisplay: false,
           multilanguagePage: true,
@@ -44,18 +50,18 @@ const Navbar = () => {
       }
     };
   }, []);
-  
+
   // Load countries data
   useEffect(() => {
-    fetch('/countries.json')
-      .then(res => res.json())
-      .then(data => {
+    fetch("/countries.json")
+      .then((res) => res.json())
+      .then((data) => {
         setCountries(data);
         // Find user's country from the loaded data
-        const country = data.find(c => c.name.trim() === countryInfo.name);
+        const country = data.find((c) => c.name.trim() === countryInfo.name);
         setUserCountry(country);
       })
-      .catch(err => console.error('Error loading countries:', err));
+      .catch((err) => console.error("Error loading countries:", err));
   }, [countryInfo]);
 
   const toggleMenu = () => {
@@ -99,25 +105,40 @@ const Navbar = () => {
   }, []);
 
   return (
-  <>
-    <div className="h-[5vh] w-full bg-gray-100 flex items-center overflow-hidden">
-      <div className="animate-marquee whitespace-nowrap flex text-orange-500">
-        <span className="mx-4 font-medium"> Welcome to HS CODES - Linking EXIM World! </span>
-        <span className="mx-4 font-medium"> Discover Global Trade Opportunities </span>
-        <span className="mx-4 font-medium"> Access Comprehensive HS Code Database </span>
-        <span className="mx-4 font-medium"> Connect with International Markets </span>
-        <span className="mx-4 font-medium"> Professional Import/Export Solutions </span>
+    <>
+      <div className="h-[5vh] w-full bg-gray-100 flex items-center overflow-hidden">
+        <div className="animate-marquee whitespace-nowrap flex text-orange-500">
+          <span className="mx-4 font-medium">
+            {" "}
+            Welcome to HS CODES - Linking EXIM World!{" "}
+          </span>
+          <span className="mx-4 font-medium">
+            {" "}
+            Discover Global Trade Opportunities{" "}
+          </span>
+          <span className="mx-4 font-medium">
+            {" "}
+            Access Comprehensive HS Code Database{" "}
+          </span>
+          <span className="mx-4 font-medium">
+            {" "}
+            Connect with International Markets{" "}
+          </span>
+          <span className="mx-4 font-medium">
+            {" "}
+            Professional Import/Export Solutions{" "}
+          </span>
+        </div>
       </div>
-    </div>
-    <nav className="bg-white border-b border-gray-200 w-full relative z-50" style={{ borderColor: 'var(--cobalt-blue)' }}>
+      <nav
+        className="bg-white border-b border-gray-200 w-full relative z-50"
+        style={{ borderColor: "var(--cobalt-blue)" }}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16 md:h-18">
             {/* Logo */}
             <Link href="/" className="flex-shrink-0">
-              <img
-                className="h-14 w-auto"
-                src="hscode2.jpg"
-                alt="HSCODE" />
+              <img className="h-14 w-auto" src="hscode2.jpg" alt="HSCODE" />
             </Link>
 
             {/* Country Display */}
@@ -126,9 +147,12 @@ const Navbar = () => {
                 <img
                   src={userCountry.image}
                   alt={`${userCountry.name} flag`}
-                  className="w-8 h-6 mr-2 object-cover rounded" />
+                  className="w-8 h-6 mr-2 object-cover rounded"
+                />
                 <div className="flex flex-col">
-                  <span className="text-xs text-gray-600">{userCountry.name}</span>
+                  <span className="text-xs text-gray-600">
+                    {userCountry.name}
+                  </span>
                 </div>
               </div>
             )}
@@ -139,18 +163,26 @@ const Navbar = () => {
                 <button
                   onClick={() => handleNavigation("/")}
                   className="px-3 py-2 text-sm font-medium flex items-center transition-colors duration-200"
-                  style={{ color: 'var(--cobalt-blue)' }}
-                  onMouseEnter={(e) => e.target.style.color = 'var(--leaf-green)'}
-                  onMouseLeave={(e) => e.target.style.color = 'var(--cobalt-blue)'}
+                  style={{ color: "var(--cobalt-blue)" }}
+                  onMouseEnter={(e) =>
+                    (e.target.style.color = "var(--leaf-green)")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.target.style.color = "var(--cobalt-blue)")
+                  }
                 >
                   Home
                 </button>
                 <button
                   onClick={() => handleNavigation("/", "about")}
                   className="px-3 py-2 text-sm font-medium flex items-center transition-colors duration-200"
-                  style={{ color: 'var(--cobalt-blue)' }}
-                  onMouseEnter={(e) => e.target.style.color = 'var(--leaf-green)'}
-                  onMouseLeave={(e) => e.target.style.color = 'var(--cobalt-blue)'}
+                  style={{ color: "var(--cobalt-blue)" }}
+                  onMouseEnter={(e) =>
+                    (e.target.style.color = "var(--leaf-green)")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.target.style.color = "var(--cobalt-blue)")
+                  }
                 >
                   About
                 </button>
@@ -158,9 +190,13 @@ const Navbar = () => {
                   <button
                     onClick={handleTrendingToggle}
                     className="px-3 py-2 text-sm font-medium flex items-center transition-colors duration-200"
-                    style={{ color: 'var(--cobalt-blue)' }}
-                    onMouseEnter={(e) => e.target.style.color = 'var(--leaf-green)'}
-                    onMouseLeave={(e) => e.target.style.color = 'var(--cobalt-blue)'}
+                    style={{ color: "var(--cobalt-blue)" }}
+                    onMouseEnter={(e) =>
+                      (e.target.style.color = "var(--leaf-green)")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.target.style.color = "var(--cobalt-blue)")
+                    }
                   >
                     Trending
                     <HiChevronDown className="ml-1 h-4 w-4" />
@@ -168,7 +204,9 @@ const Navbar = () => {
                   {isTrendingOpen && (
                     <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50">
                       <button
-                        onClick={() => handleNavigation("/", "featured-categories")}
+                        onClick={() =>
+                          handleNavigation("/", "featured-categories")
+                        }
                         className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       >
                         Featured Categories
@@ -185,18 +223,26 @@ const Navbar = () => {
                 <button
                   onClick={() => handleNavigation("/", "footer")}
                   className="px-3 py-2 text-sm font-medium flex items-center transition-colors duration-200"
-                  style={{ color: 'var(--cobalt-blue)' }}
-                  onMouseEnter={(e) => e.target.style.color = 'var(--leaf-green)'}
-                  onMouseLeave={(e) => e.target.style.color = 'var(--cobalt-blue)'}
+                  style={{ color: "var(--cobalt-blue)" }}
+                  onMouseEnter={(e) =>
+                    (e.target.style.color = "var(--leaf-green)")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.target.style.color = "var(--cobalt-blue)")
+                  }
                 >
                   Contact Us
                 </button>
                 <Link
                   href="/subscription"
                   className="px-3 py-2 text-sm font-medium flex items-center transition-colors duration-200"
-                  style={{ color: 'var(--cobalt-blue)' }}
-                  onMouseEnter={(e) => e.target.style.color = 'var(--leaf-green)'}
-                  onMouseLeave={(e) => e.target.style.color = 'var(--cobalt-blue)'}
+                  style={{ color: "var(--cobalt-blue)" }}
+                  onMouseEnter={(e) =>
+                    (e.target.style.color = "var(--leaf-green)")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.target.style.color = "var(--cobalt-blue)")
+                  }
                 >
                   Subscription
                 </Link>
@@ -205,19 +251,31 @@ const Navbar = () => {
 
             {/* Desktop Right Side */}
             <div className="hidden md:flex items-center space-x-4">
-
-              {/* Live Demo Button */}
-              <button className="border bg-white px-4 py-2 rounded-md text-sm font-medium flex items-center transition-all duration-200 hover:text-white hover:bg-blue-800 hover:border-blue-800"
-                >
-
-                <Link href="/auth" className="flex items-center">                
-                <svg
-                  className="w-4 h-4 mr-2"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
-                </svg>Login / Signup</Link>
+              {/* Login/Dashboard Button */}
+              <button className="border bg-white px-4 py-2 rounded-md text-sm font-medium flex items-center transition-all duration-200 hover:text-white hover:bg-blue-800 hover:border-blue-800">
+                {isAuthenticated ? (
+                  <Link href="/userchat" className="flex items-center">
+                    <svg
+                      className="w-4 h-4 mr-2"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
+                    </svg>
+                    Dashboard
+                  </Link>
+                ) : (
+                  <Link href="/auth" className="flex items-center">
+                    <svg
+                      className="w-4 h-4 mr-2"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                    </svg>
+                    Login / Signup
+                  </Link>
+                )}
               </button>
             </div>
 
@@ -240,12 +298,16 @@ const Navbar = () => {
 
         {/* Mobile menu */}
         <div
-          className={`md:hidden transition-all duration-300 ease-in-out ${isMenuOpen
+          className={`md:hidden transition-all duration-300 ease-in-out ${
+            isMenuOpen
               ? "max-h-96 opacity-100"
-              : "max-h-0 opacity-0 overflow-hidden"}`}
+              : "max-h-0 opacity-0 overflow-hidden"
+          }`}
         >
           <div
-            className={`px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-gray-50 transform transition-transform duration-300 ease-in-out ${isMenuOpen ? "translate-y-0" : "-translate-y-4"}`}
+            className={`px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-gray-50 transform transition-transform duration-300 ease-in-out ${
+              isMenuOpen ? "translate-y-0" : "-translate-y-4"
+            }`}
           >
             {/* Mobile Country Display */}
             {userCountry && (
@@ -253,10 +315,15 @@ const Navbar = () => {
                 <img
                   src={userCountry.image}
                   alt={`${userCountry.name} flag`}
-                  className="w-12 h-9 mr-3 object-cover rounded" />
+                  className="w-12 h-9 mr-3 object-cover rounded"
+                />
                 <div className="flex flex-col items-center">
-                  <span className="text-lg font-semibold text-gray-900">{userCountry.letter}</span>
-                  <span className="text-sm text-gray-600">{userCountry.name}</span>
+                  <span className="text-lg font-semibold text-gray-900">
+                    {userCountry.letter}
+                  </span>
+                  <span className="text-sm text-gray-600">
+                    {userCountry.name}
+                  </span>
                 </div>
               </div>
             )}
@@ -316,24 +383,42 @@ const Navbar = () => {
                 </div>
               </div>
 
-
-
               <div className="mt-3 px-3">
-                <button className="w-full border border-gray-800 text-gray-800 bg-white hover:bg-gray-50 px-4 py-2 rounded-md text-sm font-medium flex items-center justify-center">
-                  <svg
-                    className="w-4 h-4 mr-2"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
+                {isAuthenticated ? (
+                  <Link
+                    href="/userchat"
+                    className="w-full border border-gray-800 text-gray-800 bg-white hover:bg-gray-50 px-4 py-2 rounded-md text-sm font-medium flex items-center justify-center"
                   >
-                    <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
-                  </svg>
-                </button>
-                <Link href="/auth">Login / Signup</Link>
+                    <svg
+                      className="w-4 h-4 mr-2"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
+                    </svg>
+                    Dashboard
+                  </Link>
+                ) : (
+                  <Link
+                    href="/auth"
+                    className="w-full border border-gray-800 text-gray-800 bg-white hover:bg-gray-50 px-4 py-2 rounded-md text-sm font-medium flex items-center justify-center"
+                  >
+                    <svg
+                      className="w-4 h-4 mr-2"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                    </svg>
+                    Login / Signup
+                  </Link>
+                )}
               </div>
             </div>
           </div>
         </div>
-      </nav></>
+      </nav>
+    </>
   );
 };
 

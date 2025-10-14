@@ -94,9 +94,9 @@ const UserProfileSidebar = ({
     (currentUser.membership === "premium" || currentUser.role === "admin");
 
   return (
-    <div className="fixed inset-y-0 right-0 w-80 bg-white shadow-2xl transform transition-transform duration-300 ease-in-out z-50">
+    <div className="fixed inset-y-0 right-0 w-80 bg-white shadow-2xl transform transition-transform duration-300 ease-in-out z-50 flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200">
+      <div className="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
         <h3 className="text-lg font-semibold text-gray-900">User Profile</h3>
         <button
           onClick={onClose}
@@ -106,8 +106,8 @@ const UserProfileSidebar = ({
         </button>
       </div>
 
-      {/* User Info */}
-      <div className="p-6">
+      {/* User Info - Scrollable Content */}
+      <div className="flex-1 overflow-y-auto p-6 pb-0">
         {/* Avatar and Name */}
         <div className="text-center mb-6">
           {user.image ? (
@@ -335,10 +335,12 @@ const UserProfileSidebar = ({
             )}
           </div>
         )}
+      </div>
 
-        {/* Chat Button */}
+      {/* Fixed Bottom Section - Chat Button */}
+      <div className="flex-shrink-0 p-6 pt-4 border-t border-gray-200 bg-white">
         {canStartChat && (
-          <div className="mt-8 pt-6 border-t border-gray-200">
+          <div>
             <button
               onClick={handleStartChat}
               disabled={startingChat}
@@ -360,7 +362,7 @@ const UserProfileSidebar = ({
         )}
 
         {!canStartChat && (
-          <div className="mt-8 pt-6 border-t border-gray-200 text-center">
+          <div className="text-center">
             <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-6 border border-purple-200">
               <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <FaComments className="text-2xl text-purple-600" />
