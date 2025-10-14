@@ -143,6 +143,42 @@ const Footer = ({
               })}
             </div>
 
+            <div className="mt-8">
+              <div className="flex flex-col lg:flex-row gap-20">
+                {/* Social Media Links */}
+                <div>
+                  <h4 className="text-sm font-semibold text-white mb-4 tracking-wide">
+                    Message Us
+                  </h4>
+                  <div className="flex space-x-4">
+                    <a
+                      href={
+                        finalSocialLinks.arattai
+                          ? finalSocialLinks.arattai.startsWith('http') || 
+                            finalSocialLinks.arattai.startsWith('arattai://') ||
+                            finalSocialLinks.arattai.startsWith('#')
+                            ? finalSocialLinks.arattai
+                            : `https://arattai.com/chat/${finalSocialLinks.arattai.replace(/[^0-9]/g, '')}`
+                          : "#"
+                      }
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 border-[#ffffff37] gap-6"
+                      title="Connect with us on Arattai"
+                    >
+                      <img
+                        src="https://upload.wikimedia.org/wikipedia/commons/f/ff/Arattai_logo.png"
+                        alt="Arattai"
+                        className="w-9 h-9 object-cover"
+                      />
+                      {finalSocialLinks.arattai}
+                    </a>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
             {/* Social Media Links & App Downloads */}
             <div className="mt-8">
               <div className="flex flex-col lg:flex-row gap-20">
@@ -195,8 +231,7 @@ const Footer = ({
                       </svg>
                     </a>
                     <a
-                      href={finalSocialLinks.instagram}
-                      className="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110"
+                      className="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 gap-4"
                       style={{ 
                         background: "linear-gradient(45deg, #f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%)"
                       }}
@@ -209,27 +244,6 @@ const Footer = ({
                       >
                         <path d="M12.017 0C5.396 0 .029 5.367.029 11.987c0 6.62 5.367 11.987 11.988 11.987 6.62 0 11.987-5.367 11.987-11.987C24.014 5.367 18.637.001 12.017.001zM8.449 16.988c-1.297 0-2.448-.49-3.323-1.297C4.198 14.895 3.708 13.744 3.708 12.447s.49-2.448 1.297-3.323c.875-.807 2.026-1.297 3.323-1.297s2.448.49 3.323 1.297c.807.875 1.297 2.026 1.297 3.323s-.49 2.448-1.297 3.323c-.875.807-2.026 1.297-3.323 1.297zm7.718-1.297c-.875.807-2.026 1.297-3.323 1.297s-2.448-.49-3.323-1.297c-.807-.875-1.297-2.026-1.297-3.323s.49-2.448 1.297-3.323c.875-.807 2.026-1.297 3.323-1.297s2.448.49 3.323 1.297c.807.875 1.297 2.026 1.297 3.323s-.49 2.448-1.297 3.323z" />
                       </svg>
-                    </a>
-                    <a
-                      href={
-                        finalSocialLinks.arattai
-                          ? finalSocialLinks.arattai.startsWith('http') || 
-                            finalSocialLinks.arattai.startsWith('arattai://') ||
-                            finalSocialLinks.arattai.startsWith('#')
-                            ? finalSocialLinks.arattai
-                            : `https://arattai.com/chat/${finalSocialLinks.arattai.replace(/[^0-9]/g, '')}`
-                          : "#"
-                      }
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 bg-white"
-                      title="Connect with us on Arattai"
-                    >
-                      <img
-                        src="https://upload.wikimedia.org/wikipedia/commons/f/ff/Arattai_logo.png"
-                        alt="Arattai"
-                        className="w-6 h-6 object-cover"
-                      />
                     </a>
                   </div>
                 </div>

@@ -11,6 +11,7 @@ import {
   MdSearch,
 } from "react-icons/md";
 import AddGroup from "./AddGroup";
+import ChapterDocumentUpload from "./ChapterDocumentUpload";
 import hsCodeData from "../../../hs_code_structure.json";
 
 const Categories = () => {
@@ -29,6 +30,7 @@ const Categories = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [groupToEdit, setGroupToEdit] = useState(null);
   const [editFormData, setEditFormData] = useState({ name: "", heading: "", image: "" });
+  const [showChapterDocModal, setShowChapterDocModal] = useState(false);
 
   // Flatten all chapters from all sections into a single array
   const allChapters = hsCodeData.sections.flatMap(section => 
@@ -228,12 +230,24 @@ const Categories = () => {
               </h3>
             </div>
             {activeChapter && (
-              <button
-                onClick={handleAddGroup}
-                className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center hover:bg-gray-200 cursor-pointer border-gray-200 border transition-colors flex-shrink-0"
-              >
-                <MdAdd className="w-4 h-4 sm:w-5 sm:h-5" />
-              </button>
+              <div className="flex space-x-2">
+                <button
+                  onClick={handleAddGroup}
+                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center hover:bg-gray-200 cursor-pointer border-gray-200 border transition-colors flex-shrink-0"
+                  title="Add Group"
+                >
+                  <MdAdd className="w-4 h-4 sm:w-5 sm:h-5" />
+                </button>
+                <button
+                  onClick={() => setShowChapterDocModal(true)}
+                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center hover:bg-blue-100 cursor-pointer border-blue-300 border transition-colors flex-shrink-0 bg-blue-50"
+                  title="Upload Chapter Document"
+                >
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              </div>
             )}
           </div>
 
@@ -465,6 +479,20 @@ const Categories = () => {
                           <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded-full">
                             {group.members?.length || 0} members
                           </span>
+                          {group.chapterDocument && (
+                            <a
+                              href={`${process.env.NEXT_PUBLIC_BASE_URL}/${group.chapterDocument}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-2 py-1 bg-red-100 text-red-700 rounded-full hover:bg-red-200 transition-colors flex items-center gap-1"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
+                              </svg>
+                              PDF
+                            </a>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -543,6 +571,20 @@ const Categories = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Chapter Document Upload Modal */}
+      {showChapterDocModal && activeChapter && (
+        <ChapterDocumentUpload
+          chapter={activeChapter}
+          onClose={() => setShowChapterDocModal(false)}
+          onSuccess={() => {
+            // Refresh groups after successful upload
+            if (activeChapter) {
+              fetchGroups(activeChapter.chapter.toString());
+            }
+          }}
+        />
       )}
 
       {/* Edit Group Modal */}
