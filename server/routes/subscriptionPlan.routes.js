@@ -5,13 +5,20 @@ import {
   getSubscriptionPlanById,
   updateSubscriptionPlan,
   deleteSubscriptionPlan,
+  subscribeToPlan,
 } from "../controllers/subscriptionPlan.ctrls.js";
-import { superadminMiddleware } from "../middlewares/auth.mdware.js";
+import {
+  superadminMiddleware,
+  authMiddleware,
+} from "../middlewares/auth.mdware.js";
 
 const router = express.Router();
 
 // Public routes
 router.get("/", getSubscriptionPlans);
+
+// User routes (require authentication)
+router.post("/:planId/subscribe", authMiddleware, subscribeToPlan);
 
 // Super admin routes (require superadmin privileges)
 router.post("/", superadminMiddleware, createSubscriptionPlan);

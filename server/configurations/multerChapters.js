@@ -1,8 +1,8 @@
 import multer from "multer";
 import path from "path";
 import fs from "fs";
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
+import { fileURLToPath } from "url";
+import { dirname } from "path";
 
 // Get __dirname equivalent in ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -14,16 +14,21 @@ const chapterStorage = multer.diskStorage({
     try {
       // Get country code from authenticated user
       const countryCode = req.user?.countryCode || "DEFAULT";
-      
+
       // Create country-specific folder path using path.join for cross-platform compatibility
-      const uploadPath = path.join(process.cwd(), 'public', 'Chapters', countryCode);
-      
+      const uploadPath = path.join(
+        process.cwd(),
+        "public",
+        "Chapters",
+        countryCode
+      );
+
       // Create directory if it doesn't exist
       if (!fs.existsSync(uploadPath)) {
         fs.mkdirSync(uploadPath, { recursive: true });
         console.log(`Created directory: ${uploadPath}`);
       }
-      
+
       cb(null, uploadPath);
     } catch (error) {
       console.error("Error creating directory:", error);
@@ -32,15 +37,18 @@ const chapterStorage = multer.diskStorage({
   },
   filename: function (req, file, cb) {
     try {
-      // Get chapter number from request
-      const chapterNumber = req.body.chapterNumber || req.params.chapterNumber || "00";
+      // Get chapter number from request - add debugging
+      console.log("Multer filename function - req.body:", req.body);
+      console.log("Multer filename function - req.params:", req.params);
+
+      // For multer, req.body might not be available yet during filename generation
+      // We'll use a timestamp-based filename and let the controller handle the rename
       const countryCode = req.user?.countryCode || "DEFAULT";
-      
-      // Generate filename: Country_Chapter_XX.pdf
-      const filename = `${countryCode}_Chapter_${chapterNumber}.pdf`;
-      
-      console.log(`Saving chapter document as: ${filename}`);
-      cb(null, filename);
+      const timestamp = Date.now();
+      const tempFilename = `${countryCode}_Chapter_temp_${timestamp}.pdf`;
+
+      console.log(`Saving chapter document as temporary file: ${tempFilename}`);
+      cb(null, tempFilename);
     } catch (error) {
       console.error("Error generating filename:", error);
       cb(error);
@@ -66,4 +74,3 @@ const uploadChapterDoc = multer({
 });
 
 export default uploadChapterDoc;
-

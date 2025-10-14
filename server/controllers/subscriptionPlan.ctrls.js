@@ -1,4 +1,5 @@
 import SubscriptionPlanModel from "../models/SubscriptionPlan.js";
+import UserModel from "../models/user.js";
 
 // Create a new subscription plan (Super Admin only)
 export const createSubscriptionPlan = async (req, res) => {
@@ -145,5 +146,53 @@ export const deleteSubscriptionPlan = async (req, res) => {
   } catch (error) {
     console.error("Error deleting subscription plan:", error);
     res.status(500).json({ message: "Error deleting subscription plan" });
+  }
+};
+
+// Subscribe to a subscription plan (User)
+export const subscribeToPlan = async (req, res) => {
+  try {
+    const { planId } = req.params;
+    const userId = req.user._id || req.user.id;
+
+    // Find the subscription plan
+    const plan = await SubscriptionPlanModel.findOne({
+      id: planId,
+      isActive: true,
+    });
+    if (!plan) {
+      return res
+        .status(404)
+        .json({ message: "Subscription plan not found or inactive" });
+    }
+
+    // Find the user
+    const user = await UserModel.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Update user's membership and maxGroups
+    user.membership = "premium";
+    user.maxGroups = plan.maxGroups; // Set the maxGroups from the plan
+    await user.save();
+
+    res.json({
+      message: `Successfully subscribed to ${plan.name}`,
+      plan: {
+        id: plan.id,
+        name: plan.name,
+        maxGroups: plan.maxGroups,
+        maxLeads: plan.maxLeads,
+      },
+      user: {
+        membership: user.membership,
+        maxGroups: user.maxGroups,
+        currentGroupsCount: user.groupsID.length,
+      },
+    });
+  } catch (error) {
+    console.error("Error subscribing to plan:", error);
+    res.status(500).json({ message: "Error subscribing to plan" });
   }
 };

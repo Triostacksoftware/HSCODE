@@ -1,22 +1,24 @@
 "use client";
 import React, { useState, useMemo } from "react";
 import { LiaSearchSolid } from "react-icons/lia";
-import hsCodeData from "../../../hs_code_structure.json"
+import hsCodeData from "../../../hs_code_structure.json";
+import ChapterInfoButton from "./ChapterInfoButton";
 
-const UnifiedHSNavigator = ({ 
+const UnifiedHSNavigator = ({
   scope = "local",
   onChapterSelect,
-  selectedChapter 
+  selectedChapter,
+  user,
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
 
   // Flatten all chapters from all sections into a single array
   const allChapters = useMemo(() => {
-    return hsCodeData.sections.flatMap(section => 
-      section.chapters.map(chapter => ({
+    return hsCodeData.sections.flatMap((section) =>
+      section.chapters.map((chapter) => ({
         ...chapter,
         sectionTitle: section.title,
-        sectionNumber: section.section
+        sectionNumber: section.section,
       }))
     );
   }, []);
@@ -26,16 +28,17 @@ const UnifiedHSNavigator = ({
       onChapterSelect({
         _id: chapter.chapter.toString(),
         name: chapter.heading,
-        chapter: chapter.chapter.toString()
+        chapter: chapter.chapter.toString(),
       });
     }
   };
 
   // Filter chapters based on search term
-  const filteredChapters = allChapters.filter(chapter => 
-    chapter.heading.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    chapter.chapter.toString().includes(searchTerm) ||
-    chapter.sectionTitle.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredChapters = allChapters.filter(
+    (chapter) =>
+      chapter.heading.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      chapter.chapter.toString().includes(searchTerm) ||
+      chapter.sectionTitle.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -64,9 +67,12 @@ const UnifiedHSNavigator = ({
             }`}
             onClick={() => handleChapterClick(chapter)}
           >
-            <div className="text-sm grid font-medium">
-              <span>Chapter {chapter.chapter}</span>
-              <span className="text-gray-400 text-xs">{chapter.heading}</span> 
+            <div className="flex items-center justify-between">
+              <div className="text-sm grid font-medium flex-1">
+                <span>Chapter {chapter.chapter}</span>
+                <span className="text-gray-400 text-xs">{chapter.heading}</span>
+              </div>
+              <ChapterInfoButton chapter={chapter} user={user} />
             </div>
           </div>
         ))}

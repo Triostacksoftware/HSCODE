@@ -268,8 +268,9 @@ export const applyCoupon = async (req, res) => {
       });
     }
 
-    // Update user membership to premium
+    // Update user membership to premium and set maxGroups from coupon
     user.membership = "premium";
+    user.maxGroups = coupon.maxGroups || 0; // 0 means unlimited for premium users
     await user.save();
 
     res.json({

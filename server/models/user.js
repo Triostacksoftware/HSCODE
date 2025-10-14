@@ -58,6 +58,12 @@ const userSchema = new mongoose.Schema(
       default: "free",
     },
 
+    maxGroups: {
+      type: Number,
+      default: 3, // Free users can join 3 groups by default
+      min: 0,
+    },
+
     groupsID: [
       {
         type: mongoose.Schema.Types.ObjectId,

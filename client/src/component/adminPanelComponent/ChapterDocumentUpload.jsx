@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   MdClose,
   MdUploadFile,
@@ -14,6 +14,72 @@ const ChapterDocumentUpload = ({ chapter, onClose, onSuccess }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [availableDocuments, setAvailableDocuments] = useState([]);
+  const [isLoadingDocs, setIsLoadingDocs] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Fetch available documents on component mount and when chapter changes
+  useEffect(() => {
+    fetchAvailableDocuments();
+  }, [chapter.chapter]);
+
+  const fetchAvailableDocuments = async () => {
+    setIsLoadingDocs(true);
+    try {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/groups/chapter-documents`,
+        { withCredentials: true }
+      );
+
+      // Filter documents to show only the current chapter's document
+      const allDocuments = response.data.documents || [];
+      const currentChapterDocuments = allDocuments.filter(
+        (doc) => doc.chapterNumber === chapter.chapter.toString()
+      );
+
+      setAvailableDocuments(currentChapterDocuments);
+    } catch (error) {
+      console.error("Error fetching chapter documents:", error);
+      setAvailableDocuments([]);
+    } finally {
+      setIsLoadingDocs(false);
+    }
+  };
+
+  const handleDeleteDocument = async (chapterNumber) => {
+    if (
+      !confirm(
+        `Are you sure you want to delete the document for Chapter ${chapterNumber}?`
+      )
+    ) {
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      await axios.delete(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/groups/chapter-document/${chapterNumber}`,
+        { withCredentials: true }
+      );
+
+      setSuccess(`Chapter ${chapterNumber} document deleted successfully!`);
+
+      // Refresh the documents list
+      await fetchAvailableDocuments();
+
+      // Call success callback if provided
+      if (onSuccess) {
+        onSuccess();
+      }
+    } catch (error) {
+      console.error("Error deleting chapter document:", error);
+      setError(
+        error.response?.data?.message || "Failed to delete chapter document"
+      );
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -53,6 +119,10 @@ const ChapterDocumentUpload = ({ chapter, onClose, onSuccess }) => {
       formData.append("chapterDocument", selectedFile);
       formData.append("chapterNumber", chapter.chapter);
 
+      // Debug logging
+      console.log("Uploading chapter document for:", chapter);
+      console.log("Chapter number being sent:", chapter.chapter);
+
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_BASE_URL}/groups/chapter-document`,
         formData,
@@ -67,7 +137,10 @@ const ChapterDocumentUpload = ({ chapter, onClose, onSuccess }) => {
       if (response.status === 200 || response.status === 201) {
         setSuccess("Chapter document uploaded successfully!");
         setSelectedFile(null);
-        
+
+        // Refresh the documents list
+        await fetchAvailableDocuments();
+
         // Call success callback if provided
         if (onSuccess) {
           onSuccess();
@@ -89,7 +162,7 @@ const ChapterDocumentUpload = ({ chapter, onClose, onSuccess }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 bg-black/30 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
         {/* Header */}
         <div className="p-4 border-b border-gray-200 flex items-center justify-between">
@@ -132,7 +205,7 @@ const ChapterDocumentUpload = ({ chapter, onClose, onSuccess }) => {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Select PDF Document
             </label>
-            
+
             {/* Custom File Input */}
             <div className="relative">
               <input
@@ -195,17 +268,69 @@ const ChapterDocumentUpload = ({ chapter, onClose, onSuccess }) => {
             )}
           </div>
 
-          {/* Info */}
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-            <p className="text-xs text-gray-600">
-              📁 File will be saved to:{" "}
-              <span className="font-mono font-medium">
-                Chapters/[YourCountry]/[Country]_Chapter_{chapter.chapter}.pdf
-              </span>
-            </p>
-            <p className="text-xs text-gray-500 mt-1">
-              This will replace any existing document for this chapter.
-            </p>
+          {/* Available Documents */}
+          <div className="border border-gray-200 rounded-lg p-4">
+            <h4 className="text-sm font-medium text-blue-900 mb-3 flex items-center">
+              <MdFilePresent className="w-4 h-4 mr-2" />
+              Current Chapter Document
+            </h4>
+
+            {isLoadingDocs ? (
+              <div className="text-center py-4">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
+                <p className="text-xs text-blue-600 mt-2">
+                  Loading documents...
+                </p>
+              </div>
+            ) : availableDocuments.length > 0 ? (
+              <div className="space-y-2">
+                {availableDocuments.map((doc) => (
+                  <div
+                    key={doc.chapterNumber}
+                    className="flex items-center justify-between p-3 bg-white border border-blue-200 rounded-lg"
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2">
+                        <MdFilePresent className="w-4 h-4 text-blue-600" />
+                        <span className="text-sm font-medium text-gray-900">
+                          Chapter {doc.chapterNumber}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {(doc.size / 1024 / 1024).toFixed(2)} MB • Last
+                        modified:{" "}
+                        {new Date(doc.lastModified).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() =>
+                          window.open(
+                            `${process.env.NEXT_PUBLIC_BASE_URL}/api/v1/Chapters/IN/${doc.filename}`,
+                            "_blank"
+                          )
+                        }
+                        className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
+                        disabled={isDeleting}
+                      >
+                        View
+                      </button>
+                      <button
+                        onClick={() => handleDeleteDocument(doc.chapterNumber)}
+                        className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
+                        disabled={isDeleting}
+                      >
+                        {isDeleting ? "Deleting..." : "Delete"}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-blue-600 text-center py-4">
+                No document uploaded for Chapter {chapter.chapter} yet.
+              </p>
+            )}
           </div>
         </div>
 
@@ -242,4 +367,3 @@ const ChapterDocumentUpload = ({ chapter, onClose, onSuccess }) => {
 };
 
 export default ChapterDocumentUpload;
-

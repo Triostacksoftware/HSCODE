@@ -9,6 +9,7 @@ import {
   MdMoreVert,
   MdArrowBack,
   MdSearch,
+  MdFilePresent,
 } from "react-icons/md";
 import AddGroup from "./AddGroup";
 import ChapterDocumentUpload from "./ChapterDocumentUpload";
@@ -29,23 +30,28 @@ const Categories = () => {
   const [groupToDelete, setGroupToDelete] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [groupToEdit, setGroupToEdit] = useState(null);
-  const [editFormData, setEditFormData] = useState({ name: "", heading: "", image: "" });
+  const [editFormData, setEditFormData] = useState({
+    name: "",
+    heading: "",
+    image: "",
+  });
   const [showChapterDocModal, setShowChapterDocModal] = useState(false);
 
   // Flatten all chapters from all sections into a single array
-  const allChapters = hsCodeData.sections.flatMap(section => 
-    section.chapters.map(chapter => ({
+  const allChapters = hsCodeData.sections.flatMap((section) =>
+    section.chapters.map((chapter) => ({
       ...chapter,
       sectionTitle: section.title,
-      sectionNumber: section.section
+      sectionNumber: section.section,
     }))
   );
 
   // Filter chapters based on search
-  const filteredChapters = allChapters.filter(chapter => 
-    chapter.heading.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    chapter.chapter.toString().includes(searchTerm) ||
-    chapter.sectionTitle.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredChapters = allChapters.filter(
+    (chapter) =>
+      chapter.heading.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      chapter.chapter.toString().includes(searchTerm) ||
+      chapter.sectionTitle.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Filter groups based on search
@@ -76,10 +82,10 @@ const Categories = () => {
 
   const handleEditGroup = (group) => {
     setGroupToEdit(group);
-    setEditFormData({ 
-      name: group.name, 
+    setEditFormData({
+      name: group.name,
       heading: group.heading,
-      image: group.image || ""
+      image: group.image || "",
     });
     setShowEditModal(true);
     setOpenMenu(null);
@@ -223,10 +229,14 @@ const Categories = () => {
           <div className="flex justify-between items-start sm:items-center mb-3 gap-2">
             <div className="min-w-0 flex-1">
               <h2 className="text-sm sm:text-base lg:text-lg text-gray-700 font-medium truncate">
-                {!activeChapter ? "All HS Code Chapters" : `Chapter ${activeChapter?.chapter}`}
+                {!activeChapter
+                  ? "All HS Code Chapters"
+                  : `Chapter ${activeChapter?.chapter}`}
               </h2>
               <h3 className="text-xs sm:text-sm text-gray-500 mt-1">
-                {!activeChapter ? `${allChapters.length} Chapters` : `Groups in right panel`}
+                {!activeChapter
+                  ? `${allChapters.length} Chapters`
+                  : `Groups in right panel`}
               </h3>
             </div>
             {activeChapter && (
@@ -240,12 +250,10 @@ const Categories = () => {
                 </button>
                 <button
                   onClick={() => setShowChapterDocModal(true)}
-                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center hover:bg-blue-100 cursor-pointer border-blue-300 border transition-colors flex-shrink-0 bg-blue-50"
+                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center hover:bg-gray-200 cursor-pointer  border transition-colors flex-shrink-0 border-gray-200"
                   title="Upload Chapter Document"
                 >
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
-                  </svg>
+                  <MdFilePresent className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700" />
                 </button>
               </div>
             )}
@@ -487,8 +495,16 @@ const Categories = () => {
                               className="px-2 py-1 bg-red-100 text-red-700 rounded-full hover:bg-red-200 transition-colors flex items-center gap-1"
                               onClick={(e) => e.stopPropagation()}
                             >
-                              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
+                              <svg
+                                className="w-3 h-3"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                              >
+                                <path
+                                  fillRule="evenodd"
+                                  d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"
+                                  clipRule="evenodd"
+                                />
                               </svg>
                               PDF
                             </a>
@@ -656,7 +672,7 @@ const Categories = () => {
                           alt="Preview"
                           className="w-20 h-20 object-cover rounded-lg border border-gray-200"
                           onError={(e) => {
-                            e.target.style.display = 'none';
+                            e.target.style.display = "none";
                           }}
                         />
                       </div>

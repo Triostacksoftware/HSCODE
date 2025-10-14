@@ -62,7 +62,7 @@ export const createGroup = async (req, res) => {
   try {
     const { name, heading, chapterNumber } = req.body;
     const { countryCode } = req.user;
-    
+
     // Handle image file
     const image = req.file ? req.file.filename : null;
 
@@ -268,14 +268,129 @@ export const getAllGroups = async (req, res) => {
   }
 };
 
+// GET available chapter documents (Admin only)
+export const getChapterDocuments = async (req, res) => {
+  try {
+    const { countryCode } = req.user;
+    const documentsPath = `public/Chapters/${countryCode}`;
+
+    console.log(`Looking for chapter documents in: ${documentsPath}`);
+
+    // Check if directory exists
+    if (!fs.existsSync(documentsPath)) {
+      console.log(`Directory does not exist: ${documentsPath}`);
+      return res.status(200).json({
+        success: true,
+        documents: [],
+      });
+    }
+
+    // Read directory and get only chapter document files
+    const files = fs.readdirSync(documentsPath);
+    console.log(`Found files in directory:`, files);
+
+    // Only look for files matching the exact pattern: {countryCode}_Chapter_{number}.pdf
+    const chapterFilePattern = new RegExp(
+      `^${countryCode}_Chapter_(\\d+)\\.pdf$`
+    );
+
+    const pdfFiles = files
+      .filter((file) => {
+        const matches = chapterFilePattern.test(file);
+        console.log(`File ${file} matches pattern:`, matches);
+        return matches;
+      })
+      .map((file) => {
+        console.log(`Processing chapter document: ${file}`);
+        // Extract chapter number from filename (e.g., IN_Chapter_3.pdf -> 3)
+        const match = file.match(chapterFilePattern);
+        console.log(`Regex match for ${file}:`, match);
+
+        const fullPath = `${documentsPath}/${file}`;
+        const stats = fs.statSync(fullPath);
+
+        return {
+          filename: file,
+          chapterNumber: match[1], // We know this exists because we filtered for it
+          path: `Chapters/${countryCode}/${file}`,
+          size: stats.size,
+          lastModified: stats.mtime,
+        };
+      })
+      .sort((a, b) => parseInt(a.chapterNumber) - parseInt(b.chapterNumber));
+
+    console.log(
+      `Found ${pdfFiles.length} chapter documents for ${countryCode}:`,
+      pdfFiles
+    );
+
+    res.status(200).json({
+      success: true,
+      documents: pdfFiles,
+    });
+  } catch (error) {
+    console.error("Error fetching chapter documents:", error);
+    res.status(500).json({
+      message: "Error fetching chapter documents",
+      error: error.message,
+    });
+  }
+};
+
+// DELETE chapter document (Admin only)
+export const deleteChapterDocument = async (req, res) => {
+  try {
+    const { chapterNumber } = req.params;
+    const { countryCode } = req.user;
+
+    if (!chapterNumber) {
+      return res.status(400).json({
+        message: "Chapter number is required",
+      });
+    }
+
+    const filename = `${countryCode}_Chapter_${chapterNumber}.pdf`;
+    const filePath = `public/Chapters/${countryCode}/${filename}`;
+
+    // Check if file exists
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({
+        message: "Chapter document not found",
+      });
+    }
+
+    // Delete the file
+    fs.unlinkSync(filePath);
+    console.log(`Chapter document deleted: ${filename}`);
+
+    res.status(200).json({
+      success: true,
+      message: "Chapter document deleted successfully",
+      deletedFile: filename,
+    });
+  } catch (error) {
+    console.error("Error deleting chapter document:", error);
+    res.status(500).json({
+      message: "Error deleting chapter document",
+      error: error.message,
+    });
+  }
+};
+
 // UPLOAD chapter document (Admin only)
 export const uploadChapterDocument = async (req, res) => {
   try {
     const { chapterNumber } = req.body;
     const { countryCode } = req.user;
 
+    // Debug logging
+    console.log("Upload controller - req.body:", req.body);
+    console.log("Upload controller - chapterNumber:", chapterNumber);
+    console.log("Upload controller - countryCode:", countryCode);
+
     // Validate required fields
     if (!chapterNumber) {
+      console.error("Chapter number validation failed:", chapterNumber);
       return res.status(400).json({
         message: "Chapter number is required",
       });
@@ -290,24 +405,52 @@ export const uploadChapterDocument = async (req, res) => {
 
     // File info
     const uploadedFile = req.file;
-    const documentPath = `Chapters/${countryCode}/${uploadedFile.filename}`;
 
-    console.log(`Chapter document uploaded: ${documentPath}`);
+    // Rename the file to the correct chapter number
+    const oldPath = uploadedFile.path;
+    const newFilename = `${countryCode}_Chapter_${chapterNumber}.pdf`;
+    const newPath = oldPath.replace(uploadedFile.filename, newFilename);
 
-    // Return success with file info
-    res.status(200).json({
-      success: true,
-      message: "Chapter document uploaded successfully",
-      documentPath,
-      fileName: uploadedFile.filename,
-      chapterNumber,
-      countryCode,
-    });
+    // Use the already imported fs module
+
+    try {
+      // Rename the file
+      fs.renameSync(oldPath, newPath);
+      console.log(
+        `Chapter document renamed from ${uploadedFile.filename} to ${newFilename}`
+      );
+
+      const documentPath = `Chapters/${countryCode}/${newFilename}`;
+      console.log(`Chapter document uploaded: ${documentPath}`);
+
+      // Return success with file info
+      res.status(200).json({
+        success: true,
+        message: "Chapter document uploaded successfully",
+        documentPath,
+        fileName: newFilename,
+        chapterNumber,
+        countryCode,
+      });
+    } catch (renameError) {
+      console.error("Error renaming file:", renameError);
+      // If rename fails, delete the temporary file
+      try {
+        fs.unlinkSync(oldPath);
+      } catch (deleteError) {
+        console.error("Error deleting temporary file:", deleteError);
+      }
+
+      res.status(500).json({
+        message: "Error processing uploaded file",
+        error: renameError.message,
+      });
+    }
   } catch (err) {
     console.error("Error uploading chapter document:", err);
-    res.status(500).json({ 
+    res.status(500).json({
       message: "Error uploading chapter document",
-      error: err.message 
+      error: err.message,
     });
   }
 };

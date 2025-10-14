@@ -299,7 +299,7 @@ const UserChatList = ({ user, onChatSelect, selectedChatId }) => {
             <div className="relative flex-shrink-0">
               {chat.otherUser?.image ? (
                 <img
-                  src={chat.otherUser.image}
+                  src={`${process.env.NEXT_PUBLIC_BASE_URL}/upload/${chat.otherUser.image}`}
                   alt={chat.otherUser.name}
                   className="w-12 h-12 rounded-full object-cover"
                 />

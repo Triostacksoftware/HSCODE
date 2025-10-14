@@ -112,7 +112,7 @@ const UserProfileSidebar = ({
         <div className="text-center mb-6">
           {user.image ? (
             <img
-              src={user.image}
+              src={`${process.env.NEXT_PUBLIC_BASE_URL}/upload/${user.image}`}
               alt={user.name}
               className="w-24 h-24 rounded-full object-cover mx-auto mb-4 border-4 border-gray-200"
             />

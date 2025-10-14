@@ -4,7 +4,7 @@ import axios from "axios";
 import { useUserAuth } from "../../utilities/userAuthMiddleware";
 import { LiaSearchSolid } from "react-icons/lia";
 import socket from "../../utilities/socket";
-import SubscriptionUpgradeModal from "../SubscriptionUpgradeModal";
+import GroupLimitModal from "../GroupLimitModal";
 
 const GlobalGroupsList = ({
   categoryId,
@@ -19,8 +19,8 @@ const GlobalGroupsList = ({
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [error, setError] = useState("");
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [upgradeModalMessage, setUpgradeModalMessage] = useState("");
+  const [showGroupLimitModal, setShowGroupLimitModal] = useState(false);
+  const [groupLimitData, setGroupLimitData] = useState(null);
 
   useEffect(() => {
     if (categoryId) {
@@ -87,14 +87,15 @@ const GlobalGroupsList = ({
     } catch (error) {
       console.error("Error joining global group:", error);
       if (error.response?.data?.message) {
-        // Check if it's a group limit error
-        if (
-          error.response.data.message.includes(
-            "Free users can only join up to 3 global groups"
-          )
-        ) {
-          setUpgradeModalMessage(error.response.data.message);
-          setShowUpgradeModal(true);
+        // Check if it's a group limit error with the new response format
+        if (error.response.data.showUpgradeModal) {
+          setGroupLimitData({
+            currentGroups: error.response.data.currentGroups,
+            maxGroups: error.response.data.maxGroups,
+            membership: error.response.data.membership,
+            message: error.response.data.message,
+          });
+          setShowGroupLimitModal(true);
         } else {
           alert(error.response.data.message);
         }
@@ -108,6 +109,10 @@ const GlobalGroupsList = ({
     if (onGroupSelect) {
       onGroupSelect(group);
     }
+  };
+
+  const handleRedirectToSubscription = () => {
+    window.location.href = "/subscription";
   };
 
   const isUserJoined = (groupId) => {
@@ -243,12 +248,12 @@ const GlobalGroupsList = ({
           </div>
         )}
       </div>
-      {/* Subscription Upgrade Modal */}
-      <SubscriptionUpgradeModal
-        isOpen={showUpgradeModal}
-        onClose={() => setShowUpgradeModal(false)}
-        message={upgradeModalMessage}
-        groupType="global"
+      {/* Group Limit Modal */}
+      <GroupLimitModal
+        isOpen={showGroupLimitModal}
+        onClose={() => setShowGroupLimitModal(false)}
+        userData={groupLimitData}
+        onRedirectToSubscription={handleRedirectToSubscription}
       />
     </div>
   );

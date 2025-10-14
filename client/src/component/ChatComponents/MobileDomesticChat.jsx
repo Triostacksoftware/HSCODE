@@ -157,6 +157,7 @@ const MobileDomesticChat = ({ user, refreshUser, setMainActiveTab }) => {
                   scope="local"
                   onChapterSelect={handleChapterSelect}
                   selectedChapter={selectedChapter}
+                  user={user}
                 />
               ) : null}
             </div>

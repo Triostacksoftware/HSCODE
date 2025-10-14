@@ -1066,7 +1066,7 @@ const IndividualUserChat = ({ chat, user, onBack, onMessageSent }) => {
         <div className="flex items-center flex-1">
           {chat.otherUser?.image ? (
             <img
-              src={chat.otherUser.image}
+              src={`${process.env.NEXT_PUBLIC_BASE_URL}/upload/${chat.otherUser.image}`}
               alt={chat.otherUser.name}
               className="w-10 h-10 rounded-full object-cover mr-3"
             />

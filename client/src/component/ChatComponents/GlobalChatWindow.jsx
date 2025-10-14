@@ -499,7 +499,7 @@ const GlobalChatWindow = ({
                           >
                             {msg.userId?.image ? (
                               <img
-                                src={msg.userId.image}
+                                src={`${process.env.NEXT_PUBLIC_BASE_URL}/uploads/${msg.userId.image}`}
                                 alt={msg.userId.name}
                                 className="w-8 h-8 rounded-full object-cover"
                               />

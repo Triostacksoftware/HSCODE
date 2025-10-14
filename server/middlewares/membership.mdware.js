@@ -78,28 +78,26 @@ export const checkGroupLimits = async (req, res, next) => {
         .json({ message: "Group type could not be determined" });
     }
 
-    if (groupType === "local") {
-      // Check local group limit (max 3)
-      const localGroupsCount = user.groupsID ? user.groupsID.length : 0;
+    // Get user's maxGroups limit (0 means unlimited for premium users)
+    const maxGroups = user.maxGroups || 3;
+    const totalGroupsCount =
+      (user.groupsID ? user.groupsID.length : 0) +
+      (user.globalGroupsID ? user.globalGroupsID.length : 0);
 
-      if (localGroupsCount >= 3) {
-        return res.status(403).json({
-          message:
-            "Free users can only join up to 3 local groups. Upgrade to premium for unlimited access.",
-        });
-      }
-    } else if (groupType === "global") {
-      // Check global group limit (max 3)
-      const globalGroupsCount = user.globalGroupsID
-        ? user.globalGroupsID.length
-        : 0;
-
-      if (globalGroupsCount >= 3) {
-        return res.status(403).json({
-          message:
-            "Free users can only join up to 3 global groups. Upgrade to premium for unlimited access.",
-        });
-      }
+    // Check if user has reached their group limit
+    if (maxGroups > 0 && totalGroupsCount >= maxGroups) {
+      return res.status(403).json({
+        message: `You have reached your group limit of ${maxGroups} groups. ${
+          user.membership === "premium"
+            ? "Contact support to upgrade your plan."
+            : "Upgrade to premium for more groups."
+        }`,
+        currentGroups: totalGroupsCount,
+        maxGroups: maxGroups,
+        membership: user.membership,
+        showUpgradeModal: true,
+        redirectTo: "/subscription",
+      });
     }
 
     next();
