@@ -10,8 +10,9 @@ import {
 import axios from "axios";
 
 const ChapterDocumentUpload = ({ chapter, onClose, onSuccess }) => {
-  const [selectedFile, setSelectedFile] = useState(null);
+  const [selectedFiles, setSelectedFiles] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState({});
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [availableDocuments, setAvailableDocuments] = useState([]);
@@ -82,80 +83,192 @@ const ChapterDocumentUpload = ({ chapter, onClose, onSuccess }) => {
   };
 
   const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    const validFiles = [];
+    const errors = [];
+
+    files.forEach((file) => {
       // Validate file type
       if (file.type !== "application/pdf") {
-        setError("Please select a PDF file");
-        setSelectedFile(null);
+        errors.push(`${file.name}: Only PDF files are allowed`);
         return;
       }
 
       // Validate file size (20MB limit)
       if (file.size > 20 * 1024 * 1024) {
-        setError("File size should be less than 20MB");
-        setSelectedFile(null);
+        errors.push(`${file.name}: File size should be less than 20MB`);
         return;
       }
 
-      setSelectedFile(file);
+      validFiles.push(file);
+    });
+
+    if (errors.length > 0) {
+      setError(errors.join("\n"));
+    } else {
       setError("");
+    }
+
+    if (validFiles.length > 0) {
+      setSelectedFiles((prev) => [...prev, ...validFiles]);
+      setSuccess("");
+    }
+
+    // Reset input to allow selecting the same file again
+    e.target.value = "";
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const files = Array.from(e.dataTransfer.files || []);
+    if (files.length === 0) return;
+
+    const validFiles = [];
+    const errors = [];
+
+    files.forEach((file) => {
+      // Validate file type
+      if (file.type !== "application/pdf") {
+        errors.push(`${file.name}: Only PDF files are allowed`);
+        return;
+      }
+
+      // Validate file size (20MB limit)
+      if (file.size > 20 * 1024 * 1024) {
+        errors.push(`${file.name}: File size should be less than 20MB`);
+        return;
+      }
+
+      validFiles.push(file);
+    });
+
+    if (errors.length > 0) {
+      setError(errors.join("\n"));
+    } else {
+      setError("");
+    }
+
+    if (validFiles.length > 0) {
+      setSelectedFiles((prev) => [...prev, ...validFiles]);
       setSuccess("");
     }
   };
 
+  const removeFile = (index) => {
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+    setError("");
+  };
+
+  const clearAllFiles = () => {
+    setSelectedFiles([]);
+    setError("");
+  };
+
   const handleUpload = async () => {
-    if (!selectedFile) {
-      setError("Please select a file first");
+    if (selectedFiles.length === 0) {
+      setError("Please select at least one file first");
       return;
     }
 
     setIsUploading(true);
     setError("");
     setSuccess("");
+    setUploadProgress({});
+
+    let successCount = 0;
+    let failCount = 0;
+    const errors = [];
 
     try {
-      const formData = new FormData();
-      formData.append("chapterDocument", selectedFile);
-      formData.append("chapterNumber", chapter.chapter);
+      // Upload files sequentially
+      for (let i = 0; i < selectedFiles.length; i++) {
+        const file = selectedFiles[i];
+        
+        setUploadProgress((prev) => ({
+          ...prev,
+          [i]: { status: "uploading", fileName: file.name },
+        }));
 
-      // Debug logging
-      console.log("Uploading chapter document for:", chapter);
-      console.log("Chapter number being sent:", chapter.chapter);
+        try {
+          const formData = new FormData();
+          formData.append("chapterDocument", file);
+          formData.append("chapterNumber", chapter.chapter);
 
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/groups/chapter-document`,
-        formData,
-        {
-          withCredentials: true,
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
+          // Debug logging
+          console.log(`Uploading file ${i + 1}/${selectedFiles.length}:`, file.name);
+          console.log("Chapter number being sent:", chapter.chapter);
+
+          const response = await axios.post(
+            `${process.env.NEXT_PUBLIC_BASE_URL}/groups/chapter-document`,
+            formData,
+            {
+              withCredentials: true,
+              headers: {
+                "Content-Type": "multipart/form-data",
+              },
+            }
+          );
+
+          if (response.status === 200 || response.status === 201) {
+            successCount++;
+            setUploadProgress((prev) => ({
+              ...prev,
+              [i]: { status: "success", fileName: file.name },
+            }));
+          }
+        } catch (error) {
+          failCount++;
+          const errorMsg = error.response?.data?.message || "Failed to upload";
+          errors.push(`${file.name}: ${errorMsg}`);
+          setUploadProgress((prev) => ({
+            ...prev,
+            [i]: { status: "error", fileName: file.name, error: errorMsg },
+          }));
+          console.error(`Error uploading ${file.name}:`, error);
         }
-      );
+      }
 
-      if (response.status === 200 || response.status === 201) {
-        setSuccess("Chapter document uploaded successfully!");
-        setSelectedFile(null);
+      // Show results
+      if (successCount > 0) {
+        const successMsg =
+          successCount === selectedFiles.length
+            ? `All ${successCount} document(s) uploaded successfully!`
+            : `${successCount} of ${selectedFiles.length} document(s) uploaded successfully.`;
+        setSuccess(successMsg);
+      }
 
-        // Refresh the documents list
-        await fetchAvailableDocuments();
+      if (errors.length > 0) {
+        setError(errors.join("\n"));
+      }
 
-        // Call success callback if provided
-        if (onSuccess) {
-          onSuccess();
-        }
+      // Refresh the documents list
+      await fetchAvailableDocuments();
 
+      // Call success callback if provided
+      if (onSuccess && successCount > 0) {
+        onSuccess();
+      }
+
+      // Clear selected files if all uploads succeeded
+      if (failCount === 0) {
+        setSelectedFiles([]);
         // Close modal after delay
         setTimeout(() => {
           onClose();
-        }, 1500);
+        }, 2000);
       }
     } catch (error) {
-      console.error("Error uploading chapter document:", error);
-      setError(
-        error.response?.data?.message || "Failed to upload chapter document"
-      );
+      console.error("Error during upload process:", error);
+      setError("An unexpected error occurred during upload");
     } finally {
       setIsUploading(false);
     }
@@ -203,7 +316,7 @@ const ChapterDocumentUpload = ({ chapter, onClose, onSuccess }) => {
           {/* File Upload Area */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Select PDF Document
+              Select PDF Documents {selectedFiles.length > 0 && `(${selectedFiles.length} selected)`}
             </label>
 
             {/* Custom File Input */}
@@ -212,19 +325,22 @@ const ChapterDocumentUpload = ({ chapter, onClose, onSuccess }) => {
                 type="file"
                 accept=".pdf,application/pdf"
                 onChange={handleFileChange}
+                multiple
                 className="hidden"
                 id="chapter-doc-upload"
               />
               <label
                 htmlFor="chapter-doc-upload"
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
                 className="flex items-center justify-center w-full px-4 py-8 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-all"
               >
                 <div className="text-center">
                   <MdUploadFile className="w-12 h-12 text-gray-400 mx-auto mb-2" />
                   <p className="text-sm text-gray-600">
-                    {selectedFile ? (
+                    {selectedFiles.length > 0 ? (
                       <span className="text-blue-600 font-medium">
-                        Click to change file
+                        Click to add more files
                       </span>
                     ) : (
                       <>
@@ -236,33 +352,92 @@ const ChapterDocumentUpload = ({ chapter, onClose, onSuccess }) => {
                     )}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">
-                    PDF files only (max 20MB)
+                    PDF files only (max 20MB per file)
                   </p>
                 </div>
               </label>
             </div>
 
-            {/* Selected File Display */}
-            {selectedFile && (
-              <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <div className="flex-shrink-0">
-                    <MdFilePresent className="w-10 h-10 text-blue-600" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">
-                      {selectedFile.name}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-                    </p>
-                  </div>
+            {/* Selected Files Display */}
+            {selectedFiles.length > 0 && (
+              <div className="mt-4 space-y-2">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm font-medium text-gray-700">
+                    Selected Files ({selectedFiles.length})
+                  </p>
                   <button
-                    onClick={() => setSelectedFile(null)}
-                    className="flex-shrink-0 p-1 hover:bg-blue-100 rounded-full transition-colors"
+                    onClick={clearAllFiles}
+                    className="text-xs text-red-600 hover:text-red-700 font-medium"
+                    disabled={isUploading}
                   >
-                    <MdClose className="w-5 h-5 text-gray-600" />
+                    Clear All
                   </button>
+                </div>
+                <div className="max-h-48 overflow-y-auto space-y-2">
+                  {selectedFiles.map((file, index) => {
+                    const progress = uploadProgress[index];
+                    return (
+                      <div
+                        key={`${file.name}-${index}`}
+                        className={`p-3 border rounded-lg ${
+                          progress?.status === "success"
+                            ? "bg-green-50 border-green-200"
+                            : progress?.status === "error"
+                            ? "bg-red-50 border-red-200"
+                            : progress?.status === "uploading"
+                            ? "bg-yellow-50 border-yellow-200"
+                            : "bg-blue-50 border-blue-200"
+                        }`}
+                      >
+                        <div className="flex items-center space-x-3">
+                          <div className="flex-shrink-0">
+                            <MdFilePresent
+                              className={`w-8 h-8 ${
+                                progress?.status === "success"
+                                  ? "text-green-600"
+                                  : progress?.status === "error"
+                                  ? "text-red-600"
+                                  : progress?.status === "uploading"
+                                  ? "text-yellow-600"
+                                  : "text-blue-600"
+                              }`}
+                            />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">
+                              {file.name}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {(file.size / 1024 / 1024).toFixed(2)} MB
+                              {progress?.status === "uploading" && (
+                                <span className="ml-2 text-yellow-600">
+                                  • Uploading...
+                                </span>
+                              )}
+                              {progress?.status === "success" && (
+                                <span className="ml-2 text-green-600">
+                                  • Uploaded successfully
+                                </span>
+                              )}
+                              {progress?.status === "error" && (
+                                <span className="ml-2 text-red-600">
+                                  • {progress.error}
+                                </span>
+                              )}
+                            </p>
+                          </div>
+                          {!isUploading && (
+                            <button
+                              onClick={() => removeFile(index)}
+                              className="flex-shrink-0 p-1 hover:bg-blue-100 rounded-full transition-colors"
+                            >
+                              <MdClose className="w-5 h-5 text-gray-600" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
