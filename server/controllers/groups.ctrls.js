@@ -321,7 +321,8 @@ export const getChapterDocuments = async (req, res) => {
       })
       .sort((a, b) => {
         // Sort by chapter number first, then by timestamp (newest first)
-        const chapterDiff = parseInt(a.chapterNumber) - parseInt(b.chapterNumber);
+        const chapterDiff =
+          parseInt(a.chapterNumber) - parseInt(b.chapterNumber);
         if (chapterDiff !== 0) return chapterDiff;
         // If same chapter, sort by timestamp (newest first) or lastModified
         if (a.timestamp && b.timestamp) {
@@ -362,7 +363,7 @@ export const deleteChapterDocument = async (req, res) => {
 
     // Decode filename in case it was URL encoded
     const decodedFilename = decodeURIComponent(filename);
-    
+
     // Security check: ensure filename belongs to the user's country
     if (!decodedFilename.startsWith(countryCode)) {
       return res.status(403).json({
