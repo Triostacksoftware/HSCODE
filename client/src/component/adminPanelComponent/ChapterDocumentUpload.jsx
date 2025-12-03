@@ -304,12 +304,19 @@ const ChapterDocumentUpload = ({ chapter, onClose, onSuccess }) => {
                     </div>
                     <div className="flex items-center space-x-2">
                       <button
-                        onClick={() =>
+                        onClick={() => {
+                          // Use doc.path which contains "Chapters/{countryCode}/{filename}"
+                          // If path doesn't exist, construct from filename
+                          const pdfPath =
+                            doc.path ||
+                            `Chapters/${doc.filename.split("_Chapter_")[0]}/${
+                              doc.filename
+                            }`;
                           window.open(
-                            `${process.env.NEXT_PUBLIC_BASE_URL}/${doc.path}`,
+                            `${process.env.NEXT_PUBLIC_BASE_URL}/${pdfPath}`,
                             "_blank"
-                          )
-                        }
+                          );
+                        }}
                         className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
                         disabled={isDeleting}
                       >
