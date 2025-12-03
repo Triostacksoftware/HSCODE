@@ -289,9 +289,10 @@ export const getChapterDocuments = async (req, res) => {
     const files = fs.readdirSync(documentsPath);
     console.log(`Found files in directory:`, files);
 
-    // Only look for files matching the exact pattern: {countryCode}_Chapter_{number}.pdf
+    // Look for files matching the pattern: {countryCode}_Chapter_{number}_{timestamp}.pdf
+    // Also support legacy format: {countryCode}_Chapter_{number}.pdf
     const chapterFilePattern = new RegExp(
-      `^${countryCode}_Chapter_(\\d+)\\.pdf$`
+      `^${countryCode}_Chapter_(\\d+)(?:_(\\d+))?\\.pdf$`
     );
 
     const pdfFiles = files
@@ -302,7 +303,7 @@ export const getChapterDocuments = async (req, res) => {
       })
       .map((file) => {
         console.log(`Processing chapter document: ${file}`);
-        // Extract chapter number from filename (e.g., IN_Chapter_3.pdf -> 3)
+        // Extract chapter number from filename (e.g., IN_Chapter_3_1234567890.pdf -> 3)
         const match = file.match(chapterFilePattern);
         console.log(`Regex match for ${file}:`, match);
 
@@ -311,13 +312,23 @@ export const getChapterDocuments = async (req, res) => {
 
         return {
           filename: file,
-          chapterNumber: match[1], // We know this exists because we filtered for it
+          chapterNumber: match[1], // Chapter number
+          timestamp: match[2] || null, // Timestamp if present (for new format)
           path: `Chapters/${countryCode}/${file}`,
           size: stats.size,
           lastModified: stats.mtime,
         };
       })
-      .sort((a, b) => parseInt(a.chapterNumber) - parseInt(b.chapterNumber));
+      .sort((a, b) => {
+        // Sort by chapter number first, then by timestamp (newest first)
+        const chapterDiff = parseInt(a.chapterNumber) - parseInt(b.chapterNumber);
+        if (chapterDiff !== 0) return chapterDiff;
+        // If same chapter, sort by timestamp (newest first) or lastModified
+        if (a.timestamp && b.timestamp) {
+          return parseInt(b.timestamp) - parseInt(a.timestamp);
+        }
+        return new Date(b.lastModified) - new Date(a.lastModified);
+      });
 
     console.log(
       `Found ${pdfFiles.length} chapter documents for ${countryCode}:`,
@@ -340,17 +351,26 @@ export const getChapterDocuments = async (req, res) => {
 // DELETE chapter document (Admin only)
 export const deleteChapterDocument = async (req, res) => {
   try {
-    const { chapterNumber } = req.params;
+    const { filename } = req.params;
     const { countryCode } = req.user;
 
-    if (!chapterNumber) {
+    if (!filename) {
       return res.status(400).json({
-        message: "Chapter number is required",
+        message: "Filename is required",
       });
     }
 
-    const filename = `${countryCode}_Chapter_${chapterNumber}.pdf`;
-    const filePath = `public/Chapters/${countryCode}/${filename}`;
+    // Decode filename in case it was URL encoded
+    const decodedFilename = decodeURIComponent(filename);
+    
+    // Security check: ensure filename belongs to the user's country
+    if (!decodedFilename.startsWith(countryCode)) {
+      return res.status(403).json({
+        message: "Unauthorized: Cannot delete files from other countries",
+      });
+    }
+
+    const filePath = `public/Chapters/${countryCode}/${decodedFilename}`;
 
     // Check if file exists
     if (!fs.existsSync(filePath)) {
@@ -361,12 +381,12 @@ export const deleteChapterDocument = async (req, res) => {
 
     // Delete the file
     fs.unlinkSync(filePath);
-    console.log(`Chapter document deleted: ${filename}`);
+    console.log(`Chapter document deleted: ${decodedFilename}`);
 
     res.status(200).json({
       success: true,
       message: "Chapter document deleted successfully",
-      deletedFile: filename,
+      deletedFile: decodedFilename,
     });
   } catch (error) {
     console.error("Error deleting chapter document:", error);
@@ -406,9 +426,10 @@ export const uploadChapterDocument = async (req, res) => {
     // File info
     const uploadedFile = req.file;
 
-    // Rename the file to the correct chapter number
+    // Rename the file with timestamp to allow multiple documents per chapter
     const oldPath = uploadedFile.path;
-    const newFilename = `${countryCode}_Chapter_${chapterNumber}.pdf`;
+    const timestamp = Date.now();
+    const newFilename = `${countryCode}_Chapter_${chapterNumber}_${timestamp}.pdf`;
     const newPath = oldPath.replace(uploadedFile.filename, newFilename);
 
     // Use the already imported fs module

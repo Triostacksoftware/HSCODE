@@ -34,9 +34,9 @@ router.post(
 // Get available chapter documents (Admin only)
 router.get("/chapter-documents", adminMiddleware, getChapterDocuments);
 
-// Delete chapter document (Admin only)
+// Delete chapter document (Admin only) - accepts filename as parameter
 router.delete(
-  "/chapter-document/:chapterNumber",
+  "/chapter-document/:filename",
   adminMiddleware,
   deleteChapterDocument
 );

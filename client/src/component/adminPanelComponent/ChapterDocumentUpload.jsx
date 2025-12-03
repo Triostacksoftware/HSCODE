@@ -47,10 +47,10 @@ const ChapterDocumentUpload = ({ chapter, onClose, onSuccess }) => {
     }
   };
 
-  const handleDeleteDocument = async (chapterNumber) => {
+  const handleDeleteDocument = async (filename, chapterNumber) => {
     if (
       !confirm(
-        `Are you sure you want to delete the document for Chapter ${chapterNumber}?`
+        `Are you sure you want to delete this document for Chapter ${chapterNumber}?`
       )
     ) {
       return;
@@ -58,8 +58,10 @@ const ChapterDocumentUpload = ({ chapter, onClose, onSuccess }) => {
 
     setIsDeleting(true);
     try {
+      // Encode filename for URL
+      const encodedFilename = encodeURIComponent(filename);
       await axios.delete(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/groups/chapter-document/${chapterNumber}`,
+        `${process.env.NEXT_PUBLIC_BASE_URL}/groups/chapter-document/${encodedFilename}`,
         { withCredentials: true }
       );
 
@@ -192,7 +194,7 @@ const ChapterDocumentUpload = ({ chapter, onClose, onSuccess }) => {
       // Upload files sequentially
       for (let i = 0; i < selectedFiles.length; i++) {
         const file = selectedFiles[i];
-        
+
         setUploadProgress((prev) => ({
           ...prev,
           [i]: { status: "uploading", fileName: file.name },
@@ -204,7 +206,10 @@ const ChapterDocumentUpload = ({ chapter, onClose, onSuccess }) => {
           formData.append("chapterNumber", chapter.chapter);
 
           // Debug logging
-          console.log(`Uploading file ${i + 1}/${selectedFiles.length}:`, file.name);
+          console.log(
+            `Uploading file ${i + 1}/${selectedFiles.length}:`,
+            file.name
+          );
           console.log("Chapter number being sent:", chapter.chapter);
 
           const response = await axios.post(
@@ -316,7 +321,8 @@ const ChapterDocumentUpload = ({ chapter, onClose, onSuccess }) => {
           {/* File Upload Area */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Select PDF Documents {selectedFiles.length > 0 && `(${selectedFiles.length} selected)`}
+              Select PDF Documents{" "}
+              {selectedFiles.length > 0 && `(${selectedFiles.length} selected)`}
             </label>
 
             {/* Custom File Input */}
@@ -448,6 +454,7 @@ const ChapterDocumentUpload = ({ chapter, onClose, onSuccess }) => {
             <h4 className="text-sm font-medium text-blue-900 mb-3 flex items-center">
               <MdFilePresent className="w-4 h-4 mr-2" />
               Current Chapter Document
+              {availableDocuments.length !== 1 ? "s" : ""}
             </h4>
 
             {isLoadingDocs ? (
@@ -498,7 +505,7 @@ const ChapterDocumentUpload = ({ chapter, onClose, onSuccess }) => {
                         View
                       </button>
                       <button
-                        onClick={() => handleDeleteDocument(doc.chapterNumber)}
+                        onClick={() => handleDeleteDocument(doc.filename, doc.chapterNumber)}
                         className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
                         disabled={isDeleting}
                       >
@@ -527,18 +534,32 @@ const ChapterDocumentUpload = ({ chapter, onClose, onSuccess }) => {
           </button>
           <button
             onClick={handleUpload}
-            disabled={!selectedFile || isUploading}
+            disabled={selectedFiles.length === 0 || isUploading}
             className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center"
           >
             {isUploading ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                Uploading...
+                Uploading{" "}
+                {Object.keys(uploadProgress).filter(
+                  (i) => uploadProgress[i]?.status === "uploading"
+                ).length > 0 &&
+                  `(${
+                    Object.keys(uploadProgress).filter(
+                      (i) => uploadProgress[i]?.status === "uploading"
+                    ).length
+                  }/${selectedFiles.length})`}
+                ...
               </>
             ) : (
               <>
                 <MdUploadFile className="w-5 h-5 mr-2" />
-                Upload Document
+                Upload{" "}
+                {selectedFiles.length > 0
+                  ? `${selectedFiles.length} Document${
+                      selectedFiles.length > 1 ? "s" : ""
+                    }`
+                  : "Document"}
               </>
             )}
           </button>
