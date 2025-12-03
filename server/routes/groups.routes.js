@@ -48,23 +48,56 @@ router.post("/many", adminMiddleware, upload.single("file"), createManyGroup);
 router.patch("/:groupId", adminMiddleware, updateGroup);
 router.delete("/:groupId", adminMiddleware, deleteGroup);
 
-// Serve chapter documents
+// Serve chapter documents - returns the latest file for a chapter
 router.get(
   "/chapter-document/:countryCode/:chapterNumber",
   authMiddleware,
   (req, res) => {
     try {
       const { countryCode, chapterNumber } = req.params;
-      const filePath = `public/Chapters/${countryCode}/${countryCode}_Chapter_${chapterNumber}.pdf`;
-
-      // Check if file exists
       const fs = require("fs");
-      if (!fs.existsSync(filePath)) {
+      const documentsPath = `public/Chapters/${countryCode}`;
+
+      // Check if directory exists
+      if (!fs.existsSync(documentsPath)) {
         return res.status(404).json({ message: "Chapter document not found" });
       }
 
-      // Send file
-      res.sendFile(filePath, { root: process.cwd() });
+      // Look for files matching the pattern: {countryCode}_Chapter_{number}_{timestamp}.pdf
+      // Also support legacy format: {countryCode}_Chapter_{number}.pdf
+      const chapterFilePattern = new RegExp(
+        `^${countryCode}_Chapter_${chapterNumber}(?:_(\\d+))?\\.pdf$`
+      );
+
+      const files = fs.readdirSync(documentsPath);
+      const matchingFiles = files
+        .filter((file) => chapterFilePattern.test(file))
+        .map((file) => {
+          const fullPath = `${documentsPath}/${file}`;
+          const stats = fs.statSync(fullPath);
+          const match = file.match(chapterFilePattern);
+          return {
+            filename: file,
+            path: fullPath,
+            timestamp: match[1] ? parseInt(match[1]) : 0,
+            lastModified: stats.mtime,
+          };
+        })
+        .sort((a, b) => {
+          // Sort by timestamp (newest first), then by lastModified
+          if (a.timestamp !== b.timestamp) {
+            return b.timestamp - a.timestamp;
+          }
+          return new Date(b.lastModified) - new Date(a.lastModified);
+        });
+
+      if (matchingFiles.length === 0) {
+        return res.status(404).json({ message: "Chapter document not found" });
+      }
+
+      // Send the latest file
+      const latestFile = matchingFiles[0];
+      res.sendFile(latestFile.path, { root: process.cwd() });
     } catch (error) {
       console.error("Error retrieving chapter document:", error);
       res.status(500).json({ message: "Error retrieving chapter document" });
