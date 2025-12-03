@@ -56,8 +56,9 @@ const ChapterInfoButton = ({ chapter, user }) => {
       // Get user's country code for the PDF path
       const countryCode = user?.countryCode || "IN"; // Default to IN if not available
 
-      // Construct the PDF URL - using static file serving
-      const pdfUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/Chapters/${countryCode}/${countryCode}_Chapter_${chapter.chapter}.pdf`;
+      // Use the API endpoint that returns the latest file for the chapter
+      // This endpoint handles both new format (with timestamp) and legacy format
+      const pdfUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/groups/chapter-document/${countryCode}/${chapter.chapter}`;
 
       // Open PDF in new tab
       window.open(pdfUrl, "_blank");
