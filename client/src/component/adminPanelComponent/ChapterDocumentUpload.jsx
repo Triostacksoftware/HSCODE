@@ -306,7 +306,7 @@ const ChapterDocumentUpload = ({ chapter, onClose, onSuccess }) => {
                       <button
                         onClick={() =>
                           window.open(
-                            `${process.env.NEXT_PUBLIC_BASE_URL}/api/v1/Chapters/IN/${doc.filename}`,
+                            `${process.env.NEXT_PUBLIC_BASE_URL}/${doc.path}`,
                             "_blank"
                           )
                         }
