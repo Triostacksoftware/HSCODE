@@ -1,4 +1,6 @@
 import express from "express";
+import fs from "fs";
+import path from "path";
 import { adminMiddleware, authMiddleware } from "../middlewares/auth.mdware.js";
 import {
   getGroups,
@@ -48,59 +50,119 @@ router.post("/many", adminMiddleware, upload.single("file"), createManyGroup);
 router.patch("/:groupId", adminMiddleware, updateGroup);
 router.delete("/:groupId", adminMiddleware, deleteGroup);
 
-// Serve chapter documents - returns the latest file for a chapter
+// Serve chapter documents - returns all files for a chapter as JSON, or a specific file if filename is provided
 router.get(
   "/chapter-document/:countryCode/:chapterNumber",
   authMiddleware,
   (req, res) => {
     try {
       const { countryCode, chapterNumber } = req.params;
-      const fs = require("fs");
-      const documentsPath = `public/Chapters/${countryCode}`;
+      const { filename: queryFilename } = req.query;
+      
+      // Use path.join for proper cross-platform path handling
+      const documentsPath = path.join(process.cwd(), "public", "Chapters", countryCode);
+      
+      console.log("Fetching chapter documents:", { countryCode, chapterNumber, documentsPath });
 
-      // Check if directory exists
+      // Check if directory exists - return empty array instead of 404
       if (!fs.existsSync(documentsPath)) {
-        return res.status(404).json({ message: "Chapter document not found" });
+        console.log(`Directory does not exist: ${documentsPath}`);
+        return res.status(200).json({
+          success: true,
+          chapterNumber,
+          countryCode,
+          files: [],
+        });
       }
 
-      // Look for files matching the pattern: {countryCode}_Chapter_{number}_{timestamp}.pdf
-      // Also support legacy format: {countryCode}_Chapter_{number}.pdf
+      // Look for files matching the pattern: {countryCode}_Chapter_{number}_{customName}.pdf
+      // Supports new format (with custom name) and legacy format (with timestamp or no suffix)
       const chapterFilePattern = new RegExp(
-        `^${countryCode}_Chapter_${chapterNumber}(?:_(\\d+))?\\.pdf$`
+        `^${countryCode}_Chapter_${chapterNumber}(?:_(.+))?\\.pdf$`
       );
 
-      const files = fs.readdirSync(documentsPath);
-      const matchingFiles = files
-        .filter((file) => chapterFilePattern.test(file))
-        .map((file) => {
-          const fullPath = `${documentsPath}/${file}`;
-          const stats = fs.statSync(fullPath);
-          const match = file.match(chapterFilePattern);
-          return {
-            filename: file,
-            path: fullPath,
-            timestamp: match[1] ? parseInt(match[1]) : 0,
-            lastModified: stats.mtime,
-          };
-        })
-        .sort((a, b) => {
-          // Sort by timestamp (newest first), then by lastModified
-          if (a.timestamp !== b.timestamp) {
-            return b.timestamp - a.timestamp;
-          }
-          return new Date(b.lastModified) - new Date(a.lastModified);
+      let files = [];
+      try {
+        files = fs.readdirSync(documentsPath);
+        console.log(`Found ${files.length} files in directory:`, files);
+      } catch (readError) {
+        console.error("Error reading directory:", readError);
+        return res.status(200).json({
+          success: true,
+          chapterNumber,
+          countryCode,
+          files: [],
         });
-
-      if (matchingFiles.length === 0) {
-        return res.status(404).json({ message: "Chapter document not found" });
       }
 
-      // Send the latest file
-      const latestFile = matchingFiles[0];
-      res.sendFile(latestFile.path, { root: process.cwd() });
+      const matchingFiles = files
+        .filter((file) => {
+          const matches = chapterFilePattern.test(file);
+          if (matches) {
+            console.log(`File matches pattern: ${file}`);
+          }
+          return matches;
+        })
+        .map((file) => {
+          try {
+            const fullPath = path.join(documentsPath, file);
+            const stats = fs.statSync(fullPath);
+            const match = file.match(chapterFilePattern);
+            return {
+              filename: file,
+              customName: match && match[1] ? match[1] : '',
+              path: fullPath,
+              url: `Chapters/${countryCode}/${file}`,
+              size: stats.size,
+              lastModified: stats.mtime,
+            };
+          } catch (fileError) {
+            console.error(`Error processing file ${file}:`, fileError);
+            return null;
+          }
+        })
+        .filter(file => file !== null) // Remove any null entries from errors
+        .sort((a, b) => {
+          // Sort by custom name alphabetically
+          return a.customName.localeCompare(b.customName);
+        });
+
+      console.log(`Found ${matchingFiles.length} matching files for chapter ${chapterNumber}`);
+
+      // Return empty array if no files found (don't return 404, as this is a valid state)
+      if (matchingFiles.length === 0) {
+        return res.status(200).json({
+          success: true,
+          chapterNumber,
+          countryCode,
+          files: [],
+        });
+      }
+
+      // If a specific filename is requested via query parameter, return that file
+      if (queryFilename) {
+        const decodedFilename = decodeURIComponent(queryFilename);
+        const requestedFile = matchingFiles.find(f => f.filename === decodedFilename);
+        if (requestedFile) {
+          return res.sendFile(requestedFile.path, { root: process.cwd() });
+        }
+        return res.status(404).json({ message: "Requested file not found" });
+      }
+
+      // Otherwise, return all files as JSON
+      res.status(200).json({
+        success: true,
+        chapterNumber,
+        countryCode,
+        files: matchingFiles,
+      });
     } catch (error) {
       console.error("Error retrieving chapter document:", error);
-      res.status(500).json({ message: "Error retrieving chapter document" });
+      console.error("Error stack:", error.stack);
+      res.status(500).json({ 
+        message: "Error retrieving chapter document",
+        error: error.message 
+      });
     }
   }
 );

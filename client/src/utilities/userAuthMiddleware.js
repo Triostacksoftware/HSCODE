@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import axios from "axios";
 import toast from "react-hot-toast";
 
-export const useUserAuth = () => {
+export const useUserAuth = (shouldRedirect = true) => {
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -43,7 +43,20 @@ export const useUserAuth = () => {
           setUser(response.data.user);
         } else {
           // Not authenticated
-          toast.error("Please log in to access the chat", {
+          if (shouldRedirect) {
+            toast.error("Please log in to access the chat", {
+              duration: 3000,
+              position: "top-right",
+            });
+            setTimeout(() => {
+              router.push("/auth");
+            }, 1000); // Redirect after 1 second
+          }
+        }
+      } catch (error) {
+        console.error("Auth check failed:", error);
+        if (shouldRedirect) {
+          toast.error("Authentication required. Please log in.", {
             duration: 3000,
             position: "top-right",
           });
@@ -51,22 +64,14 @@ export const useUserAuth = () => {
             router.push("/auth");
           }, 1000); // Redirect after 1 second
         }
-      } catch (error) {
-        console.error("Auth check failed:", error);
-        toast.error("Authentication required. Please log in.", {
-          duration: 3000,
-          position: "top-right",
-        });
-        setTimeout(() => {
-          router.push("/auth");
-        }, 1000); // Redirect after 1 second
       } finally {
         setIsLoading(false);
       }
     };
 
     checkAuth();
-  }, [router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shouldRedirect]); // router.push is stable, so we don't need router in deps
 
   return { isAuthenticated, isLoading, user, refreshUser };
 };

@@ -289,10 +289,13 @@ export const getChapterDocuments = async (req, res) => {
     const files = fs.readdirSync(documentsPath);
     console.log(`Found files in directory:`, files);
 
-    // Look for files matching the pattern: {countryCode}_Chapter_{number}_{timestamp}.pdf
-    // Also support legacy format: {countryCode}_Chapter_{number}.pdf
+    // Look for files matching the pattern: {countryCode}_Chapter_{number}_{customName}.pdf
+    // Supports: 
+    // - New format: IN_Chapter_01_Export.pdf, IN_Chapter_01_Import.pdf
+    // - Legacy format: IN_Chapter_01_1234567890.pdf (timestamp only)
+    // - Legacy format: IN_Chapter_01.pdf (no suffix)
     const chapterFilePattern = new RegExp(
-      `^${countryCode}_Chapter_(\\d+)(?:_(\\d+))?\\.pdf$`
+      `^${countryCode}_Chapter_(\\d+)(?:_(.+))?\\.pdf$`
     );
 
     const pdfFiles = files
@@ -313,22 +316,21 @@ export const getChapterDocuments = async (req, res) => {
         return {
           filename: file,
           chapterNumber: match[1], // Chapter number
-          timestamp: match[2] || null, // Timestamp if present (for new format)
+          customName: match[2] || null, // Custom name (Export, Import, etc.) or timestamp for legacy files
           path: `Chapters/${countryCode}/${file}`,
           size: stats.size,
           lastModified: stats.mtime,
         };
       })
       .sort((a, b) => {
-        // Sort by chapter number first, then by timestamp (newest first)
+        // Sort by chapter number first, then by custom name alphabetically
         const chapterDiff =
           parseInt(a.chapterNumber) - parseInt(b.chapterNumber);
         if (chapterDiff !== 0) return chapterDiff;
-        // If same chapter, sort by timestamp (newest first) or lastModified
-        if (a.timestamp && b.timestamp) {
-          return parseInt(b.timestamp) - parseInt(a.timestamp);
-        }
-        return new Date(b.lastModified) - new Date(a.lastModified);
+        // If same chapter, sort by custom name alphabetically
+        const nameA = a.customName || '';
+        const nameB = b.customName || '';
+        return nameA.localeCompare(nameB);
       });
 
     console.log(
@@ -401,12 +403,13 @@ export const deleteChapterDocument = async (req, res) => {
 // UPLOAD chapter document (Admin only)
 export const uploadChapterDocument = async (req, res) => {
   try {
-    const { chapterNumber } = req.body;
+    const { chapterNumber, fileName } = req.body;
     const { countryCode } = req.user;
 
     // Debug logging
     console.log("Upload controller - req.body:", req.body);
     console.log("Upload controller - chapterNumber:", chapterNumber);
+    console.log("Upload controller - fileName:", fileName);
     console.log("Upload controller - countryCode:", countryCode);
 
     // Validate required fields
@@ -427,10 +430,19 @@ export const uploadChapterDocument = async (req, res) => {
     // File info
     const uploadedFile = req.file;
 
-    // Rename the file with timestamp to allow multiple documents per chapter
+    // Use custom file name if provided, otherwise use timestamp
+    // Sanitize the file name to remove any invalid characters
+    let customName = fileName || `file_${Date.now()}`;
+    // Remove any characters that aren't alphanumeric, underscore, or hyphen
+    customName = customName.replace(/[^a-zA-Z0-9_-]/g, '_');
+    // Ensure it's not empty
+    if (!customName || customName.trim() === '') {
+      customName = `file_${Date.now()}`;
+    }
+
+    // Rename the file with custom name: {countryCode}_Chapter_{number}_{customName}.pdf
     const oldPath = uploadedFile.path;
-    const timestamp = Date.now();
-    const newFilename = `${countryCode}_Chapter_${chapterNumber}_${timestamp}.pdf`;
+    const newFilename = `${countryCode}_Chapter_${chapterNumber}_${customName}.pdf`;
     const newPath = oldPath.replace(uploadedFile.filename, newFilename);
 
     // Use the already imported fs module

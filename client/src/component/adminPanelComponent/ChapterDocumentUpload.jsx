@@ -11,6 +11,7 @@ import axios from "axios";
 
 const ChapterDocumentUpload = ({ chapter, onClose, onSuccess }) => {
   const [selectedFiles, setSelectedFiles] = useState([]);
+  const [fileNames, setFileNames] = useState({}); // Store custom names for each file
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState({});
   const [error, setError] = useState("");
@@ -32,12 +33,26 @@ const ChapterDocumentUpload = ({ chapter, onClose, onSuccess }) => {
         { withCredentials: true }
       );
 
-      // Filter documents to show only the current chapter's document
+      console.log("Fetched all documents:", response.data);
+      
+      // Filter documents to show only the current chapter's documents
       const allDocuments = response.data.documents || [];
+      const currentChapter = chapter.chapter.toString();
+      
+      console.log("Current chapter:", currentChapter);
+      console.log("All documents:", allDocuments);
+      
       const currentChapterDocuments = allDocuments.filter(
-        (doc) => doc.chapterNumber === chapter.chapter.toString()
+        (doc) => {
+          const matches = doc.chapterNumber === currentChapter || 
+                        doc.chapterNumber === parseInt(currentChapter) ||
+                        parseInt(doc.chapterNumber) === parseInt(currentChapter);
+          console.log(`Document ${doc.filename}: chapterNumber=${doc.chapterNumber}, matches=${matches}`);
+          return matches;
+        }
       );
 
+      console.log("Filtered documents for chapter:", currentChapterDocuments);
       setAvailableDocuments(currentChapterDocuments);
     } catch (error) {
       console.error("Error fetching chapter documents:", error);
@@ -115,6 +130,17 @@ const ChapterDocumentUpload = ({ chapter, onClose, onSuccess }) => {
 
     if (validFiles.length > 0) {
       setSelectedFiles((prev) => [...prev, ...validFiles]);
+      // Initialize default names for new files (based on original filename or index)
+      setFileNames((prev) => {
+        const newNames = { ...prev };
+        validFiles.forEach((file, idx) => {
+          const fileIndex = prev ? Object.keys(prev).length + idx : idx;
+          // Extract name from filename (remove extension) or use default
+          const defaultName = file.name.replace(/\.pdf$/i, '').replace(/[^a-zA-Z0-9_-]/g, '_') || `file_${fileIndex}`;
+          newNames[fileIndex] = defaultName;
+        });
+        return newNames;
+      });
       setSuccess("");
     }
 
@@ -161,12 +187,37 @@ const ChapterDocumentUpload = ({ chapter, onClose, onSuccess }) => {
 
     if (validFiles.length > 0) {
       setSelectedFiles((prev) => [...prev, ...validFiles]);
+      // Initialize default names for new files
+      setFileNames((prev) => {
+        const newNames = { ...prev };
+        validFiles.forEach((file, idx) => {
+          const fileIndex = prev ? Object.keys(prev).length + idx : idx;
+          const defaultName = file.name.replace(/\.pdf$/i, '').replace(/[^a-zA-Z0-9_-]/g, '_') || `file_${fileIndex}`;
+          newNames[fileIndex] = defaultName;
+        });
+        return newNames;
+      });
       setSuccess("");
     }
   };
 
   const removeFile = (index) => {
     setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+    setFileNames((prev) => {
+      const newNames = { ...prev };
+      delete newNames[index];
+      // Reindex remaining files
+      const reindexed = {};
+      Object.keys(newNames).forEach((key) => {
+        const keyNum = parseInt(key);
+        if (keyNum < index) {
+          reindexed[key] = newNames[key];
+        } else if (keyNum > index) {
+          reindexed[keyNum - 1] = newNames[key];
+        }
+      });
+      return reindexed;
+    });
     setError("");
   };
 
@@ -204,11 +255,17 @@ const ChapterDocumentUpload = ({ chapter, onClose, onSuccess }) => {
           const formData = new FormData();
           formData.append("chapterDocument", file);
           formData.append("chapterNumber", chapter.chapter);
+          
+          // Get custom file name for this file, or use default
+          const customFileName = fileNames[i] || file.name.replace(/\.pdf$/i, '').replace(/[^a-zA-Z0-9_-]/g, '_') || `file_${i}`;
+          formData.append("fileName", customFileName);
 
           // Debug logging
           console.log(
             `Uploading file ${i + 1}/${selectedFiles.length}:`,
-            file.name
+            file.name,
+            "with custom name:",
+            customFileName
           );
           console.log("Chapter number being sent:", chapter.chapter);
 
@@ -382,6 +439,7 @@ const ChapterDocumentUpload = ({ chapter, onClose, onSuccess }) => {
                 <div className="max-h-48 overflow-y-auto space-y-2">
                   {selectedFiles.map((file, index) => {
                     const progress = uploadProgress[index];
+                    const customName = fileNames[index] || file.name.replace(/\.pdf$/i, '');
                     return (
                       <div
                         key={`${file.name}-${index}`}
@@ -395,50 +453,76 @@ const ChapterDocumentUpload = ({ chapter, onClose, onSuccess }) => {
                             : "bg-blue-50 border-blue-200"
                         }`}
                       >
-                        <div className="flex items-center space-x-3">
-                          <div className="flex-shrink-0">
-                            <MdFilePresent
-                              className={`w-8 h-8 ${
-                                progress?.status === "success"
-                                  ? "text-green-600"
-                                  : progress?.status === "error"
-                                  ? "text-red-600"
-                                  : progress?.status === "uploading"
-                                  ? "text-yellow-600"
-                                  : "text-blue-600"
-                              }`}
-                            />
+                        <div className="space-y-2">
+                          <div className="flex items-center space-x-3">
+                            <div className="flex-shrink-0">
+                              <MdFilePresent
+                                className={`w-8 h-8 ${
+                                  progress?.status === "success"
+                                    ? "text-green-600"
+                                    : progress?.status === "error"
+                                    ? "text-red-600"
+                                    : progress?.status === "uploading"
+                                    ? "text-yellow-600"
+                                    : "text-blue-600"
+                                }`}
+                              />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-900 truncate">
+                                {file.name}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {(file.size / 1024 / 1024).toFixed(2)} MB
+                                {progress?.status === "uploading" && (
+                                  <span className="ml-2 text-yellow-600">
+                                    • Uploading...
+                                  </span>
+                                )}
+                                {progress?.status === "success" && (
+                                  <span className="ml-2 text-green-600">
+                                    • Uploaded successfully
+                                  </span>
+                                )}
+                                {progress?.status === "error" && (
+                                  <span className="ml-2 text-red-600">
+                                    • {progress.error}
+                                  </span>
+                                )}
+                              </p>
+                            </div>
+                            {!isUploading && (
+                              <button
+                                onClick={() => removeFile(index)}
+                                className="flex-shrink-0 p-1 hover:bg-blue-100 rounded-full transition-colors"
+                              >
+                                <MdClose className="w-5 h-5 text-gray-600" />
+                              </button>
+                            )}
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">
-                              {file.name}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {(file.size / 1024 / 1024).toFixed(2)} MB
-                              {progress?.status === "uploading" && (
-                                <span className="ml-2 text-yellow-600">
-                                  • Uploading...
-                                </span>
-                              )}
-                              {progress?.status === "success" && (
-                                <span className="ml-2 text-green-600">
-                                  • Uploaded successfully
-                                </span>
-                              )}
-                              {progress?.status === "error" && (
-                                <span className="ml-2 text-red-600">
-                                  • {progress.error}
-                                </span>
-                              )}
-                            </p>
-                          </div>
+                          {/* File name input */}
                           {!isUploading && (
-                            <button
-                              onClick={() => removeFile(index)}
-                              className="flex-shrink-0 p-1 hover:bg-blue-100 rounded-full transition-colors"
-                            >
-                              <MdClose className="w-5 h-5 text-gray-600" />
-                            </button>
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 mb-1">
+                                File Name (e.g., Export, Import, or custom name):
+                              </label>
+                              <input
+                                type="text"
+                                value={customName}
+                                onChange={(e) => {
+                                  const sanitized = e.target.value.replace(/[^a-zA-Z0-9_-]/g, '_');
+                                  setFileNames((prev) => ({
+                                    ...prev,
+                                    [index]: sanitized,
+                                  }));
+                                }}
+                                placeholder="Export, Import, etc."
+                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              />
+                              <p className="text-xs text-gray-500 mt-1">
+                                Will be saved as: Chapter_{chapter.chapter}_{customName || 'unnamed'}.pdf
+                              </p>
+                            </div>
                           )}
                         </div>
                       </div>
@@ -466,54 +550,80 @@ const ChapterDocumentUpload = ({ chapter, onClose, onSuccess }) => {
               </div>
             ) : availableDocuments.length > 0 ? (
               <div className="space-y-2">
-                {availableDocuments.map((doc) => (
-                  <div
-                    key={doc.chapterNumber}
-                    className="flex items-center justify-between p-3 bg-white border border-blue-200 rounded-lg"
-                  >
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2">
-                        <MdFilePresent className="w-4 h-4 text-blue-600" />
-                        <span className="text-sm font-medium text-gray-900">
-                          Chapter {doc.chapterNumber}
-                        </span>
+                {availableDocuments.map((doc) => {
+                  // Format the custom name for display
+                  const getDisplayName = (customName, filename) => {
+                    if (!customName) {
+                      // If no custom name, check if it's a legacy file without suffix
+                      if (filename && filename.match(/^[A-Z]{2}_Chapter_\d+\.pdf$/)) {
+                        return "Document";
+                      }
+                      return "Document";
+                    }
+                    // If it's a timestamp-based name (legacy), show "Document"
+                    if (/^file_\d+$/.test(customName) || /^\d{10,}$/.test(customName)) {
+                      return "Document";
+                    }
+                    // Otherwise, capitalize first letter and replace underscores with spaces
+                    return customName
+                      .replace(/_/g, ' ')
+                      .split(' ')
+                      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                      .join(' ');
+                  };
+
+                  return (
+                    <div
+                      key={doc.filename}
+                      className="flex items-center justify-between p-3 bg-white border border-blue-200 rounded-lg"
+                    >
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2">
+                          <MdFilePresent className="w-4 h-4 text-blue-600" />
+                          <span className="text-sm font-medium text-gray-900">
+                            {getDisplayName(doc.customName, doc.filename)}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            (Chapter {doc.chapterNumber})
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                          File: {doc.filename} • {(doc.size / 1024 / 1024).toFixed(2)} MB • Last
+                          modified:{" "}
+                          {new Date(doc.lastModified).toLocaleDateString()}
+                        </p>
                       </div>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {(doc.size / 1024 / 1024).toFixed(2)} MB • Last
-                        modified:{" "}
-                        {new Date(doc.lastModified).toLocaleDateString()}
-                      </p>
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => {
+                            // Use doc.path which contains "Chapters/{countryCode}/{filename}"
+                            // If path doesn't exist, construct from filename
+                            const pdfPath =
+                              doc.path ||
+                              `Chapters/${doc.filename.split("_Chapter_")[0]}/${
+                                doc.filename
+                              }`;
+                            window.open(
+                              `${process.env.NEXT_PUBLIC_BASE_URL}/${pdfPath}`,
+                              "_blank"
+                            );
+                          }}
+                          className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
+                          disabled={isDeleting}
+                        >
+                          View
+                        </button>
+                        <button
+                          onClick={() => handleDeleteDocument(doc.filename, doc.chapterNumber)}
+                          className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
+                          disabled={isDeleting}
+                        >
+                          {isDeleting ? "Deleting..." : "Delete"}
+                        </button>
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => {
-                          // Use doc.path which contains "Chapters/{countryCode}/{filename}"
-                          // If path doesn't exist, construct from filename
-                          const pdfPath =
-                            doc.path ||
-                            `Chapters/${doc.filename.split("_Chapter_")[0]}/${
-                              doc.filename
-                            }`;
-                          window.open(
-                            `${process.env.NEXT_PUBLIC_BASE_URL}/${pdfPath}`,
-                            "_blank"
-                          );
-                        }}
-                        className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
-                        disabled={isDeleting}
-                      >
-                        View
-                      </button>
-                      <button
-                        onClick={() => handleDeleteDocument(doc.filename, doc.chapterNumber)}
-                        className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
-                        disabled={isDeleting}
-                      >
-                        {isDeleting ? "Deleting..." : "Delete"}
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <p className="text-sm text-blue-600 text-center py-4">

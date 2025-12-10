@@ -18,8 +18,8 @@ const Navbar = () => {
   // Get user's country code
   const { countryInfo } = useCountryCode();
 
-  // Get user authentication status
-  const { isAuthenticated, user, isLoading } = useUserAuth();
+  // Get user authentication status (without redirecting - home page is public)
+  const { isAuthenticated, user, isLoading } = useUserAuth(false);
 
   // Initialize Google Translate
   useEffect(() => {

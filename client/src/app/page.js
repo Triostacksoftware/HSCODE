@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useMemo } from "react";
 import Navbar from "@/component/HomeComponent/Navbar";
 import Herosection from "@/component/HomeComponent/Herosection";
 import AboutSection from "@/component/HomeComponent/AboutSection";
@@ -23,7 +23,10 @@ function HomeContent() {
   const { homeCountry } = useHomeCountry();
   
   // Use home country if available, otherwise fall back to detected country
-  const effectiveCountry = homeCountry || countryInfo;
+  // Memoize to prevent unnecessary recalculations
+  const effectiveCountry = useMemo(() => {
+    return homeCountry || countryInfo;
+  }, [homeCountry, countryInfo]);
   
   console.log("country code", countryInfo);
   console.log("home country", homeCountry);
