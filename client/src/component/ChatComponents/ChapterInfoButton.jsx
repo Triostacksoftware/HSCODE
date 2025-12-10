@@ -83,7 +83,7 @@ const ChapterInfoButton = ({ chapter, user }) => {
       console.error("Cannot open file - missing file or countryCode:", { file, user });
       return;
     }
-    
+
     setIsLoading(true);
     try {
       // Use the same path format as admin side: file.url contains "Chapters/{countryCode}/{filename}"
@@ -112,7 +112,7 @@ const ChapterInfoButton = ({ chapter, user }) => {
       const pdfUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/${pdfPath}`;
       
       console.log("Opening file:", { pdfPath, pdfUrl, file });
-      
+
       // Open PDF in new tab (same as admin side)
       window.open(pdfUrl, "_blank");
       setShowFileList(false);
@@ -140,23 +140,23 @@ const ChapterInfoButton = ({ chapter, user }) => {
   return (
     <>
       <div className="relative inline-block">
-        <button
-          ref={buttonRef}
-          onClick={handleClick}
+      <button
+        ref={buttonRef}
+        onClick={handleClick}
           disabled={isLoading || isLoadingFiles}
-          className={`ml-2 p-1 rounded-full transition-all duration-200 ${
+        className={`ml-2 p-1.1 rounded-full transition-all duration-200 ${
             isLoading || isLoadingFiles
-              ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+            ? "bg-gray-200 text-gray-400 cursor-not-allowed"
               : "bg-gray-100 hover:bg-gray-200 hover:text-blue-700"
-          }`}
-          title="View chapter information"
-        >
-          <MdInfo className="w-3 h-3" />
-        </button>
+        }`}
+        title="Click to view files"
+      >
+        <MdInfo className="w-4 h-4" />
+      </button>
 
         {/* File List Dropdown */}
         {showFileList && (
-          <div
+        <div
             ref={fileListRef}
             className="absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto"
             style={{ top: "100%" }}
@@ -166,8 +166,8 @@ const ChapterInfoButton = ({ chapter, user }) => {
                 Chapter {chapter.chapter} Documents
               </div>
               <div className="text-xs text-gray-500">{chapter.heading}</div>
-            </div>
-            
+          </div>
+
             {isLoadingFiles ? (
               <div className="p-4 text-center">
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
@@ -200,8 +200,8 @@ const ChapterInfoButton = ({ chapter, user }) => {
                 <p className="text-xs text-gray-400 mt-1">for this chapter</p>
               </div>
             )}
-          </div>
-        )}
+        </div>
+      )}
 
       </div>
     </>

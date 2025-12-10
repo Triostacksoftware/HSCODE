@@ -3,6 +3,7 @@ import React, { useState, useMemo } from "react";
 import { LiaSearchSolid } from "react-icons/lia";
 import hsCodeData from "../../../hs_code_structure.json";
 import ChapterInfoButton from "./ChapterInfoButton";
+import ChapterImage from "./ChapterImage";
 
 const UnifiedHSNavigator = ({
   scope = "local",
@@ -68,9 +69,16 @@ const UnifiedHSNavigator = ({
             onClick={() => handleChapterClick(chapter)}
           >
             <div className="flex items-center justify-between">
-              <div className="text-sm grid font-medium flex-1">
-                <span>Chapter {chapter.chapter}</span>
-                <span className="text-gray-400 text-xs">{chapter.heading}</span>
+              <div className="flex items-center space-x-3 flex-1 min-w-0">
+                {/* Chapter Image */}
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-gray-200 flex-shrink-0 overflow-hidden border border-gray-300">
+                  <ChapterImage chapterNumber={chapter.chapter} />
+                </div>
+                
+                <div className="text-sm grid font-medium flex-1 min-w-0">
+                  <span className="truncate">Chapter {chapter.chapter}</span>
+                  <span className="text-gray-400 text-xs truncate">{chapter.heading}</span>
+                </div>
               </div>
               <ChapterInfoButton chapter={chapter} user={user} />
             </div>

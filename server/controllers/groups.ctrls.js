@@ -351,6 +351,94 @@ export const getChapterDocuments = async (req, res) => {
   }
 };
 
+// RENAME chapter document (Admin only)
+export const renameChapterDocument = async (req, res) => {
+  try {
+    const { filename } = req.params;
+    const { newName } = req.body;
+    const { countryCode } = req.user;
+
+    if (!filename) {
+      return res.status(400).json({
+        message: "Filename is required",
+      });
+    }
+
+    if (!newName) {
+      return res.status(400).json({
+        message: "New name is required",
+      });
+    }
+
+    // Decode filename in case it was URL encoded
+    const decodedFilename = decodeURIComponent(filename);
+
+    // Security check: ensure filename belongs to the user's country
+    if (!decodedFilename.startsWith(countryCode)) {
+      return res.status(403).json({
+        message: "Unauthorized: Cannot rename files from other countries",
+      });
+    }
+
+    // Sanitize the new name
+    let sanitizedNewName = newName.replace(/[^a-zA-Z0-9_-]/g, '_');
+    if (!sanitizedNewName || sanitizedNewName.trim() === '') {
+      return res.status(400).json({
+        message: "Invalid new name",
+      });
+    }
+
+    // Extract chapter number from current filename
+    // Pattern: {countryCode}_Chapter_{number}_{oldName}.pdf
+    const filenamePattern = new RegExp(`^${countryCode}_Chapter_(\\d+)(?:_(.+))?\\.pdf$`);
+    const match = decodedFilename.match(filenamePattern);
+
+    if (!match) {
+      return res.status(400).json({
+        message: "Invalid filename format",
+      });
+    }
+
+    const chapterNumber = match[1];
+    const oldPath = path.join(process.cwd(), "public", "Chapters", countryCode, decodedFilename);
+    const newFilename = `${countryCode}_Chapter_${chapterNumber}_${sanitizedNewName}.pdf`;
+    const newPath = path.join(process.cwd(), "public", "Chapters", countryCode, newFilename);
+
+    // Check if old file exists
+    if (!fs.existsSync(oldPath)) {
+      return res.status(404).json({
+        message: "File not found",
+      });
+    }
+
+    // Check if new filename already exists
+    if (fs.existsSync(newPath) && decodedFilename !== newFilename) {
+      return res.status(400).json({
+        message: "A file with this name already exists",
+      });
+    }
+
+    // Rename the file
+    fs.renameSync(oldPath, newPath);
+    console.log(`Chapter document renamed from ${decodedFilename} to ${newFilename}`);
+
+    res.status(200).json({
+      success: true,
+      message: "Chapter document renamed successfully",
+      oldFilename: decodedFilename,
+      newFilename: newFilename,
+      chapterNumber,
+      countryCode,
+    });
+  } catch (error) {
+    console.error("Error renaming chapter document:", error);
+    res.status(500).json({
+      message: "Error renaming chapter document",
+      error: error.message,
+    });
+  }
+};
+
 // DELETE chapter document (Admin only)
 export const deleteChapterDocument = async (req, res) => {
   try {

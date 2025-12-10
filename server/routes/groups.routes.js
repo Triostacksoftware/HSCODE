@@ -12,6 +12,7 @@ import {
   getAllGroups,
   uploadChapterDocument,
   getChapterDocuments,
+  renameChapterDocument,
   deleteChapterDocument,
 } from "../controllers/groups.ctrls.js";
 import upload from "../configurations/multer.js";
@@ -35,6 +36,13 @@ router.post(
 
 // Get available chapter documents (Admin only)
 router.get("/chapter-documents", adminMiddleware, getChapterDocuments);
+
+// Rename chapter document (Admin only) - accepts filename as parameter
+router.patch(
+  "/chapter-document/:filename",
+  adminMiddleware,
+  renameChapterDocument
+);
 
 // Delete chapter document (Admin only) - accepts filename as parameter
 router.delete(

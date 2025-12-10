@@ -145,9 +145,14 @@ const Navbar = () => {
             {userCountry && (
               <div className="hidden md:flex items-center ml-6 px-4 py-2 bg-gray-50 rounded-lg border border-gray-200">
                 <img
-                  src={userCountry.image}
+                  src={userCountry.code ? `/flag_images/${userCountry.code.toLowerCase()}.svg` : userCountry.image}
                   alt={`${userCountry.name} flag`}
                   className="w-8 h-6 mr-2 object-cover rounded"
+                  onError={(e) => {
+                    if (userCountry.image && e.target.src !== userCountry.image) {
+                      e.target.src = userCountry.image;
+                    }
+                  }}
                 />
                 <div className="flex flex-col">
                   <span className="text-xs text-gray-600">
@@ -313,9 +318,14 @@ const Navbar = () => {
             {userCountry && (
               <div className="flex items-center justify-center px-3 py-3 mb-3 bg-white rounded-lg border border-gray-200">
                 <img
-                  src={userCountry.image}
+                  src={userCountry.code ? `/flag_images/${userCountry.code.toLowerCase()}.svg` : userCountry.image}
                   alt={`${userCountry.name} flag`}
                   className="w-12 h-9 mr-3 object-cover rounded"
+                  onError={(e) => {
+                    if (userCountry.image && e.target.src !== userCountry.image) {
+                      e.target.src = userCountry.image;
+                    }
+                  }}
                 />
                 <div className="flex flex-col items-center">
                   <span className="text-lg font-semibold text-gray-900">

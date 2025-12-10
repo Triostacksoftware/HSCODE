@@ -49,12 +49,12 @@ const Sidebar = ({
   const menuItems = [
     {
       id: "local",
-      label: "Local Chats",
+      label: "Domestic Chapters Chats",
       icon: <MdHomeMax className="w-[1.1em] h-[1.1em]" />,
     },
     {
       id: "global",
-      label: "Global Chats",
+      label: "Global Chapters Chats",
       icon: <BsGlobeAmericas className="w-[1.1em] h-[1.1em]" />,
     },
     {

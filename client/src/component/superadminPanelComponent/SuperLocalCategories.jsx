@@ -5,6 +5,7 @@ import SuperLocalCategoriesGroups from "./SuperLocalCategoriesGroups";
 import SuperAddGroup from "./SuperAddGroup";
 import hsCodeData from "../../../hs_code_structure.json";
 import SuperAdminChatWindow from "./SuperAdminChatWindow";
+import ChapterImage from "../ChatComponents/ChapterImage";
 
 const SuperLocalCategories = () => {
   const [activeChapter, setActiveChapter] = useState(null);
@@ -132,10 +133,19 @@ const SuperLocalCategories = () => {
             }`}
             onClick={() => handleChapterClick(chapter)}
           >
-            <h3 className="font-medium text-gray-900">
-              Chapter {chapter.chapter}
-            </h3>
-            <p className="text-sm text-gray-600 mt-1">{chapter.heading}</p>
+            <div className="flex items-center space-x-3">
+              {/* Chapter Image */}
+              <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-gray-200 flex-shrink-0 overflow-hidden border border-gray-300">
+                <ChapterImage chapterNumber={chapter.chapter} />
+              </div>
+              
+              <div className="flex-1 min-w-0">
+                <h3 className="font-medium text-gray-900 truncate">
+                  Chapter {chapter.chapter}
+                </h3>
+                <p className="text-sm text-gray-600 mt-1 truncate">{chapter.heading}</p>
+              </div>
+            </div>
           </div>
         ))}
       </div>

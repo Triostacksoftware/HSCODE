@@ -13,6 +13,7 @@ import {
 } from "react-icons/md";
 import AddGroup from "./AddGroup";
 import ChapterDocumentUpload from "./ChapterDocumentUpload";
+import ChapterImage from "../ChatComponents/ChapterImage";
 import hsCodeData from "../../../hs_code_structure.json";
 
 const Categories = () => {
@@ -295,13 +296,20 @@ const Categories = () => {
                     className="p-2.5 sm:p-3 rounded-lg cursor-pointer transition-all border border-gray-200 hover:shadow-sm bg-white hover:bg-[#f4f4f4] text-gray-600"
                     onClick={() => handleChapterClick(chapter)}
                   >
-                    <div className="text-xs sm:text-sm grid font-medium">
-                      <span className="font-semibold">
-                        Chapter {chapter.chapter}
-                      </span>
-                      <span className="text-gray-400 text-xs truncate">
-                        {chapter.heading}
-                      </span>
+                    <div className="flex items-center space-x-3">
+                      {/* Chapter Image */}
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center bg-gray-200 flex-shrink-0 overflow-hidden border border-gray-300">
+                        <ChapterImage chapterNumber={chapter.chapter} />
+                      </div>
+                      
+                      <div className="text-xs sm:text-sm grid font-medium flex-1 min-w-0">
+                        <span className="font-semibold truncate">
+                          Chapter {chapter.chapter}
+                        </span>
+                        <span className="text-gray-400 text-xs truncate">
+                          {chapter.heading}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 ))
@@ -316,13 +324,20 @@ const Categories = () => {
                     }`}
                     onClick={() => handleChapterClick(chapter)}
                   >
-                    <div className="text-xs sm:text-sm grid font-medium">
-                      <span className="font-semibold">
-                        Chapter {chapter.chapter}
-                      </span>
-                      <span className="text-gray-400 text-xs truncate">
-                        {chapter.heading}
-                      </span>
+                    <div className="flex items-center space-x-3">
+                      {/* Chapter Image */}
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center bg-gray-200 flex-shrink-0 overflow-hidden border border-gray-300">
+                        <ChapterImage chapterNumber={chapter.chapter} />
+                      </div>
+                      
+                      <div className="text-xs sm:text-sm grid font-medium flex-1 min-w-0">
+                        <span className="font-semibold truncate">
+                          Chapter {chapter.chapter}
+                        </span>
+                        <span className="text-gray-400 text-xs truncate">
+                          {chapter.heading}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 ))}

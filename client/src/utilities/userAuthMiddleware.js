@@ -44,25 +44,25 @@ export const useUserAuth = (shouldRedirect = true) => {
         } else {
           // Not authenticated
           if (shouldRedirect) {
-            toast.error("Please log in to access the chat", {
-              duration: 3000,
-              position: "top-right",
-            });
-            setTimeout(() => {
-              router.push("/auth");
-            }, 1000); // Redirect after 1 second
-          }
-        }
-      } catch (error) {
-        console.error("Auth check failed:", error);
-        if (shouldRedirect) {
-          toast.error("Authentication required. Please log in.", {
+          toast.error("Please log in to access the chat", {
             duration: 3000,
             position: "top-right",
           });
           setTimeout(() => {
             router.push("/auth");
           }, 1000); // Redirect after 1 second
+          }
+        }
+      } catch (error) {
+        console.error("Auth check failed:", error);
+        if (shouldRedirect) {
+        toast.error("Authentication required. Please log in.", {
+          duration: 3000,
+          position: "top-right",
+        });
+        setTimeout(() => {
+          router.push("/auth");
+        }, 1000); // Redirect after 1 second
         }
       } finally {
         setIsLoading(false);

@@ -12,7 +12,7 @@ export default function page() {
   // Get country flag URL from country code
   const getCountryFlag = (countryCode) => {
     if (!countryCode) return '';
-    return `https://flagcdn.com/w40/${countryCode.toLowerCase()}.png`;
+    return `/flag_images/${countryCode.toLowerCase()}.svg`;
   };
 
   return (

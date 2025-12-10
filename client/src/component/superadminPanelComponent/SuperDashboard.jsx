@@ -108,7 +108,8 @@ const SuperDashboard = () => {
   };
 
   const getFlagUrl = (countryCode) => {
-    return `https://flagcdn.com/w40/${countryCode.toLowerCase()}.png`;
+    if (!countryCode) return '';
+    return `/flag_images/${countryCode.toLowerCase()}.svg`;
   };
 
   // Filter countries based on search term

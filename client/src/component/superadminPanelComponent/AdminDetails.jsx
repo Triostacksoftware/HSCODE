@@ -64,7 +64,8 @@ const AdminDetails = ({ admin, isOpen, onClose }) => {
   };
 
   const getFlagUrl = (countryCode) => {
-    return `https://flagcdn.com/w40/${countryCode.toLowerCase()}.png`;
+    if (!countryCode) return '';
+    return `/flag_images/${countryCode.toLowerCase()}.svg`;
   };
 
   const formatDate = (dateString) => {

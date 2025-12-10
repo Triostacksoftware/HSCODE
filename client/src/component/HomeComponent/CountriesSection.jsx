@@ -7,7 +7,7 @@ const CountriesSection = ({
   title = "Global Community"
 }) => {
   const [countries, setCountries] = useState([]);
-  const [selectedLetter, setSelectedLetter] = useState("ALL");
+  const [selectedLetter, setSelectedLetter] = useState("A");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState(null);
   
@@ -29,10 +29,7 @@ const CountriesSection = ({
     }
   }, [homeCountry]);
 
-  const filteredCountries =
-    selectedLetter === "ALL"
-      ? countries
-      : countries.filter((country) => country.letter === selectedLetter);
+  const filteredCountries = countries.filter((country) => country.letter === selectedLetter);
 
   // Handle country click
   const handleCountryClick = (country) => {
@@ -85,16 +82,6 @@ const CountriesSection = ({
         {/* Alphabetical Filter */}
         <div className="mb-12">
           <div className="flex flex-wrap justify-center gap-2 md:gap-3">
-            <button
-              onClick={() => setSelectedLetter("ALL")}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors duration-200 ${
-                selectedLetter === "ALL"
-                  ? "bg-amber-600 text-white"
-                  : "bg-white text-gray-700 hover:bg-amber-100 border border-gray-200"
-              }`}
-            >
-              ALL
-            </button>
             {alphabet.map((letter) => (
               <button
                 key={letter}
@@ -120,18 +107,22 @@ const CountriesSection = ({
               className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-lg transition-all duration-200 cursor-pointer transform hover:scale-105 hover:border-amber-300"
             >
               {/* Country Image */}
-              <div className="w-full h-20 mb-3 bg-gradient-to-br from-amber-100 to-amber-200 rounded-lg flex items-center justify-center">
-                {country.image ? (
-                  <img
-                    src={country.image}
-                    alt={`${country.name} flag`}
-                    className="w-full h-full object-cover rounded"
-                  />
-                ) : (
-                  <div className="w-12 h-8 bg-gradient-to-br from-amber-300 to-amber-400 rounded flex items-center justify-center text-white font-bold text-xs">
-                    {country.name.substring(0, 2).toUpperCase()}
-                  </div>
-                )}
+              <div className="w-full h-20 mb-3 bg-gradient-to-br from-amber-100 to-amber-200 rounded-lg flex items-center justify-center overflow-hidden">
+                <img
+                  src={`/flag_images/${country.code.toLowerCase()}.svg`}
+                  alt={`${country.name} flag`}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    // Fallback to country code initials if flag not found
+                    e.target.style.display = 'none';
+                    if (!e.target.nextElementSibling) {
+                      const fallback = document.createElement('div');
+                      fallback.className = 'w-12 h-8 bg-gradient-to-br from-amber-300 to-amber-400 rounded flex items-center justify-center text-white font-bold text-xs';
+                      fallback.textContent = country.name.substring(0, 2).toUpperCase();
+                      e.target.parentElement.appendChild(fallback);
+                    }
+                  }}
+                />
               </div>
 
               {/* Country Name */}

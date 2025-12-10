@@ -13,6 +13,7 @@ import {
 } from "react-icons/md";
 import hsCodeData from "../../../hs_code_structure.json";
 import SuperAdminChatWindow from "./SuperAdminChatWindow";
+import ChapterImage from "../ChatComponents/ChapterImage";
 
 const SuperLocalChats = () => {
   const [view, setView] = useState("countries"); // "countries", "sections", "chapters", "groups", "chat"
@@ -359,13 +360,20 @@ const SuperLocalChats = () => {
               onClick={() => handleChapterClick(chapter)}
             >
               <div className="flex items-center justify-between">
-                <div className="min-w-0 flex-1">
-                  <span className="text-[.9em] sm:text-[.96em] text-gray-700 truncate block">
-                    Chapter {chapter.chapter}
-                  </span>
-                  <span className="text-[.7em] text-gray-700 truncate block">
-                    {chapter.heading}
-                  </span>
+                <div className="flex items-center space-x-3 min-w-0 flex-1">
+                  {/* Chapter Image */}
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-gray-200 flex-shrink-0 overflow-hidden border border-gray-300">
+                    <ChapterImage chapterNumber={chapter.chapter} />
+                  </div>
+                  
+                  <div className="min-w-0 flex-1">
+                    <span className="text-[.9em] sm:text-[.96em] text-gray-700 truncate block">
+                      Chapter {chapter.chapter}
+                    </span>
+                    <span className="text-[.7em] text-gray-700 truncate block">
+                      {chapter.heading}
+                    </span>
+                  </div>
                 </div>
                 <div className="flex items-center space-x-2">
                   <MdChat className="w-4 h-4 text-gray-400" />

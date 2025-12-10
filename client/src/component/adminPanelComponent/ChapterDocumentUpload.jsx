@@ -6,6 +6,7 @@ import {
   MdUploadFile,
   MdFilePresent,
   MdCheckCircle,
+  MdEdit,
 } from "react-icons/md";
 import axios from "axios";
 
@@ -19,6 +20,8 @@ const ChapterDocumentUpload = ({ chapter, onClose, onSuccess }) => {
   const [availableDocuments, setAvailableDocuments] = useState([]);
   const [isLoadingDocs, setIsLoadingDocs] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [renamingFile, setRenamingFile] = useState(null);
+  const [newFileName, setNewFileName] = useState("");
 
   // Fetch available documents on component mount and when chapter changes
   useEffect(() => {
@@ -60,6 +63,73 @@ const ChapterDocumentUpload = ({ chapter, onClose, onSuccess }) => {
     } finally {
       setIsLoadingDocs(false);
     }
+  };
+
+  const handleRenameDocument = async (filename, chapterNumber, currentCustomName) => {
+    // Extract current custom name from filename if not provided
+    let currentName = currentCustomName;
+    if (!currentName && filename) {
+      const match = filename.match(/^[A-Z]{2}_Chapter_\d+_(.+)\.pdf$/);
+      if (match) {
+        currentName = match[1];
+      }
+    }
+    
+    setRenamingFile(filename);
+    setNewFileName(currentName || "");
+  };
+
+  const handleSaveRename = async () => {
+    if (!renamingFile || !newFileName.trim()) {
+      setError("Please enter a valid file name");
+      return;
+    }
+
+    // Sanitize the new name
+    const sanitized = newFileName.replace(/[^a-zA-Z0-9_-]/g, '_');
+    if (!sanitized || sanitized.trim() === '') {
+      setError("Invalid file name. Only letters, numbers, underscores, and hyphens are allowed.");
+      return;
+    }
+
+    setIsDeleting(true); // Reuse this state for renaming too
+    setError("");
+    setSuccess("");
+
+    try {
+      // Encode filename for URL
+      const encodedFilename = encodeURIComponent(renamingFile);
+      const response = await axios.patch(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/groups/chapter-document/${encodedFilename}`,
+        { newName: sanitized },
+        { withCredentials: true }
+      );
+
+      setSuccess(`File renamed successfully to: ${sanitized}`);
+      setRenamingFile(null);
+      setNewFileName("");
+
+      // Refresh the documents list
+      await fetchAvailableDocuments();
+
+      // Call success callback if provided
+      if (onSuccess) {
+        onSuccess();
+      }
+    } catch (error) {
+      console.error("Error renaming chapter document:", error);
+      setError(
+        error.response?.data?.message || "Failed to rename chapter document"
+      );
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleCancelRename = () => {
+    setRenamingFile(null);
+    setNewFileName("");
+    setError("");
   };
 
   const handleDeleteDocument = async (filename, chapterNumber) => {
@@ -572,55 +642,117 @@ const ChapterDocumentUpload = ({ chapter, onClose, onSuccess }) => {
                       .join(' ');
                   };
 
+                  const isRenaming = renamingFile === doc.filename;
+
                   return (
                     <div
                       key={doc.filename}
                       className="flex items-center justify-between p-3 bg-white border border-blue-200 rounded-lg"
                     >
                       <div className="flex-1">
+                        {isRenaming ? (
+                          <div className="space-y-2">
+                            <div className="flex items-center space-x-2">
+                              <MdFilePresent className="w-4 h-4 text-blue-600" />
+                              <span className="text-xs text-gray-500">
+                                Renaming file...
+                              </span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="text"
+                                value={newFileName}
+                                onChange={(e) => {
+                                  const sanitized = e.target.value.replace(/[^a-zA-Z0-9_-]/g, '_');
+                                  setNewFileName(sanitized);
+                                }}
+                                placeholder="Enter new name (e.g., Export, Import)"
+                                className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                autoFocus
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    handleSaveRename();
+                                  } else if (e.key === 'Escape') {
+                                    handleCancelRename();
+                                  }
+                                }}
+                              />
+                              <button
+                                onClick={handleSaveRename}
+                                className="px-2 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors"
+                                disabled={isDeleting || !newFileName.trim()}
+                              >
+                                Save
+                              </button>
+                              <button
+                                onClick={handleCancelRename}
+                                className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors"
+                                disabled={isDeleting}
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                            <p className="text-xs text-gray-400">
+                              Will be saved as: Chapter_{doc.chapterNumber}_{newFileName || 'unnamed'}.pdf
+                            </p>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="flex items-center space-x-2">
+                              <MdFilePresent className="w-4 h-4 text-blue-600" />
+                              <span className="text-sm font-medium text-gray-900">
+                                {getDisplayName(doc.customName, doc.filename)}
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                (Chapter {doc.chapterNumber})
+                              </span>
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1">
+                              File: {doc.filename} • {(doc.size / 1024 / 1024).toFixed(2)} MB • Last
+                              modified:{" "}
+                              {new Date(doc.lastModified).toLocaleDateString()}
+                            </p>
+                          </>
+                        )}
+                      </div>
+                      {!isRenaming && (
                         <div className="flex items-center space-x-2">
-                          <MdFilePresent className="w-4 h-4 text-blue-600" />
-                          <span className="text-sm font-medium text-gray-900">
-                            {getDisplayName(doc.customName, doc.filename)}
-                          </span>
-                          <span className="text-xs text-gray-500">
-                            (Chapter {doc.chapterNumber})
-                          </span>
+                          <button
+                            onClick={() => {
+                              // Use doc.path which contains "Chapters/{countryCode}/{filename}"
+                              // If path doesn't exist, construct from filename
+                              const pdfPath =
+                                doc.path ||
+                                `Chapters/${doc.filename.split("_Chapter_")[0]}/${
+                                  doc.filename
+                                }`;
+                              window.open(
+                                `${process.env.NEXT_PUBLIC_BASE_URL}/${pdfPath}`,
+                                "_blank"
+                              );
+                            }}
+                            className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
+                            disabled={isDeleting}
+                          >
+                            View
+                          </button>
+                          <button
+                            onClick={() => handleRenameDocument(doc.filename, doc.chapterNumber, doc.customName)}
+                            className="px-3 py-1 text-xs bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200 transition-colors"
+                            disabled={isDeleting}
+                            title="Rename file"
+                          >
+                            <MdEdit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteDocument(doc.filename, doc.chapterNumber)}
+                            className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
+                            disabled={isDeleting}
+                          >
+                            {isDeleting ? "Deleting..." : "Delete"}
+                          </button>
                         </div>
-                        <p className="text-xs text-gray-500 mt-1">
-                          File: {doc.filename} • {(doc.size / 1024 / 1024).toFixed(2)} MB • Last
-                          modified:{" "}
-                          {new Date(doc.lastModified).toLocaleDateString()}
-                        </p>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <button
-                          onClick={() => {
-                            // Use doc.path which contains "Chapters/{countryCode}/{filename}"
-                            // If path doesn't exist, construct from filename
-                            const pdfPath =
-                              doc.path ||
-                              `Chapters/${doc.filename.split("_Chapter_")[0]}/${
-                                doc.filename
-                              }`;
-                            window.open(
-                              `${process.env.NEXT_PUBLIC_BASE_URL}/${pdfPath}`,
-                              "_blank"
-                            );
-                          }}
-                          className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
-                          disabled={isDeleting}
-                        >
-                          View
-                        </button>
-                        <button
-                          onClick={() => handleDeleteDocument(doc.filename, doc.chapterNumber)}
-                          className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
-                          disabled={isDeleting}
-                        >
-                          {isDeleting ? "Deleting..." : "Delete"}
-                        </button>
-                      </div>
+                      )}
                     </div>
                   );
                 })}
