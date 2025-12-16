@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useCallback } from "react";
+import { Suspense, useEffect, useMemo, useCallback, useRef } from "react";
 import Navbar from "@/component/HomeComponent/Navbar";
 import Herosection from "@/component/HomeComponent/Herosection";
 import AboutSection from "@/component/HomeComponent/AboutSection";
@@ -29,13 +29,21 @@ function HomeContent() {
     handleSwitchToDetected
   } = useHomeCountry();
   
-  // Callback to trigger country detection prompt
+  // Use ref to store callback to prevent re-renders
+  const promptRef = useRef(promptCountryDetection);
+  
+  // Update ref when function changes
+  useEffect(() => {
+    promptRef.current = promptCountryDetection;
+  }, [promptCountryDetection]);
+  
+  // Callback to trigger country detection prompt - use ref to avoid dependency issues
   const onCountryDetected = useCallback((detected, selected) => {
     // Only show prompt if user has a selected country and it differs from detected
     if (selected && detected && selected.code !== detected.code) {
-      promptCountryDetection(detected);
+      promptRef.current(detected);
     }
-  }, [promptCountryDetection]);
+  }, []); // Empty deps - use ref instead
   
   const { countryInfo, loading: countryLoading } = useCountryCode(onCountryDetected);
   

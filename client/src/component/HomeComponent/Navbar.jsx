@@ -58,8 +58,13 @@ const Navbar = () => {
       .then((data) => {
         setCountries(data);
         // Find user's country from the loaded data
-        const country = data.find((c) => c.name.trim() === countryInfo.name);
-        setUserCountry(country);
+        // Add null check to prevent errors
+        if (countryInfo && countryInfo.name) {
+          const country = data.find((c) => c.code === countryInfo.code || c.name.trim() === countryInfo.name);
+          setUserCountry(country || null);
+        } else {
+          setUserCountry(null);
+        }
       })
       .catch((err) => console.error("Error loading countries:", err));
   }, [countryInfo]);

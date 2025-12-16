@@ -1,5 +1,5 @@
 "use client";
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 
 const HomeCountryContext = createContext();
 
@@ -16,6 +16,7 @@ export const HomeCountryProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [showDetectionPrompt, setShowDetectionPrompt] = useState(false);
   const [detectedCountry, setDetectedCountry] = useState(null);
+  const promptShownRef = useRef(false); // Track if prompt has been shown in this session
 
   // Load selected country from localStorage on mount
   useEffect(() => {
@@ -68,6 +69,13 @@ export const HomeCountryProvider = ({ children }) => {
 
   // Show detection prompt when IP country differs from selected
   const promptCountryDetection = (detected) => {
+    // Only show prompt once per session
+    if (promptShownRef.current) {
+      console.log('📍 Prompt already shown in this session, skipping');
+      return;
+    }
+    
+    promptShownRef.current = true;
     setDetectedCountry(detected);
     setShowDetectionPrompt(true);
   };
@@ -75,11 +83,12 @@ export const HomeCountryProvider = ({ children }) => {
   // Handle user choice to keep selected country
   const handleKeepSelected = () => {
     setShowDetectionPrompt(false);
-    setDetectedCountry(null);
     // Update ipDetectedCountry to the new detection but keep selectedCountry
     if (detectedCountry) {
       localStorage.setItem('ipDetectedCountry', JSON.stringify(detectedCountry));
     }
+    setDetectedCountry(null);
+    // Don't reset promptShownRef - keep it true so prompt doesn't show again this session
   };
 
   // Handle user choice to switch to detected country
@@ -90,6 +99,7 @@ export const HomeCountryProvider = ({ children }) => {
     }
     setShowDetectionPrompt(false);
     setDetectedCountry(null);
+    // Don't reset promptShownRef - keep it true so prompt doesn't show again this session
   };
 
   const value = {

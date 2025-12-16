@@ -7,6 +7,9 @@ function useCountryCode(onCountryDetected) {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    let isMounted = true;
+    let promptTriggered = false; // Flag to prevent multiple prompts
+    
     const fetchCountryCode = async () => {
       try {
         setLoading(true);
@@ -41,11 +44,14 @@ function useCountryCode(onCountryDetected) {
           }
         }
 
-        // Always fetch current IP detected country to check if it differs
+        // Always fetch FRESH IP detected country (don't use cache for fresh detection)
         let ipDetectedCountry = null;
         try {
           const response = await axios.get(
-            `${process.env.NEXT_PUBLIC_BASE_URL}/location`
+            `${process.env.NEXT_PUBLIC_BASE_URL}/location`,
+            { 
+              params: { _t: Date.now() } // Add timestamp to prevent caching
+            }
           );
           ipDetectedCountry = response.data;
           
@@ -77,6 +83,8 @@ function useCountryCode(onCountryDetected) {
           }
         }
 
+        if (!isMounted) return; // Don't update state if component unmounted
+
         // If user has a selected country, check if IP detected country differs
         if (parsedSelectedCountry && ipDetectedCountry) {
           if (parsedSelectedCountry.code !== ipDetectedCountry.code) {
@@ -86,8 +94,9 @@ function useCountryCode(onCountryDetected) {
               detected: ipDetectedCountry
             });
             
-            // Trigger the prompt callback if provided
-            if (onCountryDetected && typeof onCountryDetected === 'function') {
+            // Trigger the prompt callback only once
+            if (onCountryDetected && typeof onCountryDetected === 'function' && !promptTriggered) {
+              promptTriggered = true;
               onCountryDetected(ipDetectedCountry, parsedSelectedCountry);
             }
             
@@ -116,14 +125,22 @@ function useCountryCode(onCountryDetected) {
         // Fallback to India if there's an error
         const fallbackCountry = { code: "IN", name: "India" };
         localStorage.setItem('ipDetectedCountry', JSON.stringify(fallbackCountry));
-        setCountryInfo(fallbackCountry);
+        if (isMounted) {
+          setCountryInfo(fallbackCountry);
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchCountryCode();
-  }, [onCountryDetected]);
+    
+    return () => {
+      isMounted = false; // Cleanup on unmount
+    };
+  }, []); // Remove onCountryDetected from dependencies to prevent infinite loops
 
   return { countryInfo, loading, error };
 }
