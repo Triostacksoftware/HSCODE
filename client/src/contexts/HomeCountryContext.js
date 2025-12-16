@@ -14,41 +14,94 @@ export const useHomeCountry = () => {
 export const HomeCountryProvider = ({ children }) => {
   const [homeCountry, setHomeCountry] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showDetectionPrompt, setShowDetectionPrompt] = useState(false);
+  const [detectedCountry, setDetectedCountry] = useState(null);
 
-  // Load home country from localStorage on mount
+  // Load selected country from localStorage on mount
   useEffect(() => {
-    const savedCountry = localStorage.getItem('homeCountry');
-    if (savedCountry) {
+    // Check for new selectedCountry first
+    let savedSelectedCountry = localStorage.getItem('selectedCountry');
+    
+    // Migration: If old homeCountry exists but selectedCountry doesn't, migrate it
+    if (!savedSelectedCountry) {
+      const oldHomeCountry = localStorage.getItem('homeCountry');
+      if (oldHomeCountry) {
+        try {
+          const parsedCountry = JSON.parse(oldHomeCountry);
+          localStorage.setItem('selectedCountry', oldHomeCountry);
+          localStorage.removeItem('homeCountry'); // Remove old key
+          savedSelectedCountry = oldHomeCountry;
+          console.log('Migrated homeCountry to selectedCountry');
+        } catch (error) {
+          console.error('Error migrating homeCountry:', error);
+          localStorage.removeItem('homeCountry');
+        }
+      }
+    }
+    
+    if (savedSelectedCountry) {
       try {
-        setHomeCountry(JSON.parse(savedCountry));
+        setHomeCountry(JSON.parse(savedSelectedCountry));
       } catch (error) {
-        console.error('Error parsing saved home country:', error);
-        localStorage.removeItem('homeCountry');
+        console.error('Error parsing saved selected country:', error);
+        localStorage.removeItem('selectedCountry');
       }
     }
     setLoading(false);
   }, []);
 
-  // Update home country and save to localStorage
+  // Update home country and save to localStorage as selectedCountry
   const updateHomeCountry = (newCountry) => {
     setHomeCountry(newCountry);
-    localStorage.setItem('homeCountry', JSON.stringify(newCountry));
+    // Store as selectedCountry (user's manual choice)
+    localStorage.setItem('selectedCountry', JSON.stringify(newCountry));
     
     // Don't reload the page - just update the state
     // The components will re-render automatically with the new country
   };
 
-  // Clear home country
+  // Clear home country (remove selectedCountry, will fall back to IP detected)
   const clearHomeCountry = () => {
     setHomeCountry(null);
-    localStorage.removeItem('homeCountry');
+    localStorage.removeItem('selectedCountry');
+  };
+
+  // Show detection prompt when IP country differs from selected
+  const promptCountryDetection = (detected) => {
+    setDetectedCountry(detected);
+    setShowDetectionPrompt(true);
+  };
+
+  // Handle user choice to keep selected country
+  const handleKeepSelected = () => {
+    setShowDetectionPrompt(false);
+    setDetectedCountry(null);
+    // Update ipDetectedCountry to the new detection but keep selectedCountry
+    if (detectedCountry) {
+      localStorage.setItem('ipDetectedCountry', JSON.stringify(detectedCountry));
+    }
+  };
+
+  // Handle user choice to switch to detected country
+  const handleSwitchToDetected = () => {
+    if (detectedCountry) {
+      updateHomeCountry(detectedCountry);
+      localStorage.setItem('ipDetectedCountry', JSON.stringify(detectedCountry));
+    }
+    setShowDetectionPrompt(false);
+    setDetectedCountry(null);
   };
 
   const value = {
     homeCountry,
     updateHomeCountry,
     clearHomeCountry,
-    loading
+    loading,
+    showDetectionPrompt,
+    detectedCountry,
+    promptCountryDetection,
+    handleKeepSelected,
+    handleSwitchToDetected
   };
 
   return (

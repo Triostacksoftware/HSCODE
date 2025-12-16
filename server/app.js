@@ -42,6 +42,9 @@ lines.forEach((line, index) => {
   }
 });
 
+// Trust proxy - important for getting real client IP behind proxies/load balancers
+app.set('trust proxy', true);
+
 // middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -109,14 +112,72 @@ app.get("/api/v1/test-image/:filename", (req, res) => {
   }
 });
 
+// Helper function to get client IP address
+const getClientIP = (req) => {
+  // Check various headers for the real client IP (handles proxies, load balancers, etc.)
+  const forwarded = req.headers['x-forwarded-for'];
+  const realIP = req.headers['x-real-ip'];
+  const cfConnectingIP = req.headers['cf-connecting-ip']; // Cloudflare
+  
+  let clientIP = null;
+  
+  if (forwarded) {
+    // X-Forwarded-For can contain multiple IPs, the first one is the original client
+    clientIP = forwarded.split(',')[0].trim();
+  } else if (realIP) {
+    clientIP = realIP;
+  } else if (cfConnectingIP) {
+    clientIP = cfConnectingIP;
+  } else {
+    // Fallback to req.ip or req.connection.remoteAddress
+    clientIP = req.ip || req.connection?.remoteAddress || req.socket?.remoteAddress;
+  }
+  
+  // Remove IPv6 prefix if present (::ffff:)
+  if (clientIP && clientIP.startsWith('::ffff:')) {
+    clientIP = clientIP.substring(7);
+  }
+  
+  // Handle localhost/loopback addresses
+  if (clientIP === '::1' || clientIP === '127.0.0.1' || clientIP === 'localhost') {
+    // For localhost, you might want to return a default or test IP
+    // For now, we'll let it pass through
+  }
+  
+  return clientIP;
+};
+
 // Unified country detection endpoint
 app.get("/api/v1/location", async (req, res) => {
   try {
-    const ip = req.ip;
-    const result = await getCountry(ip);
+    const clientIP = getClientIP(req);
+    
+    console.log("📍 IP Detection Debug:", {
+      ip: clientIP,
+      'x-forwarded-for': req.headers['x-forwarded-for'],
+      'x-real-ip': req.headers['x-real-ip'],
+      'cf-connecting-ip': req.headers['cf-connecting-ip'],
+      'req.ip': req.ip,
+      'req.connection.remoteAddress': req.connection?.remoteAddress,
+      timestamp: new Date().toISOString()
+    });
+    
+    if (!clientIP) {
+      console.warn("⚠️ No IP address detected, using fallback");
+      return res.status(200).json({ code: "IN", name: "India" });
+    }
+    
+    const result = await getCountry(clientIP);
+    
+    console.log("🌍 Country Detection Result:", {
+      ip: clientIP,
+      country: result,
+      timestamp: new Date().toISOString()
+    });
+    
     res.status(200).json(result);
   } catch (error) {
-    console.error("Location endpoint error:", error);
+    console.error("❌ Location endpoint error:", error);
     res.status(500).json({
       success: false,
       message: "Internal server error",
