@@ -144,14 +144,13 @@ const ChapterInfoButton = ({ chapter, user }) => {
         ref={buttonRef}
         onClick={handleClick}
           disabled={isLoading || isLoadingFiles}
-        className={`ml-2 p-1.1 rounded-full transition-all duration-200 ${
+        className={`ml-2 p-1 rounded transition-all duration-200 text-[.6em] ${
             isLoading || isLoadingFiles
             ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-              : "bg-gray-100 hover:bg-gray-200 hover:text-blue-700"
+              : "bg-gray-100 hover:bg-gray-300 hover:text-black"
         }`}
-        title="Click to view files"
       >
-        <MdInfo className="w-4 h-4" />
+        <p>Click to </p><span>view files</span>
       </button>
 
         {/* File List Dropdown */}
