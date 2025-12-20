@@ -57,7 +57,10 @@ export default function Signup() {
     setPhoneError("");
   };
 
-  // Initialize reCAPTCHA
+  // Initialize reCAPTCHA - TEMPORARILY DISABLED (phone OTP disabled)
+  // reCAPTCHA initialization commented out to prevent any Firebase phone OTP attempts
+  // To re-enable phone OTP: uncomment this useEffect block
+  /*
   useEffect(() => {
     if (typeof window !== "undefined" && !recaptchaVerifier) {
       // Wait for the DOM to be ready
@@ -94,6 +97,7 @@ export default function Signup() {
       return () => clearTimeout(timer);
     }
   }, [recaptchaVerifier]);
+  */
 
   // Step 1: Check if user exists and send email OTP
   const handleCheckUserAndSendEmailOTP = async (e) => {
@@ -182,9 +186,7 @@ export default function Signup() {
 
       if (verifyResponse.status === 200) {
         // Email OTP verified successfully - proceed directly to signup without phone OTP
-        setMessage("Email verified successfully! Creating your account...");
-        
-        // Call signup directly without phone OTP verification
+        // Call signup directly without phone OTP verification (no intermediate messages)
         await handleSignupWithoutPhoneOTP();
       }
     } catch (error) {
@@ -223,10 +225,8 @@ export default function Signup() {
       );
 
       if (response.status === 201) {
-        setMessage("Account created successfully! Redirecting...");
-        setTimeout(() => {
-          window.location.href = "/userchat";
-        }, 2000);
+        // Immediately redirect to dashboard - no delays, no messages
+        window.location.href = "/userchat";
       }
     } catch (error) {
       console.error("Signup failed:", error);
