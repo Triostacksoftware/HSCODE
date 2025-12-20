@@ -214,35 +214,35 @@ export const signup = async (req, res) => {
       });
     }
 
-    // Get Firebase ID token from Authorization header
+    // Get Firebase ID token from Authorization header (optional - phone OTP temporarily disabled)
     const idToken = req.headers.authorization?.split(" ")[1];
     console.log("idToken", idToken);
-    if (!idToken) {
-      return res.status(401).json({
-        success: false,
-        message: "Firebase ID token required in Authorization header",
-      });
+    
+    // Phone OTP verification temporarily disabled
+    // If Firebase token is provided, verify it (for future re-enabling)
+    // If not provided, skip phone verification and proceed with email OTP only
+    if (idToken) {
+      // Verify Firebase ID token if provided
+      const firebaseResult = await verifyFirebaseToken(idToken);
+
+      if (!firebaseResult.success) {
+        return res.status(401).json({
+          success: false,
+          message: "Invalid Firebase token",
+        });
+      }
+
+      // Check if phone is verified in Firebase (only if token was provided)
+      if (!firebaseResult.phoneVerified || !firebaseResult.phoneNumber) {
+        return res.status(400).json({
+          success: false,
+          message: "Phone number not verified in Firebase",
+        });
+      }
     }
+    // If no Firebase token provided, skip phone verification (phone OTP temporarily disabled)
 
-    // Verify Firebase ID token
-    const firebaseResult = await verifyFirebaseToken(idToken);
-
-    if (!firebaseResult.success) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid Firebase token",
-      });
-    }
-
-    // Check if phone is verified in Firebase
-    if (!firebaseResult.phoneVerified || !firebaseResult.phoneNumber) {
-      return res.status(400).json({
-        success: false,
-        message: "Phone number not verified in Firebase",
-      });
-    }
-
-    // Create new user directly (phone verification already done by Firebase)
+    // Create new user (phone verification skipped if no Firebase token provided)
     const newUser = new UserModel({
       name,
       email,
