@@ -37,10 +37,20 @@ const emailTemplates = {
   }
 };
 
-const DEFAULT_FROM = `"Global Lead Platform" <${process.env.SMTP_USER}>`;
+const DEFAULT_FROM = process.env.SMTP_USER 
+  ? `"Global Lead Platform" <${process.env.SMTP_USER}>`
+  : '"Global Lead Platform" <noreply@example.com>';
+
 const emailVerificatonMail = async (recipient, OTP, state) => {
   if (!emailTemplates[state]) {
     throw new Error(`Invalid email state: ${state}`);
+  }
+
+  // Check if SMTP is configured
+  if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    const error = new Error("SMTP configuration is missing. Please configure SMTP_HOST, SMTP_USER, and SMTP_PASS environment variables.");
+    error.code = "SMTP_NOT_CONFIGURED";
+    throw error;
   }
 
   try {

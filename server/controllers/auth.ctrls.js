@@ -1011,7 +1011,28 @@ export const checkUserBeforeOTP = async (req, res) => {
 
     // User doesn't exist, send email OTP for verification
     const otp = generateOTP();
-    await emailVerificatonMail(email, otp, "signup");
+    
+    // Try to send email OTP
+    try {
+      await emailVerificatonMail(email, otp, "signup");
+    } catch (emailError) {
+      console.error("Email sending error:", emailError);
+      // Check if it's a configuration error
+      if (emailError.code === "SMTP_NOT_CONFIGURED") {
+        return res.status(500).json({ 
+          message: "Email service is not configured. Please contact support." 
+        });
+      }
+      if (emailError.code === "EAUTH" || emailError.code === "ECONNECTION") {
+        return res.status(500).json({ 
+          message: "Email service configuration error. Please contact support." 
+        });
+      }
+      return res.status(500).json({ 
+        message: "Failed to send OTP email. Please try again later." 
+      });
+    }
+    
     const otpToken = generateToken({ email, otp }, "5m");
 
     console.log("Setting otp_token cookie:", otpToken);
@@ -1032,7 +1053,15 @@ export const checkUserBeforeOTP = async (req, res) => {
     });
   } catch (err) {
     console.error("User check error:", err);
-    return res.status(500).json({ message: "Failed to check user existence" });
+    // Provide more specific error message based on error type
+    if (err.name === "MongoServerError" || err.name === "MongoNetworkError") {
+      return res.status(500).json({ 
+        message: "Database connection error. Please try again later." 
+      });
+    }
+    return res.status(500).json({ 
+      message: "Failed to check user existence. Please try again." 
+    });
   }
 };
 
