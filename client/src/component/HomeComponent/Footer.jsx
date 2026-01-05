@@ -62,7 +62,6 @@ const Footer = ({
     Pricing: [
       { name: "Subscription Plans", href: "/subscription" },
       { name: "Free Trial", href: "/auth" },
-      { name: "Enterprise", href: "/contact" },
     ],
   };
   const contactInfoArray = [

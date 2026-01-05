@@ -114,9 +114,9 @@ const SubscriptionPlanManager = () => {
       };
 
       if (editingPlan) {
-        // Update existing plan
+        // Update existing plan - use the plan's 'id' field, not MongoDB '_id'
         await axios.put(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/subscription-plans/${editingPlan._id}`,
+          `${process.env.NEXT_PUBLIC_BASE_URL}/subscription-plans/${editingPlan.id}`,
           submitData,
           { withCredentials: true }
         );
@@ -143,7 +143,7 @@ const SubscriptionPlanManager = () => {
     }
   };
 
-  const handleDeletePlan = async (planId) => {
+  const handleDeletePlan = async (plan) => {
     if (
       !confirm(
         "Are you sure you want to delete this subscription plan? This action cannot be undone."
@@ -153,8 +153,9 @@ const SubscriptionPlanManager = () => {
     }
 
     try {
+      // Use the plan's 'id' field, not MongoDB '_id'
       await axios.delete(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/subscription-plans/${planId}`,
+        `${process.env.NEXT_PUBLIC_BASE_URL}/subscription-plans/${plan.id}`,
         { withCredentials: true }
       );
       toast.success("Subscription plan deleted successfully");
@@ -167,8 +168,9 @@ const SubscriptionPlanManager = () => {
 
   const handleToggleActive = async (plan) => {
     try {
+      // Use the plan's 'id' field, not MongoDB '_id'
       await axios.put(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/subscription-plans/${plan._id}`,
+        `${process.env.NEXT_PUBLIC_BASE_URL}/subscription-plans/${plan.id}`,
         { isActive: !plan.isActive },
         { withCredentials: true }
       );
@@ -216,20 +218,20 @@ const SubscriptionPlanManager = () => {
   }
 
   return (
-    <div>
+    <div className="p-4 md:p-6">
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 md:mb-8">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1">
             Subscription Plan Management
           </h2>
-          <p className="text-gray-600 mt-1">
+          <p className="text-sm md:text-base text-gray-600">
             Create and manage subscription plans for your platform
           </p>
         </div>
         <button
           onClick={handleAddPlan}
-          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          className="flex items-center gap-2 bg-gradient-to-r from-[#004b87] to-[#3e9c35] text-white px-4 md:px-6 py-2 md:py-2.5 rounded-lg hover:from-[#004b87]/90 hover:to-[#3e9c35]/90 transition-all duration-200 shadow-md hover:shadow-lg text-sm md:text-base font-semibold"
         >
           <FaPlus className="w-4 h-4" />
           Add Plan
@@ -238,19 +240,19 @@ const SubscriptionPlanManager = () => {
 
       {/* Plans List */}
       {plans.length === 0 ? (
-        <div className="text-center py-12 bg-gray-50 rounded-lg">
-          <p className="text-gray-500 mb-4">
+        <div className="text-center py-12 md:py-16 bg-white rounded-lg border border-gray-200 shadow-sm">
+          <p className="text-gray-500 mb-4 text-sm md:text-base">
             No subscription plans created yet
           </p>
           <button
             onClick={handleAddPlan}
-            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            className="bg-gradient-to-r from-[#004b87] to-[#3e9c35] text-white px-6 py-2.5 rounded-lg hover:from-[#004b87]/90 hover:to-[#3e9c35]/90 transition-all duration-200 shadow-md hover:shadow-lg font-semibold text-sm md:text-base"
           >
             Create Your First Plan
           </button>
         </div>
       ) : (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 md:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
           {plans.map((plan) => {
             const yearlyPrice =
               plan.monthlyPrice * 12 * (1 - (plan.yearlyDiscount || 0) / 100);
@@ -259,100 +261,100 @@ const SubscriptionPlanManager = () => {
             return (
               <div
                 key={plan._id}
-                className={`bg-white border rounded-lg p-6 shadow-sm ${
+                className={`bg-white border-2 rounded-lg p-4 md:p-5 shadow-sm hover:shadow-md transition-all duration-200 ${
                   !plan.isActive ? "opacity-60" : ""
-                } ${plan.popular ? "ring-2 ring-blue-500" : ""}`}
+                } ${plan.popular ? "ring-2 ring-[#004b87] border-[#004b87]" : "border-gray-200"}`}
               >
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">{plan.icon}</span>
-                    <div>
-                      <h3 className="text-lg font-bold text-gray-900">
+                <div className="flex justify-between items-start mb-3">
+                  <div className="flex items-center gap-2 md:gap-3 flex-1">
+                    <span className="text-2xl md:text-3xl">{plan.icon}</span>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-base md:text-lg font-bold text-gray-900 truncate">
                         {plan.name}
                       </h3>
                       {plan.popular && (
-                        <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                        <span className="inline-block mt-1 text-xs bg-gradient-to-r from-[#004b87] to-[#3e9c35] text-white px-2 py-0.5 rounded-full font-semibold">
                           Popular
                         </span>
                       )}
                     </div>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-1 md:gap-2 ml-2">
                     <button
                       onClick={() => handleEditPlan(plan)}
-                      className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
+                      className="p-1.5 md:p-2 text-gray-400 hover:text-[#004b87] hover:bg-[#004b87]/10 rounded-md transition-all duration-200"
                       title="Edit plan"
                     >
-                      <FaEdit className="w-4 h-4" />
+                      <FaEdit className="w-3.5 h-3.5 md:w-4 md:h-4" />
                     </button>
                     <button
                       onClick={() => handleToggleActive(plan)}
-                      className={`p-2 transition-colors ${
+                      className={`p-1.5 md:p-2 rounded-md transition-all duration-200 ${
                         plan.isActive
-                          ? "text-gray-400 hover:text-orange-600"
-                          : "text-gray-400 hover:text-green-600"
+                          ? "text-gray-400 hover:text-orange-600 hover:bg-orange-50"
+                          : "text-gray-400 hover:text-[#3e9c35] hover:bg-[#3e9c35]/10"
                       }`}
                       title={
                         plan.isActive ? "Deactivate plan" : "Activate plan"
                       }
                     >
-                      <FaEdit className="w-4 h-4" />
+                      <FaEdit className="w-3.5 h-3.5 md:w-4 md:h-4" />
                     </button>
                     <button
-                      onClick={() => handleDeletePlan(plan._id)}
-                      className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                      onClick={() => handleDeletePlan(plan)}
+                      className="p-1.5 md:p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-all duration-200"
                       title="Delete plan"
                     >
-                      <FaTrash className="w-4 h-4" />
+                      <FaTrash className="w-3.5 h-3.5 md:w-4 md:h-4" />
                     </button>
                   </div>
                 </div>
 
-                <p className="text-gray-600 mb-4">{plan.description}</p>
+                <p className="text-xs md:text-sm text-gray-600 mb-3 line-clamp-2">{plan.description}</p>
 
-                <div className="mb-4">
-                  <div className="text-3xl font-bold text-gray-900">
+                <div className="mb-3 pb-3 border-b border-gray-200">
+                  <div className="text-2xl md:text-3xl font-bold text-gray-900">
                     {formatPrice(plan.monthlyPrice)}
-                    <span className="text-sm font-normal text-gray-500">
+                    <span className="text-xs md:text-sm font-normal text-gray-500 ml-1">
                       /month
                     </span>
                   </div>
                   {plan.yearlyDiscount > 0 && (
-                    <div className="text-sm text-green-600">
+                    <div className="text-xs md:text-sm text-[#3e9c35] mt-1 font-medium">
                       {formatPrice(monthlyEquivalent)}/month when billed yearly
-                      <span className="ml-1">
-                        (Save{" "}
-                        {formatPrice(plan.monthlyPrice * 12 - yearlyPrice)})
+                      <span className="ml-1 text-gray-600">
+                        (Save {formatPrice(plan.monthlyPrice * 12 - yearlyPrice)})
                       </span>
                     </div>
                   )}
                 </div>
 
-                <div className="mb-4">
-                  <div className="text-sm text-gray-500 mb-2">Plan Limits:</div>
-                  <div className="text-sm text-gray-600">
-                    • Max Groups: {plan.maxGroups || "Unlimited"}
-                  </div>
-                  <div className="text-sm text-gray-600">
-                    • Max Leads: {plan.maxLeads || "Unlimited"}
+                <div className="mb-3">
+                  <div className="text-xs font-semibold text-gray-700 mb-1.5">Plan Limits:</div>
+                  <div className="text-xs md:text-sm text-gray-600 space-y-0.5">
+                    <div>• Max Groups: <span className="font-medium">{plan.maxGroups || "Unlimited"}</span></div>
+                    <div>• Max Leads: <span className="font-medium">{plan.maxLeads || "Unlimited"}</span></div>
                   </div>
                 </div>
 
-                <div className="mb-4">
-                  <div className="text-sm text-gray-500 mb-2">Features:</div>
-                  <ul className="text-sm text-gray-600 space-y-1">
-                    {plan.features?.map((feature, index) => (
-                      <li key={index} className="flex items-center">
-                        <span className="w-1 h-1 bg-gray-400 rounded-full mr-2"></span>
-                        {feature}
+                <div className="mb-3">
+                  <div className="text-xs font-semibold text-gray-700 mb-1.5">Features:</div>
+                  <ul className="text-xs md:text-sm text-gray-600 space-y-1">
+                    {plan.features?.slice(0, 3).map((feature, index) => (
+                      <li key={index} className="flex items-start">
+                        <span className="w-1 h-1 bg-[#3e9c35] rounded-full mr-2 mt-1.5 flex-shrink-0"></span>
+                        <span className="line-clamp-1">{feature}</span>
                       </li>
                     ))}
+                    {plan.features?.length > 3 && (
+                      <li className="text-xs text-gray-500">+{plan.features.length - 3} more</li>
+                    )}
                   </ul>
                 </div>
 
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between pt-2 border-t border-gray-100">
                   <span
-                    className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                       plan.isActive
                         ? "bg-green-100 text-green-800"
                         : "bg-red-100 text-red-800"
@@ -360,7 +362,7 @@ const SubscriptionPlanManager = () => {
                   >
                     {plan.isActive ? "Active" : "Inactive"}
                   </span>
-                  <span className="text-xs text-gray-500">ID: {plan.id}</span>
+                  <span className="text-xs text-gray-500 font-mono">ID: {plan.id}</span>
                 </div>
               </div>
             );
@@ -370,23 +372,24 @@ const SubscriptionPlanManager = () => {
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/40 bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-semibold text-gray-900">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-4 md:px-6 py-4 flex justify-between items-center">
+              <h3 className="text-lg md:text-xl font-bold text-gray-900">
                 {editingPlan
                   ? "Edit Subscription Plan"
                   : "Create New Subscription Plan"}
               </h3>
               <button
                 onClick={() => setShowModal(false)}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-1.5 transition-all duration-200"
               >
-                <FaTimes className="w-6 h-6" />
+                <FaTimes className="w-5 h-5" />
               </button>
             </div>
+            <div className="p-4 md:p-6">
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4 md:space-y-5">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -615,11 +618,11 @@ const SubscriptionPlanManager = () => {
                 </div>
               </div>
 
-              <div className="flex gap-3 pt-4">
+              <div className="flex gap-3 pt-4 border-t border-gray-200">
                 <button
                   type="submit"
                   disabled={modalLoading}
-                  className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                  className="flex-1 bg-gradient-to-r from-[#004b87] to-[#3e9c35] text-white py-2.5 px-4 rounded-lg hover:from-[#004b87]/90 hover:to-[#3e9c35]/90 transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed font-semibold text-sm md:text-base"
                 >
                   {modalLoading
                     ? "Saving..."
@@ -630,12 +633,13 @@ const SubscriptionPlanManager = () => {
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm md:text-base"
                 >
                   Cancel
                 </button>
               </div>
             </form>
+            </div>
           </div>
         </div>
       )}

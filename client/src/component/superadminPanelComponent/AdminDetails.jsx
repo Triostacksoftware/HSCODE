@@ -65,7 +65,14 @@ const AdminDetails = ({ admin, isOpen, onClose }) => {
 
   const getFlagUrl = (countryCode) => {
     if (!countryCode) return '';
-    return `/flag_images/${countryCode.toLowerCase()}.svg`;
+    // Map common country code variations to standard ISO codes
+    const countryCodeMap = {
+      'uk': 'gb', // United Kingdom - map UK to GB
+      'ukr': 'ua', // Ukraine
+    };
+    const normalizedCode = countryCode.toLowerCase();
+    const mappedCode = countryCodeMap[normalizedCode] || normalizedCode;
+    return `/flag_images/${mappedCode}.svg`;
   };
 
   const formatDate = (dateString) => {
@@ -114,14 +121,24 @@ const AdminDetails = ({ admin, isOpen, onClose }) => {
             <h3 className="text-lg font-semibold">{admin.name}</h3>
             <p className="text-amber-100 text-sm">{admin.email}</p>
             <div className="flex items-center mt-1">
-              <img
-                src={getFlagUrl(admin.countryCode)}
-                alt={`${admin.countryCode} flag`}
-                className="w-5 h-4 rounded mr-2"
-                onError={(e) => {
-                  e.target.src = `https://via.placeholder.com/20x16/cccccc/666666?text=${admin.countryCode}`;
-                }}
-              />
+              <div className="w-5 h-4 rounded mr-2 bg-white/20 flex items-center justify-center overflow-hidden">
+                <img
+                  src={getFlagUrl(admin.countryCode)}
+                  alt={`${admin.countryCode} flag`}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    // Hide the broken image and show fallback
+                    e.target.style.display = 'none';
+                    const parent = e.target.parentElement;
+                    if (!parent.querySelector('.flag-fallback')) {
+                      const fallback = document.createElement('div');
+                      fallback.className = 'flag-fallback w-full h-full flex items-center justify-center bg-white/30 text-white font-bold text-[8px]';
+                      fallback.textContent = admin.countryCode;
+                      parent.appendChild(fallback);
+                    }
+                  }}
+                />
+              </div>
               <span className="text-xs text-amber-100">{admin.countryCode}</span>
             </div>
           </div>

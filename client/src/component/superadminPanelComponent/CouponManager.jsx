@@ -222,20 +222,20 @@ const CouponManager = () => {
   }
 
   return (
-    <div>
+    <div className="p-4 md:p-6">
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 md:mb-8">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1">
             Coupon Management
           </h2>
-          <p className="text-gray-600 mt-1">
+          <p className="text-sm md:text-base text-gray-600">
             Create and manage coupon codes for your users
           </p>
         </div>
         <button
           onClick={handleAddCoupon}
-          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          className="flex items-center gap-2 bg-gradient-to-r from-[#004b87] to-[#3e9c35] text-white px-4 md:px-6 py-2 md:py-2.5 rounded-lg hover:from-[#004b87]/90 hover:to-[#3e9c35]/90 transition-all duration-200 shadow-md hover:shadow-lg text-sm md:text-base font-semibold"
         >
           <FaPlus className="w-4 h-4" />
           Add Coupon
@@ -244,42 +244,42 @@ const CouponManager = () => {
 
       {/* Coupons List */}
       {coupons.length === 0 ? (
-        <div className="text-center py-12 bg-gray-50 rounded-lg">
-          <p className="text-gray-500 mb-4">No coupons created yet</p>
+        <div className="text-center py-12 md:py-16 bg-white rounded-lg border border-gray-200 shadow-sm">
+          <p className="text-gray-500 mb-4 text-sm md:text-base">No coupons created yet</p>
           <button
             onClick={handleAddCoupon}
-            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            className="bg-gradient-to-r from-[#004b87] to-[#3e9c35] text-white px-6 py-2.5 rounded-lg hover:from-[#004b87]/90 hover:to-[#3e9c35]/90 transition-all duration-200 shadow-md hover:shadow-lg font-semibold text-sm md:text-base"
           >
             Create Your First Coupon
           </button>
         </div>
       ) : (
-        <div className="grid gap-4">
+        <div className="grid gap-4 md:gap-5">
           {coupons.map((coupon) => (
             <div
               key={coupon._id}
-              className={`bg-white border rounded-lg p-6 shadow-sm ${
+              className={`bg-white border-2 rounded-lg p-4 md:p-5 shadow-sm hover:shadow-md transition-all duration-200 ${
                 !coupon.isActive ? "opacity-60" : ""
-              }`}
+              } ${isExpired(coupon.validUntil) ? "border-orange-200" : "border-gray-200"}`}
             >
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className="text-xl font-bold text-gray-900 font-mono">
+              <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-3">
+                    <span className="text-lg md:text-xl font-bold text-gray-900 font-mono bg-gray-50 px-3 py-1 rounded-md">
                       {coupon.code}
                     </span>
                     <button
                       onClick={() => copyToClipboard(coupon.code)}
-                      className="text-gray-400 hover:text-gray-600 transition-colors"
+                      className="text-gray-400 hover:text-[#004b87] hover:bg-[#004b87]/10 rounded-md p-1.5 transition-all duration-200"
                       title="Copy coupon code"
                     >
                       <FaCopy className="w-4 h-4" />
                     </button>
 
                     {/* Status badges */}
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-1.5 md:gap-2">
                       <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                           coupon.isActive
                             ? "bg-green-100 text-green-800"
                             : "bg-red-100 text-red-800"
@@ -289,44 +289,54 @@ const CouponManager = () => {
                       </span>
 
                       {isExpired(coupon.validUntil) && (
-                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                        <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
                           Expired
                         </span>
                       )}
 
-                      <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-[#004b87]/10 text-[#004b87]">
                         {getPlanName(coupon.planId)}
                       </span>
                     </div>
                   </div>
 
-                  <p className="text-gray-600 mb-3">{coupon.description}</p>
+                  <p className="text-sm md:text-base text-gray-600 mb-3">{coupon.description}</p>
 
-                  <div className="flex flex-wrap gap-4 text-sm text-gray-500">
-                    <span>
-                      <strong>Discount:</strong>{" "}
-                      {coupon.discountType === "free"
-                        ? "Free Access"
-                        : `${coupon.discountValue}%`}
-                    </span>
-                    <span>
-                      <strong>Used:</strong> {coupon.usedCount}
-                      {coupon.usageLimit && ` / ${coupon.usageLimit}`}
-                    </span>
-                    <span>
-                      <strong>Valid Until:</strong>{" "}
-                      {formatDate(coupon.validUntil)}
-                    </span>
-                    <span>
-                      <strong>Created:</strong> {formatDate(coupon.createdAt)}
-                    </span>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 text-xs md:text-sm">
+                    <div>
+                      <span className="text-gray-500 block mb-0.5">Discount:</span>
+                      <span className="text-gray-900 font-semibold">
+                        {coupon.discountType === "free"
+                          ? "Free Access"
+                          : `${coupon.discountValue}%`}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500 block mb-0.5">Used:</span>
+                      <span className="text-gray-900 font-semibold">
+                        {coupon.usedCount}
+                        {coupon.usageLimit && ` / ${coupon.usageLimit}`}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500 block mb-0.5">Valid Until:</span>
+                      <span className="text-gray-900 font-semibold">
+                        {formatDate(coupon.validUntil)}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500 block mb-0.5">Created:</span>
+                      <span className="text-gray-900 font-semibold">
+                        {formatDate(coupon.createdAt)}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex gap-2 ml-4">
+                <div className="flex gap-1 md:gap-2 sm:ml-4">
                   <button
                     onClick={() => handleEditCoupon(coupon)}
-                    className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
+                    className="p-2 text-gray-400 hover:text-[#004b87] hover:bg-[#004b87]/10 rounded-md transition-all duration-200"
                     title="Edit coupon"
                   >
                     <FaEdit className="w-4 h-4" />
@@ -334,10 +344,10 @@ const CouponManager = () => {
 
                   <button
                     onClick={() => handleToggleActive(coupon)}
-                    className={`p-2 transition-colors ${
+                    className={`p-2 rounded-md transition-all duration-200 ${
                       coupon.isActive
-                        ? "text-gray-400 hover:text-orange-600"
-                        : "text-gray-400 hover:text-green-600"
+                        ? "text-gray-400 hover:text-orange-600 hover:bg-orange-50"
+                        : "text-gray-400 hover:text-[#3e9c35] hover:bg-[#3e9c35]/10"
                     }`}
                     title={
                       coupon.isActive ? "Deactivate coupon" : "Activate coupon"
@@ -348,7 +358,7 @@ const CouponManager = () => {
 
                   <button
                     onClick={() => handleDeleteCoupon(coupon._id)}
-                    className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-all duration-200"
                     title="Delete coupon"
                   >
                     <FaTrash className="w-4 h-4" />
@@ -362,21 +372,22 @@ const CouponManager = () => {
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/40 bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-lg mx-4">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-semibold text-gray-900">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-4 md:px-6 py-4 flex justify-between items-center">
+              <h3 className="text-lg md:text-xl font-bold text-gray-900">
                 {editingCoupon ? "Edit Coupon" : "Create New Coupon"}
               </h3>
               <button
                 onClick={() => setShowModal(false)}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-1.5 transition-all duration-200"
               >
-                <MdClose className="w-6 h-6" />
+                <MdClose className="w-5 h-5" />
               </button>
             </div>
+            <div className="p-4 md:p-6">
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4 md:space-y-5">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Coupon Code *
@@ -507,11 +518,11 @@ const CouponManager = () => {
                 </div>
               </div>
 
-              <div className="flex gap-3 pt-4">
+              <div className="flex gap-3 pt-4 border-t border-gray-200">
                 <button
                   type="submit"
                   disabled={modalLoading}
-                  className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                  className="flex-1 bg-gradient-to-r from-[#004b87] to-[#3e9c35] text-white py-2.5 px-4 rounded-lg hover:from-[#004b87]/90 hover:to-[#3e9c35]/90 transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed font-semibold text-sm md:text-base"
                 >
                   {modalLoading
                     ? "Saving..."
@@ -522,12 +533,13 @@ const CouponManager = () => {
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm md:text-base"
                 >
                   Cancel
                 </button>
               </div>
             </form>
+            </div>
           </div>
         </div>
       )}

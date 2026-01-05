@@ -109,7 +109,14 @@ const SuperDashboard = () => {
 
   const getFlagUrl = (countryCode) => {
     if (!countryCode) return '';
-    return `/flag_images/${countryCode.toLowerCase()}.svg`;
+    // Map common country code variations to standard ISO codes
+    const countryCodeMap = {
+      'uk': 'gb', // United Kingdom - map UK to GB
+      'ukr': 'ua', // Ukraine
+    };
+    const normalizedCode = countryCode.toLowerCase();
+    const mappedCode = countryCodeMap[normalizedCode] || normalizedCode;
+    return `/flag_images/${mappedCode}.svg`;
   };
 
   // Filter countries based on search term
@@ -277,13 +284,21 @@ const SuperDashboard = () => {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-4">
                         {/* Country Flag */}
-                        <div className="w-16 h-12 rounded-lg overflow-hidden border border-gray-200">
+                        <div className="w-16 h-12 rounded-lg overflow-hidden border border-gray-200 bg-gray-100 flex items-center justify-center">
                           <img
                             src={getFlagUrl(country.countryCode)}
                             alt={`${country.countryCode} flag`}
                             className="w-full h-full object-cover"
                             onError={(e) => {
-                              e.target.src = `https://via.placeholder.com/64x48/cccccc/666666?text=${country.countryCode}`;
+                              // Hide the broken image and show fallback
+                              e.target.style.display = 'none';
+                              const parent = e.target.parentElement;
+                              if (!parent.querySelector('.flag-fallback')) {
+                                const fallback = document.createElement('div');
+                                fallback.className = 'flag-fallback w-full h-full flex items-center justify-center bg-gradient-to-br from-[#004b87] to-[#3e9c35] text-white font-bold text-xs';
+                                fallback.textContent = country.countryCode;
+                                parent.appendChild(fallback);
+                              }
                             }}
                           />
                         </div>

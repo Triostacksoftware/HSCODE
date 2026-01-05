@@ -2,8 +2,9 @@ import CouponModel from "../models/Coupon.js";
 import UserModel from "../models/user.js";
 import HomeDataModel from "../models/HomeData.js";
 import SubscriptionPlanModel from "../models/SubscriptionPlan.js";
+import SuperAdminModel from "../models/SuperAdmin.js";
 
-// Create a new coupon (Admin only)
+// Create a new coupon (Admin or Superadmin)
 export const createCoupon = async (req, res) => {
   try {
     const {
@@ -18,11 +19,27 @@ export const createCoupon = async (req, res) => {
     } = req.body;
 
     const adminId = req.user._id || req.user.id;
+    const userRole = req.user.role;
 
-    // Validate admin role
-    const admin = await UserModel.findById(adminId);
-    if (!admin || admin.role !== "admin") {
-      return res.status(403).json({ message: "Admin access required" });
+    // Validate admin or superadmin role
+    let admin = null;
+    let adminCountryCode = null;
+
+    if (userRole === "superadmin") {
+      admin = await SuperAdminModel.findById(adminId);
+      if (!admin) {
+        return res.status(403).json({ message: "Superadmin not found" });
+      }
+      // Superadmin might not have countryCode, use provided one or default
+      adminCountryCode = countryCode || admin.countryCode || "US";
+    } else if (userRole === "admin") {
+      admin = await UserModel.findById(adminId);
+      if (!admin || admin.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      adminCountryCode = countryCode || admin.countryCode;
+    } else {
+      return res.status(403).json({ message: "Admin or Superadmin access required" });
     }
 
     // Check if coupon code already exists
@@ -36,17 +53,38 @@ export const createCoupon = async (req, res) => {
       });
     }
 
+    // Validate planId - can be "free", "premium", or a subscription plan ID
+    // If it's a subscription plan ID, we'll store it as-is (model no longer has enum restriction)
+    let validPlanId = planId;
+    if (!planId || (planId !== "free" && planId !== "premium")) {
+      // Check if it's a valid subscription plan ID
+      const plan = await SubscriptionPlanModel.findOne({ id: planId });
+      if (!plan) {
+        // If not a valid plan ID, default to premium
+        validPlanId = "premium";
+      }
+      // If it's a valid plan, use the plan ID as-is
+    }
+
+    // Validate discountValue based on discountType
+    let validDiscountValue = discountValue || 100;
+    if (discountType === "percentage" && validDiscountValue > 100) {
+      validDiscountValue = 100; // Cap percentage at 100%
+    }
+
     // Create new coupon
+    // Note: createdBy stores the ID, but the ref is to User
+    // For superadmins, we'll store the ID anyway (MongoDB won't validate the ref on save)
     const newCoupon = new CouponModel({
       code: code.toUpperCase(),
       description,
-      planId,
+      planId: validPlanId,
       discountType: discountType || "free",
-      discountValue: discountValue || 100,
-      usageLimit: usageLimit || null,
+      discountValue: validDiscountValue,
+      usageLimit: usageLimit ? parseInt(usageLimit) : null,
       validUntil: new Date(validUntil),
-      createdBy: adminId,
-      countryCode: countryCode || admin.countryCode,
+      createdBy: adminId, // Store ID (works for both User and SuperAdmin IDs)
+      countryCode: adminCountryCode,
     });
 
     await newCoupon.save();
@@ -69,23 +107,44 @@ export const createCoupon = async (req, res) => {
     });
   } catch (error) {
     console.error("Error creating coupon:", error);
-    res.status(500).json({ message: "Error creating coupon" });
+    console.error("Error details:", {
+      message: error.message,
+      stack: error.stack,
+      name: error.name,
+    });
+    res.status(500).json({ 
+      message: "Error creating coupon",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined
+    });
   }
 };
 
-// Get all coupons for admin's country
+// Get all coupons for admin's country (or all coupons for superadmin)
 export const getAdminCoupons = async (req, res) => {
   try {
     const adminId = req.user._id || req.user.id;
+    const userRole = req.user.role;
 
-    const admin = await UserModel.findById(adminId);
-    if (!admin || admin.role !== "admin") {
-      return res.status(403).json({ message: "Admin access required" });
+    let query = {};
+
+    if (userRole === "superadmin") {
+      // Superadmin can see all coupons
+      const superadmin = await SuperAdminModel.findById(adminId);
+      if (!superadmin) {
+        return res.status(403).json({ message: "Superadmin not found" });
+      }
+      // No country filter for superadmin - show all
+    } else if (userRole === "admin") {
+      const admin = await UserModel.findById(adminId);
+      if (!admin || admin.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      query.countryCode = admin.countryCode;
+    } else {
+      return res.status(403).json({ message: "Admin or Superadmin access required" });
     }
 
-    const coupons = await CouponModel.find({
-      countryCode: admin.countryCode,
-    })
+    const coupons = await CouponModel.find(query)
       .populate("createdBy", "name email")
       .sort({ createdAt: -1 });
 
@@ -96,17 +155,32 @@ export const getAdminCoupons = async (req, res) => {
   }
 };
 
-// Update coupon (Admin only)
+// Update coupon (Admin or Superadmin)
 export const updateCoupon = async (req, res) => {
   try {
     const { couponId } = req.params;
     const { description, usageLimit, validUntil, isActive } = req.body;
 
     const adminId = req.user._id || req.user.id;
+    const userRole = req.user.role;
 
-    const admin = await UserModel.findById(adminId);
-    if (!admin || admin.role !== "admin") {
-      return res.status(403).json({ message: "Admin access required" });
+    let admin = null;
+    let adminCountryCode = null;
+
+    if (userRole === "superadmin") {
+      admin = await SuperAdminModel.findById(adminId);
+      if (!admin) {
+        return res.status(403).json({ message: "Superadmin not found" });
+      }
+      // Superadmin can edit any coupon
+    } else if (userRole === "admin") {
+      admin = await UserModel.findById(adminId);
+      if (!admin || admin.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      adminCountryCode = admin.countryCode;
+    } else {
+      return res.status(403).json({ message: "Admin or Superadmin access required" });
     }
 
     const coupon = await CouponModel.findById(couponId);
@@ -114,8 +188,8 @@ export const updateCoupon = async (req, res) => {
       return res.status(404).json({ message: "Coupon not found" });
     }
 
-    // Check if admin can edit this coupon (same country)
-    if (coupon.countryCode !== admin.countryCode) {
+    // Check if admin can edit this coupon (same country, unless superadmin)
+    if (userRole === "admin" && coupon.countryCode !== adminCountryCode) {
       return res.status(403).json({
         message: "Cannot edit coupons from other countries",
       });
@@ -139,15 +213,30 @@ export const updateCoupon = async (req, res) => {
   }
 };
 
-// Delete coupon (Admin only)
+// Delete coupon (Admin or Superadmin)
 export const deleteCoupon = async (req, res) => {
   try {
     const { couponId } = req.params;
     const adminId = req.user._id || req.user.id;
+    const userRole = req.user.role;
 
-    const admin = await UserModel.findById(adminId);
-    if (!admin || admin.role !== "admin") {
-      return res.status(403).json({ message: "Admin access required" });
+    let admin = null;
+    let adminCountryCode = null;
+
+    if (userRole === "superadmin") {
+      admin = await SuperAdminModel.findById(adminId);
+      if (!admin) {
+        return res.status(403).json({ message: "Superadmin not found" });
+      }
+      // Superadmin can delete any coupon
+    } else if (userRole === "admin") {
+      admin = await UserModel.findById(adminId);
+      if (!admin || admin.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      adminCountryCode = admin.countryCode;
+    } else {
+      return res.status(403).json({ message: "Admin or Superadmin access required" });
     }
 
     const coupon = await CouponModel.findById(couponId);
@@ -155,8 +244,8 @@ export const deleteCoupon = async (req, res) => {
       return res.status(404).json({ message: "Coupon not found" });
     }
 
-    // Check if admin can delete this coupon (same country)
-    if (coupon.countryCode !== admin.countryCode) {
+    // Check if admin can delete this coupon (same country, unless superadmin)
+    if (userRole === "admin" && coupon.countryCode !== adminCountryCode) {
       return res.status(403).json({
         message: "Cannot delete coupons from other countries",
       });
@@ -175,6 +264,7 @@ export const deleteCoupon = async (req, res) => {
 export const validateCoupon = async (req, res) => {
   try {
     const { code } = req.params;
+    const { planId, billingCycle } = req.query; // Optional: for price calculation
     const userId = req.user._id || req.user.id;
 
     const user = await UserModel.findById(userId);
@@ -214,6 +304,33 @@ export const validateCoupon = async (req, res) => {
       });
     }
 
+    // Calculate discount if plan info provided
+    let discountInfo = null;
+    if (planId && billingCycle) {
+      const plan = await SubscriptionPlanModel.findOne({ id: planId });
+      if (plan) {
+        const basePrice =
+          billingCycle === "yearly"
+            ? plan.monthlyPrice * 12 * (1 - (plan.yearlyDiscount || 0) / 100)
+            : plan.monthlyPrice;
+
+        let discountAmount = 0;
+        if (coupon.discountType === "percentage") {
+          discountAmount = (basePrice * coupon.discountValue) / 100;
+        } else if (coupon.discountType === "fixed") {
+          discountAmount = coupon.discountValue;
+        } else if (coupon.discountType === "free") {
+          discountAmount = basePrice;
+        }
+
+        discountInfo = {
+          originalPrice: basePrice,
+          discountAmount: discountAmount,
+          finalPrice: Math.max(0, basePrice - discountAmount),
+        };
+      }
+    }
+
     res.json({
       isValid: true,
       coupon: {
@@ -223,11 +340,28 @@ export const validateCoupon = async (req, res) => {
         discountType: coupon.discountType,
         discountValue: coupon.discountValue,
       },
+      discountInfo,
     });
   } catch (error) {
     console.error("Error validating coupon:", error);
     res.status(500).json({ message: "Error validating coupon" });
   }
+};
+
+// Calculate discount amount for Stripe
+export const calculateDiscountAmount = (basePrice, coupon) => {
+  if (!coupon) return 0;
+
+  let discountAmount = 0;
+  if (coupon.discountType === "percentage") {
+    discountAmount = (basePrice * coupon.discountValue) / 100;
+  } else if (coupon.discountType === "fixed") {
+    discountAmount = coupon.discountValue;
+  } else if (coupon.discountType === "free") {
+    discountAmount = basePrice;
+  }
+
+  return discountAmount;
 };
 
 // Apply coupon to get premium membership
@@ -317,19 +451,17 @@ export const getSubscriptionPlans = async (req, res) => {
       ],
     }).select("code description planId discountType discountValue");
 
-    // Calculate global yearly discount (you can make this configurable)
-    const globalYearlyDiscount = 20; // Default 20% discount for yearly billing
-
     res.json({
       title: "Choose Your Plan",
       subtitle: "Select the perfect plan for your business needs",
       currency: "USD",
-      yearlyDiscount: globalYearlyDiscount,
+      // Removed global yearlyDiscount - each plan has its own yearlyDiscount
       plans: plans.map((plan) => ({
         id: plan.id,
         name: plan.name,
         description: plan.description,
         monthlyPrice: plan.monthlyPrice,
+        yearlyDiscount: plan.yearlyDiscount || 0, // Include each plan's own discount
         features: plan.features,
         icon: plan.icon,
         popular: plan.popular,

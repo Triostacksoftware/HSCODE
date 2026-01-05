@@ -26,6 +26,7 @@ import subscriptionPlanRoutes from "./routes/subscriptionPlan.routes.js";
 import userChatRoutes from "./routes/userChat.routes.js";
 import groupDetailsRoutes from "./routes/groupDetails.routes.js";
 import userStatsRoutes from "./routes/userStats.routes.js";
+import paymentRoutes from "./routes/payment.routes.js";
 
 // Read country-wise file mapping
 const hscodes = fs.readFileSync("db/country-wise-file.csv", "utf8");
@@ -44,6 +45,17 @@ lines.forEach((line, index) => {
 
 // Trust proxy - important for getting real client IP behind proxies/load balancers
 app.set('trust proxy', true);
+
+// Import Stripe initialization
+import Stripe from "stripe";
+if (process.env.STRIPE_SECRET_KEY) {
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+  console.log("✅ Stripe initialized");
+}
+
+// IMPORTANT: Webhook endpoint needs raw body for signature verification
+// Register webhook route with raw body BEFORE JSON middleware
+app.use('/api/v1/payments/webhook', express.raw({ type: 'application/json' }));
 
 // middlewares
 app.use(express.json());
@@ -236,6 +248,7 @@ app.use("/api/v1/home-data", homeDataRoutes);
 app.use("/api/v1/notifications", notificationRoutes);
 app.use("/api/v1/coupons", couponRoutes);
 app.use("/api/v1/subscription-plans", subscriptionPlanRoutes);
+app.use("/api/v1/payments", paymentRoutes);
 app.use("/api/v1/user-chat", userChatRoutes);
 app.use("/api/v1", groupDetailsRoutes);
 app.use("/api/v1", userStatsRoutes);

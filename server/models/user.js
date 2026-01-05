@@ -108,6 +108,49 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+
+    // Stripe subscription fields
+    stripeCustomerId: {
+      type: String,
+      default: null,
+      index: true,
+    },
+    subscriptionId: {
+      type: String,
+      default: null,
+    },
+    subscriptionStatus: {
+      type: String,
+      enum: [
+        "active",
+        "past_due",
+        "canceled",
+        "unpaid",
+        "trialing",
+        "incomplete",
+        "incomplete_expired",
+        null,
+      ],
+      default: null,
+    },
+    currentPlanId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "SubscriptionPlan",
+      default: null,
+    },
+    subscriptionStartDate: {
+      type: Date,
+      default: null,
+    },
+    subscriptionEndDate: {
+      type: Date,
+      default: null,
+    },
+    billingCycle: {
+      type: String,
+      enum: ["monthly", "yearly", null],
+      default: null,
+    },
   },
   {
     timestamps: true,

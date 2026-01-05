@@ -18,8 +18,8 @@ const couponSchema = new mongoose.Schema(
     },
     planId: {
       type: String,
-      required: true, // e.g., "premium", "free"
-      enum: ["free", "premium"],
+      required: true, // Can be "free", "premium", or subscription plan ID
+      // Removed enum to allow subscription plan IDs
     },
     discountType: {
       type: String,
@@ -31,7 +31,7 @@ const couponSchema = new mongoose.Schema(
       type: Number,
       required: true,
       min: 0,
-      max: 100, // for percentage, 100 means free
+      // Removed max: 100 to allow fixed discounts above 100
       default: 100,
     },
     usageLimit: {

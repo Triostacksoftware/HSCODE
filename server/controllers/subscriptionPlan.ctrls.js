@@ -150,10 +150,12 @@ export const deleteSubscriptionPlan = async (req, res) => {
 };
 
 // Subscribe to a subscription plan (User)
+// NOTE: This endpoint is deprecated. Use /api/v1/payments/create-checkout-session instead
+// Kept for backward compatibility but redirects to payment flow
 export const subscribeToPlan = async (req, res) => {
   try {
     const { planId } = req.params;
-    const userId = req.user._id || req.user.id;
+    const { billingCycle = "monthly" } = req.body;
 
     // Find the subscription plan
     const plan = await SubscriptionPlanModel.findOne({
@@ -166,33 +168,51 @@ export const subscribeToPlan = async (req, res) => {
         .json({ message: "Subscription plan not found or inactive" });
     }
 
-    // Find the user
-    const user = await UserModel.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    // Update user's membership and maxGroups
-    user.membership = "premium";
-    user.maxGroups = plan.maxGroups; // Set the maxGroups from the plan
-    await user.save();
-
+    // Return message directing to payment endpoint
     res.json({
-      message: `Successfully subscribed to ${plan.name}`,
+      message: "Please use the payment endpoint to subscribe",
+      redirectTo: "/api/v1/payments/create-checkout-session",
       plan: {
         id: plan.id,
         name: plan.name,
+        monthlyPrice: plan.monthlyPrice,
         maxGroups: plan.maxGroups,
         maxLeads: plan.maxLeads,
       },
-      user: {
-        membership: user.membership,
-        maxGroups: user.maxGroups,
-        currentGroupsCount: user.groupsID.length,
-      },
+      note: "Subscriptions are now handled through Stripe payment gateway. Use POST /api/v1/payments/create-checkout-session with planId and billingCycle.",
     });
   } catch (error) {
     console.error("Error subscribing to plan:", error);
     res.status(500).json({ message: "Error subscribing to plan" });
   }
+};
+
+// Helper function to calculate price with yearly discount
+export const calculatePlanPrice = (plan, billingCycle) => {
+  if (billingCycle === "yearly") {
+    return plan.monthlyPrice * 12 * (1 - (plan.yearlyDiscount || 0) / 100);
+  }
+  return plan.monthlyPrice;
+};
+
+// Helper function to calculate price with coupon
+export const calculatePriceWithCoupon = (plan, billingCycle, coupon) => {
+  const basePrice = calculatePlanPrice(plan, billingCycle);
+  let discountAmount = 0;
+
+  if (coupon) {
+    if (coupon.discountType === "percentage") {
+      discountAmount = (basePrice * coupon.discountValue) / 100;
+    } else if (coupon.discountType === "fixed") {
+      discountAmount = coupon.discountValue;
+    } else if (coupon.discountType === "free") {
+      discountAmount = basePrice;
+    }
+  }
+
+  return {
+    originalPrice: basePrice,
+    discountAmount: discountAmount,
+    finalPrice: Math.max(0, basePrice - discountAmount),
+  };
 };
