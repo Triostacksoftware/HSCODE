@@ -47,7 +47,7 @@ export default function TestPhoneVerification() {
 
       // Prepare phone number with country code
       let fullPhoneNumber = phoneNumber;
-      if (countryInfo?.code && !countryLoading) {
+      if (!fullPhoneNumber.startsWith("+") && countryInfo?.code && !countryLoading) {
         const countryData = getCountryInfo(countryInfo.code);
         if (countryData?.phonePrefix) {
           const cleanNumber = phoneNumber.replace(/^\+|\s/g, "");
@@ -245,7 +245,7 @@ export default function TestPhoneVerification() {
               <p className="font-medium text-gray-900">
                 {(() => {
                   let displayPhone = phoneNumber;
-                  if (countryInfo?.code && !countryLoading) {
+                  if (countryInfo?.code && !countryLoading && !phoneNumber.startsWith("+")) {
                     const countryData = getCountryInfo(countryInfo.code);
                     if (countryData?.phonePrefix) {
                       const cleanNumber = phoneNumber.replace(/^\+/, "");

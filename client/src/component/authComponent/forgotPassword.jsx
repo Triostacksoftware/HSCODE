@@ -57,7 +57,7 @@ export default function ForgotPassword({ onBack }) {
 
       // Prepare phone number with country code for Firebase
       let fullPhoneNumber = formData.phoneNumber;
-      if (countryInfo?.code && !countryLoading) {
+      if (!fullPhoneNumber.startsWith("+") && countryInfo?.code && !countryLoading) {
         const countryData = getCountryInfo(countryInfo.code);
         if (countryData?.phonePrefix) {
           const cleanNumber = formData.phoneNumber.replace(/^\+/, "");
@@ -177,8 +177,8 @@ export default function ForgotPassword({ onBack }) {
 
   return (
     <div className="w-full">
-      {/* Hidden reCAPTCHA container */}
-      <div id="recaptcha-container" className="hidden"></div>
+      {/* reCAPTCHA container (must not be display:none) */}
+      <div id="recaptcha-container"></div>
 
       {step === 1 ? (
         /* Step 1: Enter Phone Number */
@@ -301,7 +301,7 @@ export default function ForgotPassword({ onBack }) {
             <p className="text-sm font-medium text-gray-900">
               {(() => {
                 let displayPhone = formData.phoneNumber;
-                if (countryInfo?.code && !countryLoading) {
+                if (countryInfo?.code && !countryLoading && !formData.phoneNumber.startsWith("+")) {
                   const countryData = getCountryInfo(countryInfo.code);
                   if (countryData?.phonePrefix) {
                     const cleanNumber = formData.phoneNumber.replace(/^\+/, "");

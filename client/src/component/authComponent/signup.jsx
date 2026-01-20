@@ -211,7 +211,7 @@ export default function Signup() {
 
       // Prepare phone number with country code for Firebase only
       let fullPhoneNumber = formData.phoneNumber;
-      if (countryInfo?.code && !countryLoading) {
+      if (!fullPhoneNumber.startsWith("+") && countryInfo?.code && !countryLoading) {
         const countryData = getCountryInfo(countryInfo.code);
         if (countryData?.phonePrefix) {
           // Clean the phone number - remove any existing + or spaces
@@ -652,7 +652,7 @@ export default function Signup() {
             <p className="text-sm font-medium text-gray-900">
               {(() => {
                 let displayPhone = formData.phoneNumber;
-                if (countryInfo.code && !countryLoading) {
+                if (countryInfo.code && !countryLoading && !formData.phoneNumber.startsWith("+")) {
                   const all = getCountryInfo(countryInfo.code);
                   if (all?.phonePrefix) {
                     const cleanNumber = formData.phoneNumber.replace(/^\+/, "");
