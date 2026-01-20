@@ -57,10 +57,7 @@ export default function Signup() {
     setPhoneError("");
   };
 
-  // Initialize reCAPTCHA - TEMPORARILY DISABLED (phone OTP disabled)
-  // reCAPTCHA initialization commented out to prevent any Firebase phone OTP attempts
-  // To re-enable phone OTP: uncomment this useEffect block
-  /*
+  // Initialize reCAPTCHA
   useEffect(() => {
     if (typeof window !== "undefined" && !recaptchaVerifier) {
       // Wait for the DOM to be ready
@@ -97,7 +94,6 @@ export default function Signup() {
       return () => clearTimeout(timer);
     }
   }, [recaptchaVerifier]);
-  */
 
   // Step 1: Check if user exists and send email OTP
   const handleCheckUserAndSendEmailOTP = async (e) => {
@@ -161,7 +157,7 @@ export default function Signup() {
     }
   };
 
-  // Step 2: Verify email OTP and proceed to signup (phone OTP disabled temporarily)
+  // Step 2: Verify email OTP and send phone OTP
   const handleEmailOTPSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -185,9 +181,11 @@ export default function Signup() {
       );
 
       if (verifyResponse.status === 200) {
-        // Email OTP verified successfully - proceed directly to signup without phone OTP
-        // Call signup directly without phone OTP verification (no intermediate messages)
-        await handleSignupWithoutPhoneOTP();
+        // Email OTP verified successfully, now send phone OTP
+        setMessage("Email verified successfully! Now sending phone OTP...");
+        setTimeout(() => {
+          handleSendPhoneOTP();
+        }, 1000);
       }
     } catch (error) {
       console.error("Email OTP verification failed:", error);
@@ -197,43 +195,6 @@ export default function Signup() {
         setEmailError("OTP expired. Please request a new OTP.");
       } else {
         setEmailError("Email verification failed. Please try again.");
-      }
-      setIsLoading(false);
-    }
-  };
-
-  // Signup without phone OTP verification (phone OTP temporarily disabled)
-  const handleSignupWithoutPhoneOTP = async () => {
-    try {
-      // Call signup endpoint without Firebase ID token
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/auth/signup`,
-        {
-          name: formData.name,
-          email: formData.email,
-          phoneNumber: formData.phoneNumber, // Send plain number like "9999999995"
-          password: formData.password,
-          countryCode: countryInfo.code, // Store country code like "IN", "US"
-          companyName: formData.companyName,
-          address: formData.address,
-          companyWebsite: formData.companyWebsite,
-        },
-        {
-          withCredentials: true,
-          // No Authorization header - backend will skip Firebase phone verification
-        }
-      );
-
-      if (response.status === 201) {
-        // Immediately redirect to dashboard - no delays, no messages
-        window.location.href = "/userchat";
-      }
-    } catch (error) {
-      console.error("Signup failed:", error);
-      if (error.response?.status === 409) {
-        setEmailError("User already exists with this email or phone number.");
-      } else {
-        setEmailError("Account creation failed. Please try again.");
       }
       setIsLoading(false);
     }
@@ -653,10 +614,7 @@ export default function Signup() {
           </form>
         </div>
       ) : (
-        /* Step 3: Phone OTP Verification - TEMPORARILY DISABLED */
-        /* Phone OTP code preserved below for future re-enabling */
-        /* To re-enable: Change the condition above from `step === 2` to include step 3, and uncomment the code below */
-        false && (
+        /* Step 3: Phone OTP Verification */
         <div className="w-full">
           <div className="text-center mb-6 sm:mb-8">
             <p className="text-xs sm:text-sm text-gray-600 mb-2">
@@ -761,7 +719,6 @@ export default function Signup() {
             </button>
           </form>
         </div>
-        )
       )}
 
       {/* reCAPTCHA Container */}
