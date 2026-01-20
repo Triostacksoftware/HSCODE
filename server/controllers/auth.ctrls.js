@@ -214,35 +214,35 @@ export const signup = async (req, res) => {
       });
     }
 
-    // Get Firebase ID token from Authorization header
+    // Get Firebase ID token from Authorization header (optional - phone OTP temporarily disabled)
     const idToken = req.headers.authorization?.split(" ")[1];
     console.log("idToken", idToken);
-    if (!idToken) {
-      return res.status(401).json({
-        success: false,
-        message: "Firebase ID token required in Authorization header",
-      });
+    
+    // Phone OTP verification temporarily disabled
+    // If Firebase token is provided, verify it (for future re-enabling)
+    // If not provided, skip phone verification and proceed with email OTP only
+    if (idToken) {
+      // Verify Firebase ID token if provided
+      const firebaseResult = await verifyFirebaseToken(idToken);
+
+      if (!firebaseResult.success) {
+        return res.status(401).json({
+          success: false,
+          message: "Invalid Firebase token",
+        });
+      }
+
+      // Check if phone is verified in Firebase (only if token was provided)
+      if (!firebaseResult.phoneVerified || !firebaseResult.phoneNumber) {
+        return res.status(400).json({
+          success: false,
+          message: "Phone number not verified in Firebase",
+        });
+      }
     }
+    // If no Firebase token provided, skip phone verification (phone OTP temporarily disabled)
 
-    // Verify Firebase ID token
-    const firebaseResult = await verifyFirebaseToken(idToken);
-
-    if (!firebaseResult.success) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid Firebase token",
-      });
-    }
-
-    // Check if phone is verified in Firebase
-    if (!firebaseResult.phoneVerified || !firebaseResult.phoneNumber) {
-      return res.status(400).json({
-        success: false,
-        message: "Phone number not verified in Firebase",
-      });
-    }
-
-    // Create new user directly (phone verification already done by Firebase)
+    // Create new user (phone verification skipped if no Firebase token provided)
     const newUser = new UserModel({
       name,
       email,
@@ -1011,7 +1011,28 @@ export const checkUserBeforeOTP = async (req, res) => {
 
     // User doesn't exist, send email OTP for verification
     const otp = generateOTP();
-    await emailVerificatonMail(email, otp, "signup");
+    
+    // Try to send email OTP
+    try {
+      await emailVerificatonMail(email, otp, "signup");
+    } catch (emailError) {
+      console.error("Email sending error:", emailError);
+      // Check if it's a configuration error
+      if (emailError.code === "SMTP_NOT_CONFIGURED") {
+        return res.status(500).json({ 
+          message: "Email service is not configured. Please contact support." 
+        });
+      }
+      if (emailError.code === "EAUTH" || emailError.code === "ECONNECTION") {
+        return res.status(500).json({ 
+          message: "Email service configuration error. Please contact support." 
+        });
+      }
+      return res.status(500).json({ 
+        message: "Failed to send OTP email. Please try again later." 
+      });
+    }
+    
     const otpToken = generateToken({ email, otp }, "5m");
 
     console.log("Setting otp_token cookie:", otpToken);
@@ -1032,7 +1053,15 @@ export const checkUserBeforeOTP = async (req, res) => {
     });
   } catch (err) {
     console.error("User check error:", err);
-    return res.status(500).json({ message: "Failed to check user existence" });
+    // Provide more specific error message based on error type
+    if (err.name === "MongoServerError" || err.name === "MongoNetworkError") {
+      return res.status(500).json({ 
+        message: "Database connection error. Please try again later." 
+      });
+    }
+    return res.status(500).json({ 
+      message: "Failed to check user existence. Please try again." 
+    });
   }
 };
 
